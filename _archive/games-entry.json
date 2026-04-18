@@ -1,0 +1,10 @@
+{
+  "id": "spire-of-shadows",
+  "title": "Spire of Shadows",
+  "author": "freak",
+  "description": "A Paper Mario-style dungeon RPG. Fight through 10 floors of enemies using unique action QTEs — sword combos, hammer charges, stomp bounces, archery, and more. Built for speedrunners.",
+  "url": "https://YOUR_DEPLOY_URL_HERE/",
+  "thumbnail": "thumbnails/spire-of-shadows.png",
+  "type": "2d",
+  "tags": ["rpg", "action", "qte", "dungeon", "speedrun"]
+}

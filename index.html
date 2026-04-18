@@ -1,19 +1,35 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>My Ordinary Game Jam Game</title>
-<link rel="stylesheet" href="style.css" />
-</head>
-<body>
-<div id="hud">
-  <div id="username">loading…</div>
-  <div id="peers">1 online</div>
-  <div id="hint">WASD / arrows to move — walk into a portal to travel</div>
-</div>
-<canvas id="game" width="960" height="540"></canvas>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Spire of Shadows</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="portal.js"></script>
-<script type="module" src="game.js"></script>
+</head>
+<body style="margin:0;padding:0;background:#020205">
+<div id="root"></div>
+<script>
+fetch('App.jsx?v=' + Date.now())
+  .then(r => r.text())
+  .then(code => {
+    try {
+      const out = Babel.transform(code, { presets: ['react'] }).code;
+      const s = document.createElement('script');
+      s.textContent = out;
+      document.body.appendChild(s);
+    } catch(e) {
+      document.getElementById('root').innerText = 'Babel error: ' + e.message;
+    }
+  })
+  .catch(e => {
+    document.getElementById('root').innerText = 'Fetch error: ' + e.message;
+  });
+</script>
 </body>
 </html>

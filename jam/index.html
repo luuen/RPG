@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rune Dungeon — Vibe Jam</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;display:flex;align-items:center;justify-content:center;height:100vh;overflow:hidden;font-family:'Courier New',monospace;color:#e8d5a3}
+canvas{display:block;cursor:crosshair}
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:20}
+#overlay h1{font-size:52px;color:#ffcc44;text-shadow:0 0 30px #ff8800,0 0 60px #ff440066;letter-spacing:6px;margin-bottom:6px}
+#overlay .sub{opacity:.5;letter-spacing:3px;font-size:12px;margin-bottom:28px}
+#overlay .controls{background:rgba(255,255,255,.04);border:1px solid #2a2a40;padding:18px 32px;border-radius:4px;margin-bottom:28px;line-height:2;font-size:13px}
+#overlay .controls span{color:#ffcc44}
+#startBtn{padding:14px 48px;font-size:16px;background:#0a0a18;border:2px solid #ffcc44;color:#ffcc44;cursor:pointer;letter-spacing:4px;font-family:inherit;transition:.15s}
+#startBtn:hover{background:#ffcc44;color:#000}
+#ui{position:fixed;top:10px;left:14px;pointer-events:none;z-index:10;font-size:12px;line-height:1.8}
+#uiName{color:#ffcc44;letter-spacing:1px}
+.hpbar{width:130px;height:8px;background:#1a0808;border:1px solid #443;border-radius:3px;margin-top:2px}
+.hpfill{height:100%;border-radius:3px;transition:width .1s}
+#uiEnemies{font-size:10px;opacity:.6;letter-spacing:1px}
+#msgEl{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:30px;font-weight:bold;letter-spacing:4px;text-align:center;pointer-events:none;z-index:15;opacity:0;transition:opacity .3s;text-shadow:0 0 20px currentColor;white-space:pre-line}
+#phint{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:3px;color:#cc44ff;pointer-events:none;z-index:10;opacity:0;transition:opacity .6s}
+</style>
+</head>
+<body>
+
+<div id="overlay">
+  <h1>RUNE DUNGEON</h1>
+  <div class="sub">VIBE CODING JAM</div>
+  <div class="controls">
+    <div><span>WASD / Arrows</span> — Move</div>
+    <div><span>SPACE / Click</span> — Sword swing</div>
+    <div><span>Goal</span> — Kill all goblins, step into portal</div>
+  </div>
+  <button id="startBtn">ENTER DUNGEON</button>
+</div>
+
+<canvas id="c"></canvas>
+
+<div id="ui">
+  <div id="uiName">Hero</div>
+  <div class="hpbar"><div class="hpfill" id="hpFill" style="background:#cc3333;width:100%"></div></div>
+  <div id="uiEnemies"></div>
+</div>
+<div id="msgEl"></div>
+<div id="phint">Step into the glowing portal to travel!</div>
+
+<script>
+// ─── Portal Protocol ───────────────────────────────────────────────────────────
+const REGISTRY_URL = 'https://callumhyoung.github.io/gamejam/games.json';
+const FALLBACK = [
+  { id:'rune-dungeon-fallback', title:'Shadow Keep', url:'https://example-jam-game-a.netlify.app/' },
+  { id:'rune-dungeon-fallback2',title:'Void Runner',  url:'https://example-jam-game-b.netlify.app/' },
+];
+
+const sp        = new URLSearchParams(window.location.search);
+const PORTAL_IN = sp.get('portal') === 'true';
+const P_NAME    = sp.get('username') || ('Hero' + Math.floor(Math.random()*900+100));
+const P_COLOR   = '#' + (sp.get('color') || 'ffcc44');
+const P_REF     = sp.get('ref') || null;
+
+let registry      = [...FALLBACK];
+let portalTarget  = FALLBACK[0];
+
+(async () => {
+  try {
+    const d = await fetch(REGISTRY_URL).then(r => r.json());
+    const others = (d.games||[]).filter(g => !window.location.href.startsWith(g.url));
+    if (others.length) { registry = others; }
+  } catch(_) {}
+  portalTarget = registry[Math.floor(Math.random() * registry.length)];
+})();
+
+function goPortal(url) {
+  const p = new URLSearchParams({
+    portal:   'true',
+    username: P_NAME,
+    color:    P_COLOR.replace('#',''),
+    speed:    '5',
+    ref:      window.location.href.split('?')[0],
+  });
+  window.location.href = `${url}?${p}`;
+}
+
+// ─── Canvas ────────────────────────────────────────────────────────────────────
+const c   = document.getElementById('c');
+const ctx = c.getContext('2d');
+const W = 800, H = 560;
+c.width = W; c.height = H;
+
+function resize() {
+  const s = Math.min(window.innerWidth/W, window.innerHeight/H, 1.6);
+  c.style.width  = W*s+'px';
+  c.style.height = H*s+'px';
+}
+window.addEventListener('resize', resize);
+resize();
+
+// ─── Map ──────────────────────────────────────────────────────────────────────
+const T = 40, COLS = W/T|0, ROWS = H/T|0;
+
+// 0=floor 1=wall
+const RAW = [
+  "####################",
+  "#..................#",
+  "#.#####.....####..#",
+  "#.#...#.....#......#",
+  "#.#...#..........###",
+  "#.####.....##....#.#",
+  "#..........#.....#.#",
+  "#....####..#......##",
+  "#....#......#......#",
+  "###..#......######.#",
+  "#....#.............#",
+  "#....#....####.....#",
+  "#.########.........#",
+  "#..................#",
+  "####################",
+];
+const MAP = RAW.map(row => row.split('').map(ch => ch==='#'?1:0));
+const rows = MAP.length, cols = MAP[0]?.length||COLS;
+
+function tileAt(tx,ty) {
+  if(tx<0||ty<0||ty>=rows||tx>=cols) return 1;
+  return MAP[ty][tx];
+}
+function solidAt(x,y,r=11) {
+  const pts = [[-r,-r],[r,-r],[-r,r],[r,r],[0,-r],[0,r],[-r,0],[r,0]];
+  for(const [dx,dy] of pts) {
+    if(tileAt((x+dx)/T|0,(y+dy)/T|0)) return true;
+  }
+  return false;
+}
+
+// ─── Entities ─────────────────────────────────────────────────────────────────
+const SPAWN_X = 2*T+T/2, SPAWN_Y = 2*T+T/2;
+
+const player = {
+  x: SPAWN_X, y: SPAWN_Y, r:13,
+  vx:0, vy:0,
+  hp:100, maxHp:100,
+  name: P_NAME, color: P_COLOR,
+  facing: 0,
+  atkTimer:0, atkCool:0, atkRange:52,
+  iframes:0, dead:false,
+};
+
+const GOBLIN_SPOTS = [[17,1],[17,12],[1,12],[9,7],[15,7]];
+let enemies = GOBLIN_SPOTS.map((s,i) => ({
+  x: s[0]*T+T/2, y: s[1]*T+T/2, r:11,
+  hp:45, maxHp:45, spd:1.2+i*0.12,
+  hitFlash:0, dying:0, dead:false, id:i,
+}));
+
+// Portals
+const EXIT_PORTAL  = { x:W/2, y:H/2, open:false, pulse:0, enterTimer:0 };
+const RET_PORTAL   = P_REF ? { x:3*T+T/2, y:3*T+T/2, label:'RETURN', target:P_REF, enterTimer:0 } : null;
+
+// Particles + state
+let parts   = [];
+let frame   = 0;
+let gstate  = 'title'; // title | play | dead
+let msgTimer = 0;
+
+// ─── Input ────────────────────────────────────────────────────────────────────
+const keys = {};
+window.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (e.code === 'Space') { e.preventDefault(); swing(); }
+});
+window.addEventListener('keyup', e => { keys[e.code] = false; });
+c.addEventListener('click', () => swing());
+c.addEventListener('mousemove', e => {
+  const r = c.getBoundingClientRect();
+  player.facing = Math.atan2((e.clientY-r.top)*(H/r.height)-player.y,
+                             (e.clientX-r.left)*(W/r.width)-player.x);
+});
+
+// ─── Audio ────────────────────────────────────────────────────────────────────
+let AC;
+function ac() { return AC||(AC=new(window.AudioContext||window.webkitAudioContext)()); }
+function beep(freq,dur,vol=0.08,type='square',detune=0) {
+  try {
+    const a=ac(),g=a.createGain(),o=a.createOscillator();
+    o.type=type; o.frequency.value=freq; o.detune.value=detune;
+    g.gain.setValueAtTime(vol,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime+dur);
+  } catch(_){}
+}
+function sfxSwing()  { beep(260,.07,.09,'sawtooth'); beep(340,.05,.06,'sawtooth',150); }
+function sfxHit()    { beep(180,.12,.13,'sawtooth',-100); }
+function sfxDead()   { beep(110,.35,.12,'square'); beep(75,.45,.09,'square',-200); }
+function sfxHurt()   { beep(140,.18,.14,'sawtooth',-250); }
+function sfxPortal() { [523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,.5,.07,'sine'),i*90)); }
+
+// ─── Logic ────────────────────────────────────────────────────────────────────
+function swing() {
+  if (gstate !== 'play' || player.atkCool > 0) return;
+  player.atkTimer = 14;
+  player.atkCool  = 24;
+  sfxSwing();
+  enemies.forEach(en => {
+    if (en.dead) return;
+    const dx=en.x-player.x, dy=en.y-player.y, d=Math.hypot(dx,dy);
+    if (d > player.atkRange) return;
+    let a = Math.atan2(dy,dx) - player.facing;
+    while(a >  Math.PI) a -= 2*Math.PI;
+    while(a < -Math.PI) a += 2*Math.PI;
+    if (Math.abs(a) < Math.PI*0.6) hitEnemy(en);
+  });
+}
+
+function hitEnemy(en) {
+  const dmg = 28 + Math.random()*16 | 0;
+  en.hp -= dmg;
+  en.hitFlash = 9;
+  sfxHit();
+  burst(en.x, en.y, '#ff8844', 7);
+  if (en.hp <= 0 && !en.dead) {
+    en.dead = true; en.dying = 40;
+    burst(en.x, en.y, '#ff4422', 18);
+    sfxDead();
+    if (enemies.every(e => e.dead)) setTimeout(openExit, 700);
+  }
+}
+
+function openExit() {
+  EXIT_PORTAL.open = true;
+  msg('PORTAL OPENED!\nFind it — center of the dungeon', 160);
+  sfxPortal();
+  document.getElementById('phint').style.opacity = '1';
+}
+
+function burst(x,y,col,n) {
+  for (let i=0;i<n;i++) {
+    const a=Math.random()*Math.PI*2, s=1.5+Math.random()*3.5;
+    parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col,life:1,
+      d: .04+Math.random()*.04, r:2+Math.random()*3});
+  }
+}
+
+function msg(txt, dur=140) {
+  const el=document.getElementById('msgEl');
+  el.textContent=txt; el.style.color='#ffcc44'; el.style.opacity='1';
+  msgTimer=dur;
+}
+
+function update() {
+  if (gstate !== 'play') return;
+  frame++;
+
+  // player timers
+  if (player.atkCool > 0)  player.atkCool--;
+  if (player.atkTimer > 0) player.atkTimer--;
+  if (player.iframes > 0)  player.iframes--;
+
+  // movement
+  let dx=0, dy=0;
+  if (keys['KeyW']||keys['ArrowUp'])    dy=-1;
+  if (keys['KeyS']||keys['ArrowDown'])  dy= 1;
+  if (keys['KeyA']||keys['ArrowLeft'])  dx=-1;
+  if (keys['KeyD']||keys['ArrowRight']) dx= 1;
+  if (dx&&dy){dx*=.707;dy*=.707;}
+  const spd = 3.4;
+  if (dx||dy) {
+    if (Math.abs(dx)>.1) player.facing=Math.atan2(dy,dx);
+    let nx=player.x+dx*spd;
+    if (!solidAt(nx,player.y)) player.x=nx;
+    let ny=player.y+dy*spd;
+    if (!solidAt(player.x,ny)) player.y=ny;
+  }
+  player.x=Math.max(player.r,Math.min(W-player.r,player.x));
+  player.y=Math.max(player.r,Math.min(H-player.r,player.y));
+
+  // enemies
+  enemies.forEach(en => {
+    if (en.dying>0) { en.dying--; return; }
+    if (en.dead) return;
+    if (en.hitFlash>0) en.hitFlash--;
+    const ddx=player.x-en.x, ddy=player.y-en.y, dd=Math.hypot(ddx,ddy);
+    if (dd>0) {
+      let nx=en.x+ddx/dd*en.spd; if(!solidAt(nx,en.y,8)) en.x=nx;
+      let ny=en.y+ddy/dd*en.spd; if(!solidAt(en.x,ny,8)) en.y=ny;
+    }
+    // damage player
+    if (dd < player.r+en.r+2 && player.iframes<=0) {
+      player.hp = Math.max(0, player.hp-9);
+      player.iframes = 45;
+      sfxHurt();
+      burst(player.x,player.y,'#ff4444',5);
+      if (player.hp<=0 && !player.dead) { player.dead=true; gstate='dead'; msg('YOU DIED\n\nRefresh to try again',9999); }
+    }
+  });
+
+  // particles
+  parts = parts.filter(p=>{
+    p.x+=p.vx; p.y+=p.vy; p.vx*=.91; p.vy*=.91;
+    p.life-=p.d; return p.life>0;
+  });
+
+  // exit portal
+  if (EXIT_PORTAL.open) {
+    EXIT_PORTAL.pulse += .07;
+    const d=Math.hypot(player.x-EXIT_PORTAL.x,player.y-EXIT_PORTAL.y);
+    if (d<42) {
+      EXIT_PORTAL.enterTimer++;
+      if (EXIT_PORTAL.enterTimer>40 && portalTarget) goPortal(portalTarget.url);
+    } else EXIT_PORTAL.enterTimer=0;
+  }
+
+  // return portal
+  if (RET_PORTAL) {
+    const d=Math.hypot(player.x-RET_PORTAL.x,player.y-RET_PORTAL.y);
+    if (d<42) {
+      RET_PORTAL.enterTimer++;
+      if (RET_PORTAL.enterTimer>40) goPortal(RET_PORTAL.target);
+    } else RET_PORTAL.enterTimer=0;
+  }
+
+  // msg fade
+  if (msgTimer>0) { if(--msgTimer===0) document.getElementById('msgEl').style.opacity='0'; }
+
+  // UI
+  document.getElementById('hpFill').style.width=(player.hp/player.maxHp*100)+'%';
+  document.getElementById('uiName').textContent=player.name;
+  const alive=enemies.filter(e=>!e.dead).length;
+  document.getElementById('uiEnemies').textContent=alive>0?`Goblins: ${alive}`:
+    EXIT_PORTAL.open?'Find the purple portal!':'All slain...';
+}
+
+// ─── Draw ─────────────────────────────────────────────────────────────────────
+const WALL_COL  = '#1c1c2e';
+const WALL_TOP  = '#26263e';
+const FLOOR_A   = '#111120';
+const FLOOR_B   = '#13131e';
+
+function draw() {
+  ctx.clearRect(0,0,W,H);
+
+  // Tiles
+  for (let r=0;r<rows;r++) {
+    for (let col=0;col<cols;col++) {
+      const tx=col*T, ty=r*T;
+      if (MAP[r][col]===1) {
+        ctx.fillStyle=WALL_COL; ctx.fillRect(tx,ty,T,T);
+        ctx.fillStyle=WALL_TOP; ctx.fillRect(tx,ty,T,5);
+        ctx.fillStyle='#0a0a16'; ctx.fillRect(tx,ty+T-3,T,3);
+      } else {
+        ctx.fillStyle=(r+col)%2?FLOOR_A:FLOOR_B;
+        ctx.fillRect(tx,ty,T,T);
+      }
+    }
+  }
+
+  // Return portal
+  if (RET_PORTAL) {
+    drawPortal(RET_PORTAL.x, RET_PORTAL.y, '#44ccff', frame*.055, 'RETURN', RET_PORTAL.enterTimer/40);
+  }
+
+  // Exit portal
+  if (EXIT_PORTAL.open) {
+    const title = portalTarget ? portalTarget.title : 'THE BEYOND';
+    drawPortal(EXIT_PORTAL.x, EXIT_PORTAL.y, '#bb44ff', EXIT_PORTAL.pulse, title, EXIT_PORTAL.enterTimer/40);
+  }
+
+  // Particles
+  ctx.save();
+  parts.forEach(p=>{
+    ctx.globalAlpha=p.life*.9;
+    ctx.fillStyle=p.col;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+  });
+  ctx.restore();
+
+  // Enemies
+  enemies.forEach(en=>{
+    if (en.dead && en.dying<=0) return;
+    ctx.save();
+    ctx.globalAlpha = en.dying>0 ? en.dying/40 : 1;
+    drawEnemy(en);
+    ctx.restore();
+  });
+
+  // Attack arc
+  if (player.atkTimer>0) {
+    const f=player.atkTimer/14;
+    ctx.save();
+    ctx.globalAlpha=f*.4;
+    ctx.fillStyle='#ffcc44';
+    ctx.beginPath();
+    ctx.moveTo(player.x,player.y);
+    ctx.arc(player.x,player.y,player.atkRange,
+      player.facing-Math.PI*.58, player.facing+Math.PI*.58);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  // Player
+  drawPlayer();
+
+  // Portal enter bar
+  const entering = EXIT_PORTAL.enterTimer || (RET_PORTAL?.enterTimer||0);
+  if (entering>0) {
+    const frac=Math.min(1,entering/40);
+    ctx.fillStyle='rgba(0,0,0,.65)';
+    ctx.fillRect(W/2-90,H-38,180,16);
+    ctx.fillStyle='#cc44ff';
+    ctx.fillRect(W/2-90,H-38,180*frac,16);
+    ctx.fillStyle='#fff';
+    ctx.font='bold 10px monospace';
+    ctx.textAlign='center';
+    ctx.fillText('ENTERING PORTAL...', W/2, H-26);
+  }
+}
+
+function drawPortal(x,y,col,pulse,label,enterFrac=0) {
+  const r1=32+Math.sin(pulse)*5;
+  // glow
+  const g=ctx.createRadialGradient(x,y,r1*.4,x,y,r1+20);
+  g.addColorStop(0,col+'55'); g.addColorStop(1,col+'00');
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.arc(x,y,r1+20,0,Math.PI*2); ctx.fill();
+  // ring
+  ctx.strokeStyle=col; ctx.lineWidth=5;
+  ctx.shadowColor=col; ctx.shadowBlur=18;
+  ctx.beginPath(); ctx.arc(x,y,r1,0,Math.PI*2); ctx.stroke();
+  ctx.shadowBlur=0;
+  // inner fill
+  ctx.fillStyle=col+'22';
+  ctx.beginPath(); ctx.arc(x,y,r1*.7,0,Math.PI*2); ctx.fill();
+  // spokes
+  for(let i=0;i<8;i++){
+    const a=pulse+i*Math.PI/4;
+    ctx.strokeStyle=col+'55'; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.moveTo(x+Math.cos(a)*7,y+Math.sin(a)*7);
+    ctx.lineTo(x+Math.cos(a)*r1*.65,y+Math.sin(a)*r1*.65);
+    ctx.stroke();
+  }
+  // label
+  ctx.fillStyle=col; ctx.font='bold 10px monospace'; ctx.textAlign='center';
+  ctx.shadowColor=col; ctx.shadowBlur=8;
+  ctx.fillText(label.toUpperCase().slice(0,20), x, y+r1+20);
+  ctx.shadowBlur=0; ctx.lineWidth=1;
+  // enter progress arc
+  if(enterFrac>0){
+    ctx.strokeStyle='#fff'; ctx.lineWidth=4;
+    ctx.beginPath();
+    ctx.arc(x,y,r1+5,-Math.PI/2,-Math.PI/2+Math.PI*2*enterFrac);
+    ctx.stroke(); ctx.lineWidth=1;
+  }
+}
+
+function drawPlayer() {
+  if (player.dead) return;
+  if (player.iframes>0 && frame%4<2) return;
+  const {x,y,r,facing,color} = player;
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.ellipse(x,y+r,r*.8,3.5,0,0,Math.PI*2); ctx.fill();
+  ctx.save(); ctx.translate(x,y); ctx.rotate(facing);
+  // body circle
+  ctx.fillStyle=color+'ee';
+  ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fill();
+  // armor sheen
+  ctx.fillStyle='rgba(255,255,255,.18)';
+  ctx.beginPath(); ctx.arc(-3,-4,r*.55,0,Math.PI*2); ctx.fill();
+  // visor
+  ctx.fillStyle='rgba(255,255,255,.9)';
+  ctx.fillRect(3,-5,8,5);
+  ctx.fillStyle='rgba(0,0,0,.7)';
+  ctx.fillRect(5,-4,5,4);
+  // sword when attacking
+  if (player.atkTimer>0) {
+    ctx.strokeStyle='#ccdde8'; ctx.lineWidth=3;
+    ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(6,0); ctx.lineTo(r+20,0); ctx.stroke();
+    ctx.strokeStyle='#ffcc44'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(6,-2); ctx.lineTo(r+20,-2); ctx.stroke();
+  }
+  ctx.restore();
+  // name tag
+  ctx.fillStyle='rgba(0,0,0,.55)';
+  ctx.fillRect(x-28,y-r-20,56,13);
+  ctx.fillStyle=color;
+  ctx.font='bold 9px monospace'; ctx.textAlign='center';
+  ctx.fillText(player.name.slice(0,12), x, y-r-10);
+}
+
+function drawEnemy(en) {
+  const {x,y,r} = en;
+  const col = en.hitFlash>0 ? '#ffffff' : '#2e9a2e';
+  ctx.fillStyle='rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.ellipse(x,y+r,r*.8,3,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=col;
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#44aa44';
+  ctx.beginPath(); ctx.arc(x,y-3,r*.7,Math.PI,0); ctx.fill();
+  // eyes
+  [-4,4].forEach(ex=>{
+    ctx.fillStyle='#ffaa00';
+    ctx.beginPath(); ctx.arc(x+ex,y-3,3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#000';
+    ctx.beginPath(); ctx.arc(x+ex,y-3,1.5,0,Math.PI*2); ctx.fill();
+  });
+  // teeth
+  ctx.fillStyle='#eef';
+  [-3,0,3].forEach(tx=>{ ctx.fillRect(x+tx-1.5,y+3,2.5,3); });
+  // hp bar
+  if(!en.dead) {
+    ctx.fillStyle='#220000'; ctx.fillRect(x-r,y-r-9,r*2,5);
+    ctx.fillStyle='#cc2222'; ctx.fillRect(x-r,y-r-9,r*2*(en.hp/en.maxHp),5);
+  }
+}
+
+// ─── Loop ─────────────────────────────────────────────────────────────────────
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+
+// ─── Start ────────────────────────────────────────────────────────────────────
+document.getElementById('startBtn').addEventListener('click', start);
+window.addEventListener('keydown', e=>{ if(e.code==='Enter'&&gstate==='title') start(); });
+
+function start() {
+  document.getElementById('overlay').style.display='none';
+  gstate='play';
+  document.getElementById('uiName').textContent=player.name;
+  if (PORTAL_IN) {
+    player.x=SPAWN_X; player.y=SPAWN_Y;
+    msg(`Welcome, ${player.name}!`, 130);
+    if (P_REF) {
+      document.getElementById('phint').style.opacity='1';
+      setTimeout(()=>{ document.getElementById('phint').style.opacity='0'; },4000);
+    }
+  }
+}
+
+// Skip title if arriving via portal
+if (PORTAL_IN) start();
+
+loop();
+</script>
+</body>
+</html>

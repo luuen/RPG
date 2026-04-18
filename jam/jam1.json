@@ -1,0 +1,10 @@
+{
+  "id": "rpg",
+  "title": "R.P.G.",
+  "author": "luuen",
+  "description": "RACE YOUR WAY THROUGH THE DUNGEON AGAINST YOUR OPPONENT TO ACQUIRE THE FINAL WEAPON TO BLAST YOUR WAY TO VICTORY",
+  "url": "https://freak.github.io/rune-dungeon/",
+  "thumbnail": "thumbnails/rpg.png",
+  "type": "2d",
+  "tags": ["action", "dungeon", "brawler", "roguelite", "rpg"]
+}
