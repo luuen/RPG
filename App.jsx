@@ -27,6 +27,7 @@ body{background:#020205;overflow:hidden;user-select:none;color:#e8d5a3;font-fami
 @keyframes dotPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.7}}
 @keyframes bowPull{0%{transform:rotate(0deg)}100%{transform:rotate(-18deg)}}
 @keyframes chargeBar{from{box-shadow:0 0 4px #ff8833}to{box-shadow:0 0 18px #ffcc44,0 0 40px #ff8833}}
+@keyframes chargeRelease{from{transform:translateX(-50%) scale(1);opacity:1}to{transform:translateX(-50%) scale(1.18);opacity:.7}}
 @keyframes parryFlash{0%{opacity:0}15%{opacity:.75}60%{opacity:.45}100%{opacity:0}}
 @keyframes parryText{0%{transform:translate(-50%,-50%) scale(.5);opacity:0}20%{transform:translate(-50%,-50%) scale(1.4);opacity:1}55%{transform:translate(-50%,-50%) scale(1.1);opacity:1}100%{transform:translate(-50%,-50%) scale(1.3);opacity:0}}
 @keyframes particleFly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.1)}}
@@ -47,6 +48,13 @@ body{background:#020205;overflow:hidden;user-select:none;color:#e8d5a3;font-fami
 @keyframes weaponOrbit{from{transform:rotate(0deg) translateX(var(--r,50px)) rotate(0deg)}to{transform:rotate(360deg) translateX(var(--r,50px)) rotate(-360deg)}}
 @keyframes weaponBob{0%,100%{filter:drop-shadow(0 0 4px #ffcc4488)}50%{filter:drop-shadow(0 0 12px #ffcc44cc)}}
 @keyframes golemFist{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+@keyframes dualKeyPop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+@keyframes dualDotPing{0%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.8);opacity:.4}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}
+@keyframes dualTrackPulse{0%,100%{box-shadow:0 0 8px currentColor}50%{box-shadow:0 0 22px currentColor,0 0 44px currentColor}}
+@keyframes bookFlipOpen{0%{transform:perspective(600px) rotateY(0deg);opacity:.9}100%{transform:perspective(600px) rotateY(-160deg);opacity:1}}
+@keyframes bookPageIn{from{transform:perspective(400px) rotateY(-90deg);opacity:0}to{transform:perspective(400px) rotateY(0deg);opacity:1}}
+@keyframes bookBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes potionHint{0%,100%{opacity:.55}50%{opacity:.9}}
 @keyframes dragonBreath{0%{opacity:0;transform:scaleX(0)}40%{opacity:.9}100%{opacity:0;transform:scaleX(1.4)}}
 @keyframes skelSwing{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-18deg)}}
 @keyframes eyePulse{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.08);opacity:1}}
@@ -56,19 +64,26 @@ body{background:#020205;overflow:hidden;user-select:none;color:#e8d5a3;font-fami
 
 /* ─── WEAPON DATA ────────────────────────────────────────────── */
 const STARTER_WEAPONS = {
-  sword:   { id:"sword",   name:"Iron Sword",    emoji:"⚔️", baseDmg:12, speed:2.2, qteType:"swing_beat",  desc:"Swing in rhythm — press A and D as the dial hits each side.", classEmoji:"🛡️", className:"Knight"    },
-  hammer:  { id:"hammer",  name:"War Hammer",     emoji:"🔨", baseDmg:22, speed:1.0, qteType:"hold_release",desc:"Wind up and release at the apex.",                             classEmoji:"⚒️", className:"Berserker" },
-  daggers: { id:"daggers", name:"Shadow Daggers", emoji:"🗡️", baseDmg:9,  speed:3.0, qteType:"rapid_tap",  tapTarget:8, desc:"Unleash a flurry of cuts — mash SPACE rapidly.",  classEmoji:"🐍", className:"Rogue"     },
-  staff:   { id:"staff",   name:"Arcane Staff",   emoji:"🪄", baseDmg:16, speed:1.8, qteType:"sequence",   seqLength:4, desc:"Channel a spell — enter the rune sequence exactly.", classEmoji:"🌙", className:"Mage"      },
-  bow:     { id:"bow",     name:"Elven Bow",       emoji:"🏹", baseDmg:8,  speed:1.5, qteType:"archery",    desc:"Stop 3 moving dots — press SPACE for each. Three arrows fly.",classEmoji:"🌿", className:"Ranger"    },
+  sword:      { id:"sword",      name:"Iron Sword",    emoji:"⚔️", baseDmg:12, speed:2.2, qteType:"swing_beat",  desc:"Press A when dial hits LEFT, D when it hits RIGHT. Hit the beat!", classEmoji:"🛡️", className:"Knight"    },
+  hammer:     { id:"hammer",     name:"War Hammer",    emoji:"🔨", baseDmg:22, speed:1.0, qteType:"hold_release",desc:"Hold SPACE to charge. Release in the GREEN zone — too long = OVERCHARGE!", classEmoji:"⚒️", className:"Berserker" },
+  daggers:    { id:"daggers",    name:"Shadow Daggers",emoji:"🗡️", baseDmg:9,  speed:3.0, qteType:"rapid_tap",  tapTarget:8, desc:"Mash SPACE 8 times before the timer runs out. Go fast!", classEmoji:"🐍", className:"Rogue"     },
+  staff:      { id:"staff",      name:"Arcane Staff",  emoji:"🪄", baseDmg:16, speed:1.8, qteType:"sequence",   seqLength:4, desc:"Type the 4-letter rune sequence shown. One wrong key = restart!", classEmoji:"🌙", className:"Mage"      },
+  bow:        { id:"bow",        name:"Elven Bow",     emoji:"🏹", baseDmg:8,  speed:1.5, qteType:"archery",    desc:"3 orbiting dots — press SPACE when each is in the center ring.", classEmoji:"🌿", className:"Ranger"    },
+  sword_gun:  { id:"sword_gun",  name:"Sword & Gun",   emoji:"⚔🔫", baseDmg:30, speed:1.8, qteType:"dual_action", dotSpeed:1.80, centerWidth:0.20, classEmoji:"🔫", className:"Duelist",    desc:"Hold A+W+D simultaneously, then LEFT CLICK when the dot hits the center zone." },
 };
 const ALL_WEAPONS = {
   ...STARTER_WEAPONS,
-  boots: { id:"boots", name:"Iron Boots", emoji:"👟", baseDmg:8,  speed:1.4, qteType:"stomp",        classEmoji:"👊", className:"Brawler"  },
-  axe:   { id:"axe",   name:"Battle Axe", emoji:"🪓", baseDmg:19, speed:1.1, qteType:"hold_release", classEmoji:"🪓", className:"Warrior"  },
-  spear: { id:"spear", name:"Iron Spear", emoji:"🔱", baseDmg:15, speed:1.9, qteType:"poke",         classEmoji:"🔱", className:"Lancer"   },
-  wand:  { id:"wand",  name:"Chaos Wand", emoji:"✨", baseDmg:18, speed:2.0, qteType:"sequence",        seqLength:3, classEmoji:"✨", className:"Sorcerer"},
-  rpg:   { id:"rpg",  name:"RPG",        emoji:"🚀", baseDmg:55, speed:1.2, qteType:"sequence_reveal", seqLength:10, classEmoji:"💥", className:"Demolisher"},
+  boots:       { id:"boots",       name:"Iron Boots",     emoji:"👟", baseDmg:8,  speed:1.4, qteType:"stomp",        classEmoji:"👊", className:"Brawler"     },
+  axe:         { id:"axe",         name:"Battle Axe",     emoji:"🪓", baseDmg:19, speed:1.1, qteType:"hold_release", classEmoji:"🪓", className:"Warrior"     },
+  spear:       { id:"spear",       name:"Iron Spear",     emoji:"🔱", baseDmg:15, speed:1.9, qteType:"poke",         classEmoji:"🔱", className:"Lancer"      },
+  wand:        { id:"wand",        name:"Chaos Wand",     emoji:"✨", baseDmg:18, speed:2.0, qteType:"sequence",        seqLength:3, classEmoji:"✨", className:"Sorcerer"   },
+  rpg:         { id:"rpg",         name:"RPG",            emoji:"🚀", baseDmg:55, speed:1.2, qteType:"sequence_reveal", seqLength:10, classEmoji:"💥", className:"Demolisher" },
+  // ── DUAL ACTION weapons: hold A+W+D, click when dot centers ──
+  sword_gun:    { id:"sword_gun",    name:"Sword & Gun",    emoji:"⚔🔫", baseDmg:30, speed:1.8, qteType:"dual_action", dotSpeed:1.80, centerWidth:0.20, classEmoji:"🔫", className:"Duelist",     desc:"Hold A+W+D, then LEFT CLICK when the dot hits the center zone." },
+  knife_shotgun:{ id:"knife_shotgun",name:"Knife & Shotgun",emoji:"🔪💥", baseDmg:24, speed:2.2, qteType:"dual_action", dotSpeed:2.60, centerWidth:0.30, classEmoji:"💥", className:"Brawgunner",  desc:"Fast chaotic dot — wide zone saves you. Hold A+W+D and click." },
+  sniper_spear: { id:"sniper_spear", name:"Sniper & Spear", emoji:"🎯🔱", baseDmg:55, speed:1.0, qteType:"dual_action", dotSpeed:0.90, centerWidth:0.07, classEmoji:"🎯", className:"Deadeye",     desc:"Slow dot, tiny zone. Nail it for massive damage. Hold A+W+D, click center." },
+  axe_pistol:   { id:"axe_pistol",   name:"Axe & Pistol",  emoji:"🪓🔫", baseDmg:36, speed:1.5, qteType:"dual_action", dotSpeed:2.10, centerWidth:0.14, classEmoji:"🪓", className:"Gunslinger",  desc:"Medium speed, punishing zone. Hold A+W+D, click the center." },
+  club_musket:  { id:"club_musket",  name:"Club & Musket",  emoji:"🏏💥", baseDmg:46, speed:1.0, qteType:"dual_action", dotSpeed:0.70, centerWidth:0.10, classEmoji:"💥", className:"Rifleman",    desc:"Agonisingly slow dot, tiny zone — massive payoff. Hold A+W+D, click." },
 };
 
 /* ─── ENEMY DATA ─────────────────────────────────────────────── */
@@ -130,7 +145,7 @@ const BASE_REWARDS = [
   { id:"w_axe",   type:"weapon", label:"Battle Axe",     emoji:"🪓", weaponId:"axe"   },
   { id:"w_spear", type:"weapon", label:"Iron Spear",     emoji:"🔱", weaponId:"spear" },
   { id:"w_wand",  type:"weapon", label:"Chaos Wand",     emoji:"✨", weaponId:"wand"  },
-  { id:"w_rpg",   type:"weapon", label:"RPG",            emoji:"🚀", weaponId:"rpg", eliteOnly:true },
+  // RPG excluded from drops — dragon kill only
   // Potions — each can appear at most once per pick
   ...POTIONS.map(pt=>({ id:`pot_${pt.id}`, type:"potion", label:pt.name, emoji:pt.emoji, desc:pt.desc, potion:pt })),
 ];
@@ -138,7 +153,6 @@ const pickRewards = (held, eliteDrop=false) => {
   const pool = BASE_REWARDS.filter(r => {
     if (r.type==="weapon" && held.includes(r.weaponId)) return false;
     if (r.eliteOnly && !eliteDrop) return false;
-    if (r.eliteOnly && eliteDrop && Math.random() > 0.30) return false; // 30% drop chance
     return true;
   });
   const potions  = pool.filter(r=>r.type==="potion").sort(()=>Math.random()-.5);
@@ -884,409 +898,618 @@ function Icon({ type, size=28, color }) {
     /* ── WEAPONS ── */
     case"sword":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* Blade — tapered steel with fuller */}
-        <polygon points="24,2 26,5 10,24 7,22" fill={c||"#c8d8e8"}/>
-        <line x1="23" y1="4" x2="11" y2="22" stroke="#88aabb" strokeWidth="1.3" strokeLinecap="round" opacity=".5"/>
-        <line x1="25" y1="3" x2="9" y2="23" stroke="#ffffff" strokeWidth=".9" strokeLinecap="round" opacity=".55"/>
-        {/* Crossguard with quillons */}
-        <line x1="4" y1="18" x2="14" y2="26" stroke={c||"#bb8818"} strokeWidth="5" strokeLinecap="round"/>
-        <line x1="5" y1="18" x2="13" y2="25" stroke="#ffdd55" strokeWidth="1.4" strokeLinecap="round" opacity=".45"/>
-        <circle cx="3" cy="17" r="2.5" fill={c||"#ddaa22"}/>
-        <circle cx="15" cy="27" r="2.5" fill={c||"#ddaa22"}/>
-        {/* Grip with leather wrap */}
-        <line x1="10.5" y1="23" x2="5.5" y2="27.5" stroke="#2a1005" strokeWidth="3.8" strokeLinecap="round"/>
-        <line x1="9.5" y1="22.5" x2="8" y2="24" stroke="#7a3a10" strokeWidth="1.2" strokeLinecap="round" opacity=".9"/>
-        <line x1="8" y1="24.5" x2="6.5" y2="26" stroke="#7a3a10" strokeWidth="1.2" strokeLinecap="round" opacity=".9"/>
-        {/* Pommel */}
-        <circle cx="4.5" cy="27.5" r="2.8" fill={c||"#cc9920"}/>
-        <circle cx="3.8" cy="26.8" r="1.1" fill="#ffee60" opacity=".6"/>
+        {/* main blade — wide tapered steel */}
+        <polygon points="27,1 25,4 5,24 7,26" fill={c||"#dce8f2"}/>
+        <polygon points="27,1 26,2.5 6,25 7,26" fill="#ffffff" opacity=".28"/>
+        {/* fuller groove */}
+        <line x1="24" y1="4" x2="8" y2="24" stroke="#8aadc0" strokeWidth="1.4" strokeLinecap="round" opacity=".55"/>
+        {/* crossguard */}
+        <rect x="1" y="20.5" width="14" height="3.5" rx="1.7" fill={c||"#c8971a"} transform="rotate(-45,8,22.25)"/>
+        <circle cx="3.5" cy="19.5" r="2.2" fill={c||"#f0b622"}/>
+        <circle cx="14.5" cy="25.5" r="2.2" fill={c||"#f0b622"}/>
+        {/* grip */}
+        <line x1="10" y1="24" x2="5" y2="28.5" stroke="#1c0d03" strokeWidth="4.2" strokeLinecap="round"/>
+        <line x1="9.5" y1="23.5" x2="8.2" y2="24.8" stroke="#7a3b10" strokeWidth="1.5" strokeLinecap="round" opacity=".85"/>
+        <line x1="7.8" y1="25.2" x2="6.5" y2="26.5" stroke="#7a3b10" strokeWidth="1.5" strokeLinecap="round" opacity=".85"/>
+        {/* pommel */}
+        <circle cx="4" cy="28" r="2.9" fill={c||"#d4a01a"}/>
+        <circle cx="3" cy="27" r="1.1" fill="#ffe566" opacity=".6"/>
       </svg>
     );
     case"hammer":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* Haft with leather wrap */}
-        <line x1="4" y1="27" x2="16" y2="13" stroke={c||"#7a4a22"} strokeWidth="4" strokeLinecap="round"/>
-        <line x1="5.5" y1="25.5" x2="7.5" y2="23.5" stroke="#9a6030" strokeWidth="1.3" strokeLinecap="round" opacity=".7"/>
-        <line x1="8" y1="23" x2="10" y2="21" stroke="#9a6030" strokeWidth="1.3" strokeLinecap="round" opacity=".7"/>
-        <line x1="10.5" y1="20.5" x2="12.5" y2="18.5" stroke="#9a6030" strokeWidth="1.3" strokeLinecap="round" opacity=".7"/>
-        {/* Heavy head */}
-        <rect x="13" y="4" width="14" height="12" rx="2" fill={c||"#556677"}/>
-        <rect x="13.5" y="4.5" width="13" height="5" rx="1.5" fill={c||"#7a8fa8"} opacity=".85"/>
-        <line x1="26.5" y1="5" x2="26.5" y2="15" stroke="#ccddee" strokeWidth="2.5" strokeLinecap="round" opacity=".7"/>
-        {/* Rear spike */}
-        <polygon points="13,4 13,8 10,6" fill={c||"#6a7a8a"}/>
-        {/* Head collar */}
-        <rect x="13" y="11" width="6" height="5" rx="1" fill={c||"#3a4a5a"}/>
-        <line x1="13" y1="13" x2="19" y2="13" stroke="#556677" strokeWidth="1" opacity=".6"/>
-        <circle cx="15" cy="7" r="1.1" fill="#445566" opacity=".7"/>
-        <circle cx="23" cy="7" r="1.1" fill="#445566" opacity=".7"/>
+        {/* handle */}
+        <line x1="3" y1="28" x2="15" y2="14" stroke={c||"#6b3f16"} strokeWidth="4.5" strokeLinecap="round"/>
+        <line x1="4.5" y1="26" x2="6.5" y2="24" stroke="#a06530" strokeWidth="1.5" strokeLinecap="round" opacity=".7"/>
+        <line x1="7.5" y1="23" x2="9.5" y2="21" stroke="#a06530" strokeWidth="1.5" strokeLinecap="round" opacity=".65"/>
+        <line x1="10.5" y1="20" x2="12.5" y2="18" stroke="#a06530" strokeWidth="1.5" strokeLinecap="round" opacity=".6"/>
+        {/* head — left spike */}
+        <polygon points="12,15 14,12 10,9 8,13" fill={c||"#5a6d7e"}/>
+        <line x1="10" y1="9" x2="8" y2="13" stroke="#c0d4e4" strokeWidth="1" opacity=".5"/>
+        {/* head — main block */}
+        <rect x="12" y="3" width="15" height="12" rx="2.5" fill={c||"#4f6070"}/>
+        <rect x="12.5" y="3.5" width="14" height="5" rx="2" fill={c||"#7090a8"} opacity=".8"/>
+        {/* striking face highlight */}
+        <line x1="26.5" y1="4.5" x2="26.5" y2="14.5" stroke="#c8dde8" strokeWidth="2.8" strokeLinecap="round" opacity=".65"/>
+        {/* rivet details */}
+        <circle cx="16" cy="7" r="1.2" fill="#384858" opacity=".8"/>
+        <circle cx="24" cy="7" r="1.2" fill="#384858" opacity=".8"/>
+        {/* collar band */}
+        <rect x="12" y="11" width="5.5" height="4" rx="1" fill={c||"#38505e"}/>
       </svg>
     );
     case"daggers":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* Dagger A — tip top-right */}
-        <polygon points="25,2 27,5 11,22 8,20" fill={c||"#c8d8e8"}/>
-        <line x1="26" y1="3.5" x2="10" y2="21" stroke="#ffffff" strokeWidth=".9" strokeLinecap="round" opacity=".5"/>
-        <line x1="23" y1="5" x2="13" y2="18" stroke="#8aaabb" strokeWidth="1" strokeLinecap="round" opacity=".4"/>
-        <line x1="14" y1="14" x2="7" y2="20" stroke={c||"#ccaa22"} strokeWidth="3.5" strokeLinecap="round"/>
-        <circle cx="6" cy="20.5" r="2" fill={c||"#ddbb33"}/>
-        <circle cx="15" cy="13.5" r="2" fill={c||"#ddbb33"}/>
-        <line x1="11" y1="20" x2="6" y2="25" stroke="#2a1005" strokeWidth="3.5" strokeLinecap="round"/>
-        <line x1="10.5" y1="20" x2="9" y2="21.5" stroke="#7a3a10" strokeWidth="1.1" strokeLinecap="round" opacity=".8"/>
-        <line x1="8.5" y1="22" x2="7" y2="23.5" stroke="#7a3a10" strokeWidth="1.1" strokeLinecap="round" opacity=".8"/>
-        <circle cx="5.5" cy="25.5" r="2.2" fill={c||"#ccaa22"}/>
-        {/* Dagger B — tip top-left */}
-        <polygon points="3,2 1,5 17,22 20,20" fill={c||"#c8d8e8"}/>
-        <line x1="2" y1="3.5" x2="18" y2="21" stroke="#ffffff" strokeWidth=".9" strokeLinecap="round" opacity=".5"/>
-        <line x1="5" y1="5" x2="15" y2="18" stroke="#8aaabb" strokeWidth="1" strokeLinecap="round" opacity=".4"/>
-        <line x1="14" y1="14" x2="21" y2="20" stroke={c||"#ccaa22"} strokeWidth="3.5" strokeLinecap="round"/>
-        <circle cx="22" cy="20.5" r="2" fill={c||"#ddbb33"}/>
-        <line x1="17" y1="20" x2="22" y2="25" stroke="#2a1005" strokeWidth="3.5" strokeLinecap="round"/>
-        <line x1="17.5" y1="20" x2="19" y2="21.5" stroke="#7a3a10" strokeWidth="1.1" strokeLinecap="round" opacity=".8"/>
-        <line x1="19.5" y1="22" x2="21" y2="23.5" stroke="#7a3a10" strokeWidth="1.1" strokeLinecap="round" opacity=".8"/>
-        <circle cx="22.5" cy="25.5" r="2.2" fill={c||"#ccaa22"}/>
+        {/* dagger A — upper-left to lower-right */}
+        <polygon points="3,3 5,1 27,21 25,23" fill={c||"#d0e0ec"}/>
+        <line x1="4" y1="2" x2="26" y2="22" stroke="#fff" strokeWidth="1" opacity=".38"/>
+        <line x1="5" y1="3" x2="25" y2="22" stroke="#7aaabb" strokeWidth="1.3" strokeLinecap="round" opacity=".4"/>
+        {/* guard A */}
+        <line x1="22" y1="17" x2="28" y2="23" stroke={c||"#d4a01a"} strokeWidth="4" strokeLinecap="round"/>
+        <circle cx="21.5" cy="16.5" r="1.8" fill={c||"#eebb22"}/>
+        <circle cx="28" cy="23.5" r="1.8" fill={c||"#eebb22"}/>
+        {/* grip A */}
+        <line x1="25.5" y1="22.5" x2="28" y2="27" stroke="#180a02" strokeWidth="3.5" strokeLinecap="round"/>
+        {/* dagger B — upper-right to lower-left (behind) */}
+        <polygon points="25,3 23,1 1,21 3,23" fill={c||"#bccedd"} opacity=".88"/>
+        <line x1="24" y1="2" x2="2" y2="22" stroke="#fff" strokeWidth="1" opacity=".25"/>
+        {/* guard B */}
+        <line x1="6" y1="17" x2="0" y2="23" stroke={c||"#c49018"} strokeWidth="4" strokeLinecap="round"/>
+        <circle cx="6.5" cy="16.5" r="1.8" fill={c||"#dda822"}/>
+        {/* grip B */}
+        <line x1="2.5" y1="22.5" x2="0" y2="27" stroke="#180a02" strokeWidth="3.5" strokeLinecap="round"/>
+        {/* central clash spark */}
+        <circle cx="14" cy="12" r="3.2" fill="#ffe855" opacity=".5"/>
+        <circle cx="14" cy="12" r="1.6" fill="#ffffff" opacity=".85"/>
+        <line x1="14" y1="12" x2="14" y2="6" stroke="#ffee22" strokeWidth="1.8" strokeLinecap="round" opacity=".85"/>
+        <line x1="14" y1="12" x2="19" y2="7" stroke="#ffcc22" strokeWidth="1.4" strokeLinecap="round" opacity=".7"/>
+        <line x1="14" y1="12" x2="9" y2="7" stroke="#ffcc22" strokeWidth="1.4" strokeLinecap="round" opacity=".7"/>
       </svg>
     );
     case"staff":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* Gnarled shaft */}
-        <line x1="14" y1="27" x2="13" y2="11" stroke={c||"#6a3e18"} strokeWidth="4" strokeLinecap="round"/>
-        <line x1="14.5" y1="26" x2="13.5" y2="12" stroke="#9a6030" strokeWidth="1.2" strokeLinecap="round" opacity=".5"/>
-        <ellipse cx="13.5" cy="20" rx="2.8" ry="1.3" fill="#4a2e0a" opacity=".6"/>
-        <line x1="12" y1="16" x2="15" y2="16" stroke="#7733cc" strokeWidth="1.1" opacity=".6"/>
-        <line x1="13.5" y1="15" x2="13.5" y2="17" stroke="#7733cc" strokeWidth="1.1" opacity=".6"/>
-        {/* Crown prongs */}
-        <line x1="13" y1="11" x2="7" y2="6" stroke={c||"#6622aa"} strokeWidth="2.5" strokeLinecap="round"/>
-        <line x1="13" y1="10" x2="13" y2="5" stroke={c||"#6622aa"} strokeWidth="2" strokeLinecap="round"/>
-        <line x1="13" y1="11" x2="19" y2="6" stroke={c||"#6622aa"} strokeWidth="2.5" strokeLinecap="round"/>
-        <line x1="13" y1="11" x2="8" y2="9" stroke={c||"#5511aa"} strokeWidth="1.8" strokeLinecap="round"/>
-        <line x1="13" y1="11" x2="18" y2="9" stroke={c||"#5511aa"} strokeWidth="1.8" strokeLinecap="round"/>
-        {/* Orb glow + orb */}
-        <circle cx="13" cy="5" r="6.5" fill={c||"#9922dd"} opacity=".2"/>
-        <circle cx="13" cy="5" r="5" fill={c||"#9933ee"} opacity=".45"/>
-        <circle cx="13" cy="5" r="4" fill={c||"#cc55ff"}/>
-        <circle cx="11.5" cy="3.5" r="2.2" fill="#ffffff" opacity=".38"/>
-        <circle cx="11" cy="3" r="1" fill="#ffffff" opacity=".65"/>
-        <line x1="18" y1="1" x2="19.5" y2="0" stroke="#ee88ff" strokeWidth="1.5" strokeLinecap="round" opacity=".8"/>
-        <line x1="19" y1="3" x2="21" y2="3" stroke="#ee88ff" strokeWidth="1.5" strokeLinecap="round" opacity=".7"/>
+        {/* shaft */}
+        <line x1="15" y1="28" x2="12" y2="10" stroke={c||"#5e3412"} strokeWidth="4.5" strokeLinecap="round"/>
+        <line x1="15.5" y1="26" x2="13" y2="12" stroke="#9a6a32" strokeWidth="1.3" strokeLinecap="round" opacity=".45"/>
+        {/* gnarl bands */}
+        <ellipse cx="13.5" cy="20" rx="3" ry="1.2" fill="#3e2208" opacity=".65"/>
+        <ellipse cx="14" cy="15" rx="2.5" ry="1" fill="#3e2208" opacity=".5"/>
+        {/* crown prongs */}
+        <line x1="12" y1="10" x2="5" y2="4" stroke={c||"#7733cc"} strokeWidth="2.8" strokeLinecap="round"/>
+        <line x1="12" y1="9" x2="12" y2="3" stroke={c||"#7733cc"} strokeWidth="2.4" strokeLinecap="round"/>
+        <line x1="12" y1="10" x2="19" y2="5" stroke={c||"#7733cc"} strokeWidth="2.8" strokeLinecap="round"/>
+        <line x1="12" y1="10" x2="7" y2="8" stroke={c||"#5511aa"} strokeWidth="2" strokeLinecap="round"/>
+        <line x1="12" y1="10" x2="17" y2="8" stroke={c||"#5511aa"} strokeWidth="2" strokeLinecap="round"/>
+        {/* orb outer glow */}
+        <circle cx="12" cy="5" r="7.5" fill={c||"#aa22ee"} opacity=".15"/>
+        <circle cx="12" cy="5" r="5.8" fill={c||"#9933ee"} opacity=".38"/>
+        {/* orb core */}
+        <circle cx="12" cy="5" r="4.5" fill={c||"#cc55ff"}/>
+        {/* inner shine */}
+        <circle cx="10" cy="3.2" r="2.5" fill="#ffffff" opacity=".3"/>
+        <circle cx="9.5" cy="2.8" r="1.1" fill="#ffffff" opacity=".65"/>
+        {/* magic sparks */}
+        <line x1="18" y1="1" x2="20" y2="-1" stroke="#ee88ff" strokeWidth="1.8" strokeLinecap="round" opacity=".85"/>
+        <line x1="19.5" y1="4" x2="22" y2="4" stroke="#ee66ff" strokeWidth="1.8" strokeLinecap="round" opacity=".75"/>
+        <line x1="4" y1="0" x2="3" y2="-2" stroke="#dd77ff" strokeWidth="1.6" strokeLinecap="round" opacity=".7"/>
       </svg>
     );
     case"bow":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* Recurve bow stave */}
-        <path d="M7,2 Q1,6 2,14 Q1,22 7,26" stroke={c||"#7a4a22"} strokeWidth="4" fill="none" strokeLinecap="round"/>
-        <path d="M7,2 Q3,5 3,10" stroke={c||"#aa7030"} strokeWidth="2" fill="none" strokeLinecap="round" opacity=".55"/>
-        <path d="M3,18 Q3,23 7,26" stroke={c||"#aa7030"} strokeWidth="2" fill="none" strokeLinecap="round" opacity=".55"/>
-        {/* Recurve tip curves */}
-        <path d="M7,2 Q4,1 5,3" stroke={c||"#886030"} strokeWidth="2" fill="none" strokeLinecap="round"/>
-        <path d="M7,26 Q4,27 5,25" stroke={c||"#886030"} strokeWidth="2" fill="none" strokeLinecap="round"/>
-        {/* String */}
-        <line x1="7" y1="2" x2="7" y2="26" stroke={c||"#d8c888"} strokeWidth="1.5" opacity=".9"/>
-        {/* Arrow shaft */}
-        <line x1="7" y1="14" x2="27" y2="14" stroke={c||"#9a6a20"} strokeWidth="2" strokeLinecap="round"/>
-        {/* Broadhead */}
-        <polygon points="28,14 22,11 23,14 22,17" fill={c||"#b8c8d8"}/>
-        <line x1="28" y1="14" x2="22" y2="11" stroke="#ddeeff" strokeWidth=".8" opacity=".7"/>
-        {/* Fletching */}
-        <path d="M7,14 L7,10 L12,14 Z" fill={c||"#cc2222"}/>
-        <path d="M7,14 L7,18 L12,14 Z" fill={c||"#cc2222"}/>
-        <path d="M8,14 L8,11 L12,14 Z" fill="#ff4433" opacity=".5"/>
-        <rect x="6" y="12.5" width="2.5" height="3" rx=".5" fill={c||"#553010"}/>
+        {/* bow stave */}
+        <path d="M6,1 Q0,5 1,14 Q0,23 6,27" stroke={c||"#7a4a22"} strokeWidth="4.5" fill="none" strokeLinecap="round"/>
+        {/* recurve tips flare */}
+        <path d="M6,1 Q3,0 4,2.5" stroke={c||"#9a6832"} strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+        <path d="M6,27 Q3,28 4,25.5" stroke={c||"#9a6832"} strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+        {/* stave highlight */}
+        <path d="M6,2 Q2,6 2.5,14 Q2,22 6,26" stroke="#c89050" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity=".4"/>
+        {/* bowstring */}
+        <line x1="6" y1="1" x2="6" y2="27" stroke={c||"#e0d090"} strokeWidth="1.6" opacity=".95"/>
+        {/* arrow shaft */}
+        <line x1="6" y1="14" x2="27" y2="14" stroke={c||"#9a6820"} strokeWidth="2.2" strokeLinecap="round"/>
+        {/* arrowhead */}
+        <polygon points="28,14 21,11 22.5,14 21,17" fill={c||"#b8ccd8"}/>
+        <line x1="28" y1="14" x2="21" y2="11" stroke="#ddeeff" strokeWidth=".9" opacity=".65"/>
+        {/* nock point */}
+        <rect x="4.5" y="12.5" width="3" height="3" rx=".8" fill={c||"#5a3010"}/>
+        {/* fletching */}
+        <path d="M6,14 L6,10 L11,14 Z" fill={c||"#cc2222"}/>
+        <path d="M6,14 L6,18 L11,14 Z" fill={c||"#cc2222"}/>
+        <path d="M7.5,14 L7.5,11.2 L11,14 Z" fill="#ff5544" opacity=".45"/>
       </svg>
     );
     case"boots":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* Armored shin plate */}
-        <rect x="8" y="3" width="8" height="13" rx="2.5" fill={c||"#5a6a7a"}/>
-        <rect x="8.5" y="3.5" width="7" height="6" rx="2" fill={c||"#7a8fa8"} opacity=".85"/>
-        <circle cx="10" cy="7" r="1" fill="#334455" opacity=".8"/>
-        <circle cx="14" cy="7" r="1" fill="#334455" opacity=".8"/>
-        <circle cx="10" cy="11" r="1" fill="#334455" opacity=".8"/>
-        <circle cx="14" cy="11" r="1" fill="#334455" opacity=".8"/>
-        {/* Knee cap */}
-        <ellipse cx="12" cy="3.5" rx="4.5" ry="2.5" fill={c||"#6a7a8a"}/>
-        <ellipse cx="12" cy="3.5" rx="3.5" ry="1.5" fill={c||"#8aaabb"} opacity=".75"/>
-        {/* Ankle band */}
-        <rect x="7.5" y="15.5" width="9" height="3" rx="1.5" fill={c||"#4a5a6a"}/>
-        <line x1="8" y1="17" x2="16" y2="17" stroke="#6a7a8a" strokeWidth=".8" opacity=".5"/>
-        {/* Boot body */}
-        <path d="M8,18 L8,22 Q8,25 13,25 L25,25 L25,22 Q18,22 17,19 L16,18 Z" fill={c||"#4a5a6a"}/>
-        <path d="M12,24 Q10,24 9,26 L25,26 L25,24 Z" fill={c||"#6a7a8a"}/>
-        <rect x="8" y="25.5" width="17" height="2.5" rx="1.2" fill="#2a3344"/>
-        <line x1="14" y1="24.5" x2="20" y2="24.5" stroke="#8a9aaa" strokeWidth=".8" opacity=".5"/>
+        {/* speed lines — motion feel */}
+        <line x1="1" y1="13" x2="6" y2="13" stroke="#5588cc" strokeWidth="1.5" strokeLinecap="round" opacity=".6"/>
+        <line x1="1" y1="16" x2="5" y2="16" stroke="#5588cc" strokeWidth="1.2" strokeLinecap="round" opacity=".4"/>
+        <line x1="1" y1="10" x2="4" y2="10" stroke="#5588cc" strokeWidth="1" strokeLinecap="round" opacity=".3"/>
+        {/* shin guard */}
+        <rect x="9" y="3" width="9" height="14" rx="3" fill={c||"#4a5e70"}/>
+        <rect x="9.5" y="3.5" width="8" height="6.5" rx="2.5" fill={c||"#6a8098"} opacity=".8"/>
+        {/* shin rivets */}
+        <circle cx="11" cy="7" r="1.1" fill="#28404e" opacity=".85"/>
+        <circle cx="16" cy="7" r="1.1" fill="#28404e" opacity=".85"/>
+        <circle cx="11" cy="12" r="1.1" fill="#28404e" opacity=".85"/>
+        <circle cx="16" cy="12" r="1.1" fill="#28404e" opacity=".85"/>
+        {/* knee dome */}
+        <ellipse cx="13.5" cy="3.2" rx="5" ry="2.8" fill={c||"#5a7080"}/>
+        <ellipse cx="13.5" cy="3" rx="3.8" ry="1.8" fill={c||"#80a0b0"} opacity=".7"/>
+        {/* ankle cuff */}
+        <rect x="8" y="16.5" width="11" height="3.2" rx="1.6" fill={c||"#384a58"}/>
+        {/* boot body */}
+        <path d="M9,19.5 L9,23 Q9,26 14,26 L27,26 L27,23 Q20,23 19,20 L18,19.5 Z" fill={c||"#3a4e5c"}/>
+        {/* toe cap */}
+        <path d="M13,25 Q11,25 10,27 L27,27 L27,25 Z" fill={c||"#5a7080"}/>
+        {/* sole */}
+        <rect x="9" y="27" width="18" height="2" rx="1" fill="#1e2c36"/>
       </svg>
     );
     case"axe":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* Haft with binding */}
-        <line x1="4" y1="27" x2="19" y2="9" stroke={c||"#7a4a22"} strokeWidth="4" strokeLinecap="round"/>
-        <line x1="5" y1="26" x2="18" y2="10.5" stroke="#9a6030" strokeWidth="1.2" strokeLinecap="round" opacity=".5"/>
-        <line x1="7" y1="24" x2="9" y2="22" stroke="#cc8833" strokeWidth="2" strokeLinecap="round" opacity=".7"/>
-        <line x1="10" y1="21" x2="12" y2="19" stroke="#cc8833" strokeWidth="2" strokeLinecap="round" opacity=".6"/>
-        {/* Large crescent blade */}
-        <path d="M16,7 Q20,1 27,3 Q29,12 26,19 Q21,23 16,20 Q23,14 22,8 Q20,5 16,7 Z" fill={c||"#7a8a9a"}/>
-        <path d="M27,3 Q29,12 26,19" stroke="#ccddee" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity=".8"/>
-        <path d="M16,7 Q20,1 27,3" stroke="#aabbcc" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity=".6"/>
-        {/* Beard hook */}
-        <path d="M16,20 Q21,25 14,27 Q12,23 17,21" fill={c||"#6a7a8a"}/>
-        <path d="M14,27 Q11,24 16,21" stroke="#aabbcc" strokeWidth=".8" fill="none" strokeLinecap="round" opacity=".5"/>
-        {/* Blade fuller */}
-        <path d="M22,6 Q26,12 24,18" stroke="#8a9aaa" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity=".4"/>
-        <circle cx="17.5" cy="10.5" r="1.5" fill="#445566" opacity=".8"/>
+        {/* haft */}
+        <line x1="3" y1="27" x2="18" y2="10" stroke={c||"#6b3f16"} strokeWidth="4.5" strokeLinecap="round"/>
+        <line x1="4" y1="26" x2="17" y2="11" stroke="#a06530" strokeWidth="1.3" strokeLinecap="round" opacity=".45"/>
+        {/* binding wraps */}
+        <line x1="6" y1="24" x2="8" y2="22" stroke="#e09030" strokeWidth="2.2" strokeLinecap="round" opacity=".75"/>
+        <line x1="9" y1="21" x2="11" y2="19" stroke="#e09030" strokeWidth="2.2" strokeLinecap="round" opacity=".65"/>
+        {/* main crescent blade */}
+        <path d="M15,8 Q20,1 27,3 Q30,13 27,20 Q22,25 16,22 Q23,15 22,8 Q19,4 15,8 Z" fill={c||"#6a7e8e"}/>
+        {/* blade edge highlight */}
+        <path d="M27,3 Q30,13 27,20" stroke="#c8dce8" strokeWidth="3" fill="none" strokeLinecap="round" opacity=".75"/>
+        {/* top edge highlight */}
+        <path d="M15,8 Q20,1 27,3" stroke="#aac0cc" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity=".55"/>
+        {/* fuller */}
+        <path d="M22,6 Q26,13 24,19" stroke="#7a9aaa" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity=".45"/>
+        {/* beard hook */}
+        <path d="M16,22 Q21,27 14,28 Q12,24 17,22" fill={c||"#5a6e7e"}/>
+        <path d="M14,28 Q11,25 16,22" stroke="#aabccc" strokeWidth="1" fill="none" strokeLinecap="round" opacity=".5"/>
+        {/* eye hole */}
+        <circle cx="18" cy="11" r="1.8" fill="#3a4e5a" opacity=".85"/>
       </svg>
     );
     case"spear":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* Shaft */}
-        <line x1="3" y1="27" x2="21" y2="7" stroke={c||"#7a4a22"} strokeWidth="3.5" strokeLinecap="round"/>
-        <line x1="4" y1="26" x2="20" y2="8" stroke="#9a6030" strokeWidth="1.1" strokeLinecap="round" opacity=".5"/>
-        <line x1="8" y1="22" x2="10" y2="20" stroke="#cc8833" strokeWidth="2.5" strokeLinecap="round" opacity=".7"/>
-        {/* Socket collar */}
-        <line x1="17" y1="12" x2="20" y2="9" stroke={c||"#3a4a5a"} strokeWidth="4" strokeLinecap="round"/>
-        {/* Broad leaf head */}
-        <path d="M20,9 Q22,5 26,2 Q28,6 27,10 Q26,14 22,15 Q25,9 24,5 Q22,3 20,9 Z" fill={c||"#b8c8d8"}/>
-        <line x1="26" y1="3" x2="23" y2="12" stroke="#ddeeff" strokeWidth="1.5" strokeLinecap="round" opacity=".55"/>
-        <path d="M20,9 Q22,5 26,2" stroke="#ffffff" strokeWidth="1" fill="none" strokeLinecap="round" opacity=".45"/>
-        {/* Cross-guard lugs */}
-        <line x1="20" y1="12" x2="16" y2="15" stroke={c||"#8a9aaa"} strokeWidth="2.5" strokeLinecap="round"/>
-        <line x1="22" y1="9" x2="25" y2="6" stroke={c||"#8a9aaa"} strokeWidth="2" strokeLinecap="round" opacity=".6"/>
-        {/* Butt spike */}
-        <polygon points="3,27 2,25 5,25" fill={c||"#9aaabb"}/>
+        {/* shaft */}
+        <line x1="2" y1="28" x2="20" y2="8" stroke={c||"#6b3f16"} strokeWidth="4" strokeLinecap="round"/>
+        <line x1="3" y1="27" x2="19" y2="9" stroke="#a06530" strokeWidth="1.2" strokeLinecap="round" opacity=".42"/>
+        {/* wrap binding mid-shaft */}
+        <line x1="7" y1="23" x2="9" y2="21" stroke="#e09030" strokeWidth="2.5" strokeLinecap="round" opacity=".7"/>
+        {/* socket collar */}
+        <rect x="16.5" y="7" width="5" height="4.5" rx="1.5" fill={c||"#384858"} transform="rotate(-45,19,9.25)"/>
+        {/* broad leaf blade */}
+        <path d="M19,8 Q21,4 26,1 Q29,6 27,11 Q25,15 21,16 Q24,9 22,4 Q20,3 19,8 Z" fill={c||"#b0c4d0"}/>
+        {/* blade edge */}
+        <line x1="26" y1="2" x2="23" y2="13" stroke="#ddeeff" strokeWidth="1.8" strokeLinecap="round" opacity=".5"/>
+        {/* center ridge */}
+        <path d="M19,8 Q22,5 26,2" stroke="#e8f0f8" strokeWidth="1" fill="none" strokeLinecap="round" opacity=".5"/>
+        <path d="M21,8 Q23,11 21.5,15" stroke="#8aaabb" strokeWidth="1" fill="none" strokeLinecap="round" opacity=".45"/>
+        {/* cross-guard lugs */}
+        <line x1="20" y1="13" x2="15" y2="17" stroke={c||"#7a8e9e"} strokeWidth="3" strokeLinecap="round"/>
+        <line x1="22" y1="10" x2="26" y2="7" stroke={c||"#7a8e9e"} strokeWidth="2.2" strokeLinecap="round" opacity=".6"/>
+        {/* butt spike */}
+        <polygon points="2,28 1,25 5,25" fill={c||"#9aaabb"}/>
       </svg>
     );
     case"rpg":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* Tube body */}
-        <rect x="2" y="9" width="18" height="8" rx="4" fill={c||"#3a4a5a"}/>
-        <rect x="3" y="9.5" width="17" height="3" rx="2" fill={c||"#556677"} opacity=".8"/>
-        <line x1="6" y1="9" x2="6" y2="17" stroke="#556677" strokeWidth="1.2" opacity=".5"/>
-        <line x1="10" y1="9" x2="10" y2="17" stroke="#556677" strokeWidth="1.2" opacity=".5"/>
-        <line x1="14" y1="9" x2="14" y2="17" stroke="#556677" strokeWidth="1.2" opacity=".5"/>
-        {/* Rear exhaust cone */}
-        <polygon points="2,10 2,16 0,18 0,8" fill={c||"#2a3a4a"} opacity=".9"/>
-        {/* Conical warhead */}
-        <polygon points="20,9 28,13 20,17" fill={c||"#dd3311"}/>
-        <polygon points="20,9 28,13 24,13" fill="#ff5533" opacity=".6"/>
-        <line x1="27" y1="12" x2="28" y2="13" stroke="#ffaa55" strokeWidth="1.5" strokeLinecap="round" opacity=".8"/>
-        {/* Pistol grip */}
-        <rect x="9" y="17" width="5" height="7" rx="1.5" fill={c||"#2a3a44"}/>
-        <line x1="10" y1="18" x2="13" y2="18" stroke="#445566" strokeWidth="1" opacity=".5"/>
-        {/* Optical sight */}
-        <rect x="7" y="6" width="8" height="3" rx="1.2" fill={c||"#334455"}/>
-        <rect x="8" y="6.5" width="6" height="2" rx=".8" fill={c||"#4a5a6a"} opacity=".8"/>
-        <line x1="11" y1="6" x2="11" y2="4.5" stroke={c||"#3a4a5a"} strokeWidth="1.8" strokeLinecap="round"/>
-        <circle cx="11" cy="7.5" r=".7" fill="#cc3311" opacity=".9"/>
+        {/* main tube */}
+        <rect x="1" y="10" width="19" height="7" rx="3.5" fill={c||"#2e3d4a"}/>
+        {/* tube highlight stripe */}
+        <rect x="2" y="10.5" width="18" height="2.8" rx="2" fill={c||"#4a5e6a"} opacity=".85"/>
+        {/* panel lines */}
+        <line x1="5" y1="10" x2="5" y2="17" stroke="#4a5e6a" strokeWidth="1.1" opacity=".55"/>
+        <line x1="10" y1="10" x2="10" y2="17" stroke="#4a5e6a" strokeWidth="1.1" opacity=".55"/>
+        <line x1="15" y1="10" x2="15" y2="17" stroke="#4a5e6a" strokeWidth="1.1" opacity=".55"/>
+        {/* exhaust bell */}
+        <path d="M1,10.5 L1,16.5 L-1,19 L-1,8 Z" fill={c||"#1e2d38"} opacity=".95"/>
+        {/* warhead — bold cone */}
+        <polygon points="20,10 28,13.5 20,17" fill={c||"#dd3311"}/>
+        <polygon points="20,10 28,13.5 24.5,13.5" fill="#ff6644" opacity=".55"/>
+        <line x1="27.5" y1="12.5" x2="28" y2="13.5" stroke="#ffbb55" strokeWidth="2" strokeLinecap="round" opacity=".85"/>
+        {/* pistol grip */}
+        <path d="M9,17 L9,25 Q9,26 10.5,26 L13.5,26 Q15,26 15,25 L15,17 Z" fill={c||"#243038"}/>
+        <line x1="10" y1="18.5" x2="14" y2="18.5" stroke="#3a4e58" strokeWidth="1.1" opacity=".5"/>
+        <line x1="10" y1="21" x2="14" y2="21" stroke="#3a4e58" strokeWidth="1.1" opacity=".5"/>
+        {/* red dot sight */}
+        <rect x="6" y="6" width="9" height="4" rx="1.5" fill={c||"#2a3840"}/>
+        <rect x="7" y="6.8" width="7" height="2.4" rx=".8" fill={c||"#3e5060"} opacity=".8"/>
+        <line x1="10.5" y1="6" x2="10.5" y2="4.5" stroke={c||"#2a3840"} strokeWidth="2" strokeLinecap="round"/>
+        <circle cx="10.5" cy="8" r="1" fill="#ff2200" opacity=".95"/>
+        <circle cx="10.5" cy="8" r="0.4" fill="#ff8866" opacity=".8"/>
       </svg>
     );
     case"wand":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* Wand body */}
-        <line x1="5" y1="26" x2="18" y2="10" stroke={c||"#5522bb"} strokeWidth="4.5" strokeLinecap="round"/>
-        <line x1="6" y1="25" x2="17" y2="11" stroke="#8844dd" strokeWidth="1.5" strokeLinecap="round" opacity=".5"/>
-        <line x1="9" y1="22" x2="11" y2="20" stroke="#cc88ff" strokeWidth="2" strokeLinecap="round" opacity=".7"/>
-        <line x1="13" y1="17" x2="15" y2="15" stroke="#cc88ff" strokeWidth="2" strokeLinecap="round" opacity=".5"/>
-        {/* Crystal tip glow */}
-        <circle cx="20" cy="8" r="7" fill={c||"#aa33ff"} opacity=".18"/>
-        <circle cx="20" cy="8" r="5.5" fill={c||"#bb55ff"} opacity=".35"/>
-        {/* Crystal cluster main */}
-        <polygon points="20,7 17,5 18,2 22,3 23,7" fill={c||"#cc77ff"}/>
-        <polygon points="18,2 22,3 20,1" fill="#ffffff" opacity=".5"/>
-        {/* Secondary crystals */}
-        <polygon points="17,9 14,7 15,5 18,6" fill={c||"#aa55ee"} opacity=".9"/>
-        <polygon points="23,9 26,7 25,5 22,7" fill={c||"#aa55ee"} opacity=".9"/>
-        {/* Chaos sparkles */}
-        <line x1="25" y1="3" x2="27" y2="1" stroke="#ff88ff" strokeWidth="1.8" strokeLinecap="round" opacity=".9"/>
-        <line x1="26" y1="6" x2="28" y2="6" stroke="#ee66ff" strokeWidth="1.8" strokeLinecap="round" opacity=".8"/>
-        <line x1="24" y1="1" x2="24" y2="0" stroke="#ff99ff" strokeWidth="1.8" strokeLinecap="round" opacity=".7"/>
-        <line x1="13" y1="4" x2="12" y2="2" stroke="#dd55ff" strokeWidth="1.5" strokeLinecap="round" opacity=".7"/>
+        {/* handle */}
+        <line x1="4" y1="27" x2="17" y2="12" stroke={c||"#4411aa"} strokeWidth="5" strokeLinecap="round"/>
+        <line x1="5" y1="26" x2="16" y2="13" stroke="#8855dd" strokeWidth="1.5" strokeLinecap="round" opacity=".45"/>
+        {/* grip bands */}
+        <line x1="8" y1="23" x2="10" y2="21" stroke="#cc88ff" strokeWidth="2.2" strokeLinecap="round" opacity=".7"/>
+        <line x1="12" y1="18.5" x2="14" y2="16.5" stroke="#cc88ff" strokeWidth="2.2" strokeLinecap="round" opacity=".5"/>
+        {/* glow aura */}
+        <circle cx="20" cy="8" r="9" fill={c||"#cc22ff"} opacity=".12"/>
+        <circle cx="20" cy="8" r="7" fill={c||"#cc33ff"} opacity=".22"/>
+        {/* star burst — 8 rays */}
+        {[0,45,90,135,180,225,270,315].map((deg,i)=>{
+          const r=deg*Math.PI/180;
+          const len=i%2===0?6:4;
+          return <line key={i}
+            x1={20+Math.cos(r)*3} y1={8+Math.sin(r)*3}
+            x2={20+Math.cos(r)*(3+len)} y2={8+Math.sin(r)*(3+len)}
+            stroke={i%2===0?"#ff88ff":"#cc55ff"}
+            strokeWidth={i%2===0?2:1.5} strokeLinecap="round"
+            opacity={i%2===0?.9:.7}/>;
+        })}
+        {/* crystal core */}
+        <polygon points="20,4 23,8 20,12 17,8" fill={c||"#dd66ff"}/>
+        <polygon points="20,4 23,8 20,6" fill="#ffffff" opacity=".4"/>
+        <circle cx="20" cy="8" r="2.5" fill="#ffffff" opacity=".25"/>
       </svg>
     );
     /* ── MAP NODES ── */
     case"combat":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* Sword A — tip top-left, guard+handle bottom-right */}
-        <polygon points="3,2 5,2 25,20 23,22" fill={c||"#c8d8e8"} opacity=".95"/>
-        <line x1="4" y1="2" x2="24" y2="21" stroke="#ffffff" strokeWidth=".9" strokeLinecap="round" opacity=".45"/>
-        <line x1="19" y1="16" x2="27" y2="26" stroke={c||"#ccaa22"} strokeWidth="3.8" strokeLinecap="round"/>
-        <circle cx="27" cy="27" r="2" fill={c||"#ddbb33"}/>
-        {/* Sword B — tip top-right, guard+handle bottom-left */}
-        <polygon points="25,2 23,2 3,20 5,22" fill={c||"#c8d8e8"} opacity=".95"/>
-        <line x1="24" y1="2" x2="4" y2="21" stroke="#ffffff" strokeWidth=".9" strokeLinecap="round" opacity=".45"/>
-        <line x1="9" y1="16" x2="1" y2="26" stroke={c||"#ccaa22"} strokeWidth="3.8" strokeLinecap="round"/>
-        <circle cx="1" cy="27" r="2" fill={c||"#ddbb33"}/>
-        {/* Clash sparks at crossing ~(14,11) */}
-        <circle cx="14" cy="11" r="3" fill="#ffff88" opacity=".55"/>
-        <circle cx="14" cy="11" r="1.5" fill="#ffffff" opacity=".9"/>
-        <line x1="14" y1="11" x2="14" y2="4" stroke="#ffee33" strokeWidth="2" strokeLinecap="round" opacity=".9"/>
-        <line x1="14" y1="11" x2="20" y2="5" stroke="#ffcc22" strokeWidth="1.5" strokeLinecap="round" opacity=".8"/>
-        <line x1="14" y1="11" x2="8" y2="5" stroke="#ffcc22" strokeWidth="1.5" strokeLinecap="round" opacity=".8"/>
-        <line x1="14" y1="11" x2="22" y2="11" stroke="#ffaa22" strokeWidth="1.3" strokeLinecap="round" opacity=".7"/>
-        <line x1="14" y1="11" x2="6" y2="11" stroke="#ffaa22" strokeWidth="1.3" strokeLinecap="round" opacity=".7"/>
-        <line x1="14" y1="11" x2="20" y2="17" stroke="#ff8811" strokeWidth="1.1" strokeLinecap="round" opacity=".6"/>
-        <line x1="14" y1="11" x2="8" y2="17" stroke="#ff8811" strokeWidth="1.1" strokeLinecap="round" opacity=".6"/>
+        {/* sword A */}
+        <polygon points="2,2 4,2 26,22 24,24" fill={c||"#ccd8e4"} opacity=".95"/>
+        <line x1="3" y1="2" x2="25" y2="23" stroke="#fff" strokeWidth="1" opacity=".38"/>
+        <line x1="19.5" y1="17" x2="27" y2="27" stroke={c||"#ddaa22"} strokeWidth="4" strokeLinecap="round"/>
+        <circle cx="27.5" cy="27.5" r="2.2" fill={c||"#f0bb33"}/>
+        {/* sword B */}
+        <polygon points="26,2 24,2 2,22 4,24" fill={c||"#ccd8e4"} opacity=".95"/>
+        <line x1="25" y1="2" x2="3" y2="23" stroke="#fff" strokeWidth="1" opacity=".38"/>
+        <line x1="8.5" y1="17" x2="1" y2="27" stroke={c||"#ddaa22"} strokeWidth="4" strokeLinecap="round"/>
+        <circle cx=".5" cy="27.5" r="2.2" fill={c||"#f0bb33"}/>
+        {/* clash — bright starburst center */}
+        <circle cx="14" cy="12" r="4.5" fill="#ffe633" opacity=".38"/>
+        <circle cx="14" cy="12" r="2.5" fill="#ffffff" opacity=".85"/>
+        <line x1="14" y1="12" x2="14" y2="4" stroke="#ffee22" strokeWidth="2.5" strokeLinecap="round" opacity=".9"/>
+        <line x1="14" y1="12" x2="21" y2="5" stroke="#ffcc22" strokeWidth="2" strokeLinecap="round" opacity=".8"/>
+        <line x1="14" y1="12" x2="7" y2="5" stroke="#ffcc22" strokeWidth="2" strokeLinecap="round" opacity=".8"/>
+        <line x1="14" y1="12" x2="22" y2="12" stroke="#ffaa22" strokeWidth="1.5" strokeLinecap="round" opacity=".7"/>
+        <line x1="14" y1="12" x2="6" y2="12" stroke="#ffaa22" strokeWidth="1.5" strokeLinecap="round" opacity=".7"/>
+        <line x1="14" y1="12" x2="20" y2="19" stroke="#ff8811" strokeWidth="1.3" strokeLinecap="round" opacity=".55"/>
+        <line x1="14" y1="12" x2="8" y2="19" stroke="#ff8811" strokeWidth="1.3" strokeLinecap="round" opacity=".55"/>
       </svg>
     );
     case"elite":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* Left horn — sweeping curved outward */}
-        <path d="M8,12 Q4,7 3,2 Q6,5 9,9 Z" fill={c||"#551188"}/>
-        <path d="M8,12 Q3,8 4,1" stroke={c||"#aa44dd"} strokeWidth="1.8" fill="none" strokeLinecap="round"/>
-        <path d="M8,12 Q5,8 5,2" stroke="#cc88ff" strokeWidth="1" fill="none" strokeLinecap="round" opacity=".5"/>
-        {/* Right horn */}
-        <path d="M20,12 Q24,7 25,2 Q22,5 19,9 Z" fill={c||"#551188"}/>
-        <path d="M20,12 Q25,8 24,1" stroke={c||"#aa44dd"} strokeWidth="1.8" fill="none" strokeLinecap="round"/>
-        <path d="M20,12 Q23,8 23,2" stroke="#cc88ff" strokeWidth="1" fill="none" strokeLinecap="round" opacity=".5"/>
-        {/* Skull cranium */}
-        <path d="M5,18 Q5,9 14,8 Q23,9 23,18 L23,21 L5,21 Z" fill={c||"#220033"}/>
-        <path d="M5,18 Q5,9 14,8 Q23,9 23,18" fill={c||"#441166"} opacity=".7"/>
-        <path d="M5,18 Q5,9 14,8 Q23,9 23,18" fill="none" stroke={c||"#8833cc"} strokeWidth="1.5"/>
-        {/* Eye sockets — glowing red */}
-        <ellipse cx="10" cy="15.5" rx="3" ry="2.8" fill="#110005"/>
-        <ellipse cx="10" cy="15.5" rx="2" ry="1.9" fill="#cc1122" opacity=".85"/>
-        <ellipse cx="9.5" cy="15" rx=".9" ry=".8" fill="#ff4433" opacity=".9"/>
-        <ellipse cx="18" cy="15.5" rx="3" ry="2.8" fill="#110005"/>
-        <ellipse cx="18" cy="15.5" rx="2" ry="1.9" fill="#cc1122" opacity=".85"/>
-        <ellipse cx="17.5" cy="15" rx=".9" ry=".8" fill="#ff4433" opacity=".9"/>
-        {/* Nose cavity */}
-        <path d="M12.5,18.5 L14,20.5 L15.5,18.5 Z" fill="#110005" opacity=".8"/>
-        {/* Jaw */}
-        <rect x="6" y="21" width="16" height="4.5" rx="2" fill={c||"#330044"}/>
-        {/* Fangs */}
-        <polygon points="8.5,21 10.5,21 9.5,25.5" fill={c||"#cc88ff"}/>
-        <polygon points="13,21 15,21 14,25.5" fill={c||"#cc88ff"}/>
-        <polygon points="17.5,21 19.5,21 18.5,25.5" fill={c||"#cc88ff"}/>
-        <ellipse cx="14" cy="15" rx="11" ry="10" fill={c||"#7722bb"} opacity=".07"/>
+        {/* left horn — twisted */}
+        <path d="M8,13 Q3,8 2,2 Q5,5 8,9 Z" fill={c||"#5a1199"}/>
+        <path d="M8,13 Q3,7 3,1" stroke={c||"#bb44ee"} strokeWidth="2" fill="none" strokeLinecap="round"/>
+        <path d="M8,13 Q5,8 5.5,2" stroke="#dd88ff" strokeWidth="1.1" fill="none" strokeLinecap="round" opacity=".5"/>
+        {/* right horn */}
+        <path d="M20,13 Q25,8 26,2 Q23,5 20,9 Z" fill={c||"#5a1199"}/>
+        <path d="M20,13 Q25,7 25,1" stroke={c||"#bb44ee"} strokeWidth="2" fill="none" strokeLinecap="round"/>
+        <path d="M20,13 Q23,8 22.5,2" stroke="#dd88ff" strokeWidth="1.1" fill="none" strokeLinecap="round" opacity=".5"/>
+        {/* skull cranium */}
+        <path d="M5,19 Q5,10 14,9 Q23,10 23,19 L23,22 L5,22 Z" fill={c||"#1e0030"}/>
+        <path d="M5,19 Q5,10 14,9 Q23,10 23,19" fill={c||"#3e0866"} opacity=".75"/>
+        <path d="M5,19 Q5,10 14,9 Q23,10 23,19" fill="none" stroke={c||"#9933cc"} strokeWidth="1.8"/>
+        {/* eye sockets */}
+        <ellipse cx="10" cy="16.5" rx="3.2" ry="3" fill="#0d0018"/>
+        <ellipse cx="10" cy="16.5" rx="2.1" ry="2" fill="#dd1133" opacity=".85"/>
+        <circle cx="9.5" cy="16" r="1" fill="#ff3344" opacity=".9"/>
+        <ellipse cx="18" cy="16.5" rx="3.2" ry="3" fill="#0d0018"/>
+        <ellipse cx="18" cy="16.5" rx="2.1" ry="2" fill="#dd1133" opacity=".85"/>
+        <circle cx="17.5" cy="16" r="1" fill="#ff3344" opacity=".9"/>
+        {/* nasal */}
+        <path d="M12.5,19.5 L14,21.5 L15.5,19.5 Z" fill="#0d0018" opacity=".9"/>
+        {/* jaw */}
+        <rect x="5.5" y="22" width="17" height="4.5" rx="2.2" fill={c||"#280040"}/>
+        {/* fangs — three, pointy */}
+        <polygon points="8,22 10.5,22 9.2,27" fill={c||"#dd99ff"}/>
+        <polygon points="12.5,22 15.5,22 14,27" fill={c||"#dd99ff"}/>
+        <polygon points="17.5,22 20,22 18.7,27" fill={c||"#dd99ff"}/>
       </svg>
     );
     case"rest":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* Crossed logs */}
-        <line x1="3" y1="24" x2="18" y2="19" stroke={c||"#8a4a1a"} strokeWidth="4.5" strokeLinecap="round"/>
-        <line x1="4" y1="23" x2="17" y2="18.5" stroke="#cc7730" strokeWidth="1.5" strokeLinecap="round" opacity=".4"/>
-        <line x1="25" y1="24" x2="10" y2="19" stroke={c||"#8a4a1a"} strokeWidth="4.5" strokeLinecap="round"/>
-        <line x1="24" y1="23" x2="11" y2="18.5" stroke="#cc7730" strokeWidth="1.5" strokeLinecap="round" opacity=".4"/>
-        {/* Ember glow */}
-        <ellipse cx="14" cy="21" rx="6" ry="2.2" fill="#ff5500" opacity=".35"/>
-        {/* Outer flame */}
-        <path d="M14,19 Q9,14 11,9 Q13,13 14,13 Q15,9 17,14 Q15,19 14,19 Z" fill={c||"#ff6600"} opacity=".85"/>
-        {/* Mid flame */}
-        <path d="M14,18 Q11,14 12,10 Q13.5,13.5 14,13.5 Q14.5,13.5 16,10 Q17,14 14,18 Z" fill={c||"#ff9922"} opacity=".9"/>
-        {/* Inner flame */}
-        <path d="M14,17 Q12,14 13,11 Q13.8,13.5 14,13.5 Q14.2,13.5 15,11 Q16,14 14,17 Z" fill={c||"#ffdd44"} opacity=".95"/>
-        {/* White hot tip */}
-        <path d="M14,16 Q13.3,13.5 14,12 Q14.7,13.5 14,16 Z" fill="#ffffff" opacity=".7"/>
-        {/* Floating embers */}
-        <circle cx="10" cy="8" r="1.1" fill="#ff8833" opacity=".7"/>
-        <circle cx="18" cy="6" r=".9" fill="#ffaa33" opacity=".6"/>
-        <circle cx="12" cy="5" r=".8" fill="#ff6622" opacity=".5"/>
-        <circle cx="17" cy="10" r=".7" fill="#ffcc44" opacity=".6"/>
+        {/* ground glow */}
+        <ellipse cx="14" cy="24" rx="9" ry="3" fill="#ff4400" opacity=".2"/>
+        {/* log left */}
+        <line x1="2" y1="25" x2="18" y2="20" stroke={c||"#8a4a18"} strokeWidth="5" strokeLinecap="round"/>
+        <line x1="3" y1="24" x2="17" y2="19.5" stroke="#cc7730" strokeWidth="1.6" strokeLinecap="round" opacity=".38"/>
+        {/* log right */}
+        <line x1="26" y1="25" x2="10" y2="20" stroke={c||"#8a4a18"} strokeWidth="5" strokeLinecap="round"/>
+        <line x1="25" y1="24" x2="11" y2="19.5" stroke="#cc7730" strokeWidth="1.6" strokeLinecap="round" opacity=".38"/>
+        {/* ember bed */}
+        <ellipse cx="14" cy="21.5" rx="5.5" ry="2" fill="#ff5500" opacity=".45"/>
+        {/* outer flame */}
+        <path d="M14,20 Q8,14 10,8 Q12.5,13 14,13 Q15.5,9 18,14 Q16,20 14,20 Z" fill={c||"#ff5500"} opacity=".82"/>
+        {/* mid flame */}
+        <path d="M14,19 Q10,14 11.5,9.5 Q13,13.5 14,13.5 Q15,13.5 16.5,9.5 Q18,14 14,19 Z" fill={c||"#ff9922"} opacity=".9"/>
+        {/* inner flame */}
+        <path d="M14,18 Q11.5,14 12.5,10.5 Q13.5,13.5 14,13.5 Q14.5,13.5 15.5,10.5 Q16.5,14 14,18 Z" fill={c||"#ffdd44"} opacity=".95"/>
+        {/* white hot core */}
+        <path d="M14,16.5 Q13.2,13.5 14,12 Q14.8,13.5 14,16.5 Z" fill="#ffffff" opacity=".72"/>
+        {/* embers */}
+        <circle cx="9" cy="8" r="1.3" fill="#ff8833" opacity=".75"/>
+        <circle cx="19" cy="6" r="1.1" fill="#ffaa33" opacity=".65"/>
+        <circle cx="12" cy="5" r=".9" fill="#ff6622" opacity=".55"/>
+        <circle cx="18" cy="10" r=".8" fill="#ffcc44" opacity=".65"/>
+        <circle cx="10" cy="11" r=".7" fill="#ff9933" opacity=".5"/>
       </svg>
     );
     case"boss":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* Fire breath */}
-        <ellipse cx="25" cy="18" rx="4.5" ry="3" fill="#ff5500" opacity=".4"/>
-        <path d="M22,15 Q26,11 28,13 Q26,14 28,16.5 Q26,17.5 28,20 Q25,19 22,20 Z" fill="#ff4400" opacity=".75"/>
-        <path d="M23,16 Q26,13.5 27.5,15 Q26,15.5 27.5,17 Q25.5,17 23,17 Z" fill="#ffcc00" opacity=".9"/>
-        <circle cx="24" cy="15.5" r=".8" fill="#ffffff" opacity=".8"/>
-        {/* Dorsal bony crests */}
-        <polygon points="6,9 5,4 8,8" fill={c||"#cc4411"}/>
-        <polygon points="11,7 11,2 13.5,6.5" fill={c||"#cc4411"}/>
-        <polygon points="16,7 17,2 19,6" fill={c||"#cc4411"}/>
-        {/* Dragon skull cranium */}
-        <path d="M3,14 Q4,7 11,7 Q18,7 20,12 L20,20 L3,20 Z" fill={c||"#3a1a08"}/>
-        <path d="M3,14 Q4,7 11,7 Q18,7 20,12" fill={c||"#6a3010"} opacity=".75"/>
-        <path d="M3,14 Q4,7 11,7 Q18,7 20,12" fill="none" stroke="#8a4018" strokeWidth="1.3" opacity=".8"/>
-        {/* Snout extension */}
-        <path d="M20,12 Q24,11 25,13.5 L25,20 L20,20 Z" fill={c||"#4a2010"}/>
-        <path d="M20,12 Q24,11 25,13.5" stroke="#7a4020" strokeWidth="1.2" fill="none"/>
-        {/* Lower jaw */}
-        <path d="M3.5,20 L3.5,23 Q13,24.5 25,22 L25,20 Z" fill={c||"#3a1a08"}/>
-        {/* Teeth */}
-        <polygon points="7.5,20 9.5,20 8.5,23" fill={c||"#c8b888"}/>
-        <polygon points="12,20 14,20 13,23" fill={c||"#c8b888"}/>
-        <polygon points="16.5,20 18.5,20 17.5,23" fill={c||"#c8b888"}/>
-        {/* Large fang */}
-        <polygon points="21.5,20 24,20 22.5,24" fill={c||"#eeeebb"}/>
-        {/* Eye socket with fire glow */}
-        <ellipse cx="9" cy="13.5" rx="3.8" ry="3.3" fill="#110400"/>
-        <ellipse cx="9" cy="13.5" rx="2.3" ry="2" fill="#ff3300" opacity=".75"/>
-        <ellipse cx="8.5" cy="13" rx="1" ry=".9" fill="#ffaa00" opacity=".9"/>
-        {/* Nasal cavity */}
-        <ellipse cx="23" cy="16" rx="1.3" ry="1" fill="#220800" opacity=".9"/>
-        {/* Skull highlight */}
-        <path d="M6,9 Q9,8 13,8 Q11,10 8,11 Z" fill="#9a5030" opacity=".35"/>
+        {/* fire breath plume */}
+        <ellipse cx="25.5" cy="18" rx="4" ry="3.5" fill="#ff4400" opacity=".35"/>
+        <path d="M21,15 Q26,10 28,13 Q26,14 28,17 Q25,18 28,21 Q24,19 21,21 Z" fill="#ff3300" opacity=".72"/>
+        <path d="M22,16 Q26,13 27.5,15 Q26,15.5 27.5,17.5 Q25,17 22,17.5 Z" fill="#ffcc00" opacity=".92"/>
+        <circle cx="23.5" cy="15.5" r="1" fill="#ffffff" opacity=".8"/>
+        {/* bony dorsal crests */}
+        <polygon points="5,9 4,3 7.5,8" fill={c||"#c83810"}/>
+        <polygon points="10,7 10,1 13,6" fill={c||"#c83810"}/>
+        <polygon points="15.5,7 16.5,1 19,6" fill={c||"#c83810"}/>
+        {/* cranium */}
+        <path d="M2,15 Q3,7 11,7 Q19,7 20,13 L20,21 L2,21 Z" fill={c||"#301408"}/>
+        <path d="M2,15 Q3,7 11,7 Q19,7 20,13" fill={c||"#6a2c10"} opacity=".72"/>
+        <path d="M2,15 Q3,7 11,7 Q19,7 20,13" fill="none" stroke="#8a3e18" strokeWidth="1.5" opacity=".75"/>
+        {/* snout */}
+        <path d="M20,13 Q25,11 26,14 L26,21 L20,21 Z" fill={c||"#3a1808"}/>
+        <path d="M20,13 Q25,11 26,14" stroke="#7a3818" strokeWidth="1.3" fill="none"/>
+        {/* lower jaw */}
+        <path d="M2.5,21 L2.5,24 Q13,26 26,23 L26,21 Z" fill={c||"#2a1006"}/>
+        {/* teeth */}
+        <polygon points="7,21 9,21 8,24.5" fill={c||"#c8b880"}/>
+        <polygon points="12,21 14,21 13,24.5" fill={c||"#c8b880"}/>
+        <polygon points="17,21 19,21 18,24.5" fill={c||"#c8b880"}/>
+        {/* large fang */}
+        <polygon points="22,21 25,21 23,26" fill={c||"#eeeeba"}/>
+        {/* eye — blazing */}
+        <ellipse cx="9" cy="14" rx="4" ry="3.5" fill="#0e0300"/>
+        <ellipse cx="9" cy="14" rx="2.6" ry="2.2" fill="#ff2200" opacity=".75"/>
+        <ellipse cx="8.5" cy="13.5" rx="1.2" ry="1" fill="#ffaa00" opacity=".9"/>
+        <circle cx="8.5" cy="13.5" r=".5" fill="#ffffff" opacity=".7"/>
+        {/* nostril */}
+        <ellipse cx="24" cy="16.5" rx="1.4" ry="1.1" fill="#1a0800" opacity=".9"/>
       </svg>
     );
     /* ── POTIONS ── */
     case"bomb":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        <circle cx="13" cy="17" r="9" fill={c||"#333344"} stroke={c||"#555566"} strokeWidth="1.5"/>
-        <path d="M13 8 Q16 4 20 3" stroke={c||"#cc8833"} strokeWidth="2" fill="none" strokeLinecap="round"/>
-        <circle cx="20" cy="3" r="2" fill={c||"#ffcc44"} opacity=".9"/>
-        <circle cx="10" cy="14" r="2.5" fill="#ffffff" opacity=".15"/>
+        {/* shadow */}
+        <ellipse cx="13" cy="26" rx="7" ry="1.8" fill="#000" opacity=".35"/>
+        {/* bomb body */}
+        <circle cx="13" cy="17" r="9.5" fill={c||"#2a2a3a"}/>
+        <circle cx="13" cy="17" r="9.5" fill="none" stroke={c||"#4a4a5a"} strokeWidth="1.5"/>
+        {/* sheen */}
+        <ellipse cx="10" cy="13" rx="3.5" ry="2.5" fill="#ffffff" opacity=".12" transform="rotate(-20,10,13)"/>
+        {/* fuse cord */}
+        <path d="M13,7.5 Q17,4 21,5" stroke={c||"#aa6622"} strokeWidth="2.2" fill="none" strokeLinecap="round"/>
+        {/* fuse spark */}
+        <circle cx="21" cy="5" r="2.5" fill="#ffcc22" opacity=".95"/>
+        <line x1="21" y1="5" x2="24" y2="2" stroke="#ff8811" strokeWidth="1.8" strokeLinecap="round" opacity=".9"/>
+        <line x1="21" y1="5" x2="24" y2="6" stroke="#ffcc22" strokeWidth="1.5" strokeLinecap="round" opacity=".8"/>
+        <line x1="21" y1="5" x2="22" y2="1" stroke="#ffee44" strokeWidth="1.3" strokeLinecap="round" opacity=".75"/>
       </svg>
     );
     case"frost":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        <line x1="14" y1="3" x2="14" y2="25" stroke={c||"#88ddff"} strokeWidth="2" strokeLinecap="round"/>
-        <line x1="3" y1="14" x2="25" y2="14" stroke={c||"#88ddff"} strokeWidth="2" strokeLinecap="round"/>
-        <line x1="6" y1="6" x2="22" y2="22" stroke={c||"#88ddff"} strokeWidth="2" strokeLinecap="round"/>
-        <line x1="22" y1="6" x2="6" y2="22" stroke={c||"#88ddff"} strokeWidth="2" strokeLinecap="round"/>
-        {[[14,3],[14,25],[3,14],[25,14],[6,6],[22,22],[22,6],[6,22]].map(([x,y],i)=><circle key={i} cx={x} cy={y} r="2.2" fill={c||"#aaeeff"}/>)}
-        <circle cx="14" cy="14" r="3" fill={c||"#ccf0ff"} opacity=".9"/>
+        {/* main 6-arm crystal */}
+        {[0,60,120,180,240,300].map((deg,i)=>{
+          const r=deg*Math.PI/180;
+          return <g key={i}>
+            <line x1={14} y1={14} x2={14+Math.cos(r)*11} y2={14+Math.sin(r)*11}
+              stroke={c||"#66ccff"} strokeWidth="2.2" strokeLinecap="round"/>
+            <line x1={14+Math.cos(r)*5} y1={14+Math.sin(r)*5}
+              x2={14+Math.cos(r)*5+Math.cos(r+1.2)*3.5} y2={14+Math.sin(r)*5+Math.sin(r+1.2)*3.5}
+              stroke={c||"#88ddff"} strokeWidth="1.4" strokeLinecap="round" opacity=".8"/>
+            <line x1={14+Math.cos(r)*5} y1={14+Math.sin(r)*5}
+              x2={14+Math.cos(r)*5+Math.cos(r-1.2)*3.5} y2={14+Math.sin(r)*5+Math.sin(r-1.2)*3.5}
+              stroke={c||"#88ddff"} strokeWidth="1.4" strokeLinecap="round" opacity=".8"/>
+            <circle cx={14+Math.cos(r)*11} cy={14+Math.sin(r)*11} r="2.4" fill={c||"#aaeeff"}/>
+          </g>;
+        })}
+        {/* center */}
+        <circle cx="14" cy="14" r="3.5" fill={c||"#ccf4ff"} opacity=".95"/>
+        <circle cx="14" cy="14" r="2" fill="#ffffff" opacity=".6"/>
       </svg>
     );
     case"power":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        <path d="M10 24 L10 16 Q10 14 8 13 Q5 11 6 7 Q7 3 14 3 Q21 3 22 7 Q23 11 20 13 Q18 14 18 16 L18 24 Z" fill={c||"#553388"} stroke={c||"#8844cc"} strokeWidth="1.2"/>
-        <path d="M10 16 Q10 14 8 13 Q5 11 6 7 Q7 3 14 3 Q21 3 22 7 Q23 11 20 13 Q18 14 18 16" fill={c||"#aa66ff"} opacity=".7"/>
-        <rect x="10" y="22" width="8" height="3" rx="1.5" fill={c||"#7733aa"}/>
-        <circle cx="14" cy="10" r="3" fill="#ffffff" opacity=".3"/>
+        {/* glowing flask silhouette */}
+        <path d="M11,3 L11,10 Q4,15 4,21 Q4,27 14,27 Q24,27 24,21 Q24,15 17,10 L17,3 Z"
+          fill={c||"#441177"} stroke={c||"#9944cc"} strokeWidth="1.3"/>
+        {/* liquid fill */}
+        <path d="M11,13 Q5,17 5,21 Q5,26 14,26 Q23,26 23,21 Q23,17 17,13 Z" fill={c||"#9933ff"} opacity=".75"/>
+        {/* bubbles */}
+        <circle cx="11" cy="20" r="1.8" fill="#cc66ff" opacity=".6"/>
+        <circle cx="16" cy="22" r="1.2" fill="#dd88ff" opacity=".55"/>
+        <circle cx="13" cy="17" r="1" fill="#cc55ff" opacity=".5"/>
+        {/* neck */}
+        <rect x="10" y="2" width="8" height="3.5" rx="1.8" fill={c||"#552288"}/>
+        {/* cork */}
+        <rect x="11" y="1" width="6" height="2.5" rx="1.2" fill="#c8a050"/>
+        {/* lightning bolt inside */}
+        <polygon points="15,13 12,19 14.5,19 13,24 17,17 14,17" fill="#ffffff" opacity=".5"/>
       </svg>
     );
     case"mend":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        <path d="M14 22 Q6 16 6 11 Q6 6 11 6 Q13 6 14 8 Q15 6 17 6 Q22 6 22 11 Q22 16 14 22Z" fill={c||"#dd3333"} opacity=".9"/>
-        <path d="M14 20 Q8 15 8 11 Q8 8 11 8 Q13 8 14 10 Q15 8 17 8 Q20 8 20 11 Q20 15 14 20Z" fill={c||"#ff6666"} opacity=".7"/>
-        <line x1="14" y1="11" x2="14" y2="17" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" opacity=".8"/>
-        <line x1="11" y1="14" x2="17" y2="14" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" opacity=".8"/>
+        {/* heart body */}
+        <path d="M14,23 Q4,17 4,11 Q4,5 10,5 Q12.5,5 14,8 Q15.5,5 18,5 Q24,5 24,11 Q24,17 14,23 Z"
+          fill={c||"#dd2233"} opacity=".92"/>
+        {/* heart shine */}
+        <path d="M14,21 Q6,16 6,11 Q6,8 10,7 Q12.5,7 14,10 Q15.5,7 18,7 Q22,7 22,11 Q22,16 14,21 Z"
+          fill={c||"#ff5566"} opacity=".65"/>
+        {/* cross */}
+        <line x1="14" y1="10" x2="14" y2="18" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" opacity=".85"/>
+        <line x1="10" y1="14" x2="18" y2="14" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" opacity=".85"/>
+        {/* sparkles */}
+        <line x1="24" y1="5" x2="26" y2="3" stroke="#ff88aa" strokeWidth="1.5" strokeLinecap="round" opacity=".8"/>
+        <line x1="25" y1="7" x2="27" y2="7" stroke="#ff88aa" strokeWidth="1.5" strokeLinecap="round" opacity=".7"/>
       </svg>
     );
     /* ── REWARDS / UI ── */
     case"heal_vial":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        <path d="M11 4 L11 10 Q5 14 5 20 Q5 25 14 25 Q23 25 23 20 Q23 14 17 10 L17 4 Z" fill={c||"#226633"} stroke={c||"#44aa55"} strokeWidth="1.2"/>
-        <path d="M11 12 Q6 16 6 20 Q6 24 14 24 Q22 24 22 20 Q22 16 17 12" fill={c||"#44cc66"} opacity=".8"/>
-        <rect x="10" y="3" width="8" height="3" rx="1.5" fill={c||"#557766"}/>
-        <ellipse cx="11" cy="19" rx="2" ry="3" fill="#ffffff" opacity=".2" transform="rotate(-20,11,19)"/>
+        {/* glass vial body */}
+        <path d="M11,4 L11,11 Q5,15 5,21 Q5,26 14,26 Q23,26 23,21 Q23,15 17,11 L17,4 Z"
+          fill={c||"#1a5530"} stroke={c||"#33aa55"} strokeWidth="1.3"/>
+        {/* liquid */}
+        <path d="M11,14 Q6,18 6,21 Q6,25 14,25 Q22,25 22,21 Q22,18 17,14 Z" fill={c||"#33cc66"} opacity=".8"/>
+        {/* bubbles */}
+        <circle cx="11" cy="21" r="1.5" fill="#66ee88" opacity=".55"/>
+        <circle cx="16" cy="23" r="1" fill="#88ffaa" opacity=".5"/>
+        {/* cork neck */}
+        <rect x="10" y="2.5" width="8" height="3" rx="1.5" fill={c||"#3a6644"}/>
+        <rect x="11" y="1" width="6" height="2.5" rx="1.2" fill="#c8a050"/>
+        {/* glass shine */}
+        <ellipse cx="10.5" cy="20" rx="1.5" ry="3.5" fill="#ffffff" opacity=".18" transform="rotate(-15,10.5,20)"/>
       </svg>
     );
     case"heal_potion":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        <path d="M10 4 L10 10 Q3 15 3 21 Q3 26 14 26 Q25 26 25 21 Q25 15 18 10 L18 4 Z" fill={c||"#883311"} stroke={c||"#cc4422"} strokeWidth="1.2"/>
-        <path d="M10 12 Q4 17 4 21 Q4 25 14 25 Q24 25 24 21 Q24 17 18 12" fill={c||"#ff5533"} opacity=".8"/>
-        <rect x="10" y="3" width="8" height="3" rx="1.5" fill={c||"#664422"}/>
-        <ellipse cx="10" cy="19" rx="2.5" ry="4" fill="#ffffff" opacity=".2" transform="rotate(-20,10,19)"/>
+        {/* big round bottle */}
+        <path d="M10,4 L10,11 Q3,16 3,22 Q3,27 14,27 Q25,27 25,22 Q25,16 18,11 L18,4 Z"
+          fill={c||"#7a1e0e"} stroke={c||"#cc3322"} strokeWidth="1.3"/>
+        {/* liquid */}
+        <path d="M10,13 Q4,18 4,22 Q4,26 14,26 Q24,26 24,22 Q24,18 18,13 Z" fill={c||"#ee3311"} opacity=".8"/>
+        {/* bubbles */}
+        <circle cx="10" cy="22" r="2" fill="#ff6644" opacity=".55"/>
+        <circle cx="17" cy="24" r="1.3" fill="#ff8866" opacity=".5"/>
+        <circle cx="13" cy="18" r="1" fill="#ff5533" opacity=".45"/>
+        {/* neck */}
+        <rect x="10" y="2.5" width="8" height="3.5" rx="1.8" fill={c||"#550e06"}/>
+        {/* cork */}
+        <rect x="11" y="1" width="6" height="2.5" rx="1.2" fill="#c8a050"/>
+        {/* glass shine */}
+        <ellipse cx="9.5" cy="20" rx="2" ry="4.5" fill="#ffffff" opacity=".15" transform="rotate(-15,9.5,20)"/>
+        {/* heart symbol */}
+        <path d="M14,21 Q10,18 10,15 Q10,12 13,12 Q13.8,12 14,13.2 Q14.2,12 15,12 Q18,12 18,15 Q18,18 14,21 Z"
+          fill="#ffffff" opacity=".35"/>
       </svg>
     );
     case"str_shard":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        <polygon points="14,2 18,10 26,10 20,16 22,24 14,20 6,24 8,16 2,10 10,10" fill={c||"#dd4422"} stroke={c||"#ff6644"} strokeWidth="1" opacity=".9"/>
-        <polygon points="14,6 17,12 22,12 18,15 19.5,21 14,18 8.5,21 10,15 6,12 11,12" fill={c||"#ff8855"} opacity=".7"/>
-        <line x1="14" y1="8" x2="14" y2="18" stroke="#ffffff" strokeWidth="1.5" opacity=".5"/>
+        {/* glow */}
+        <circle cx="14" cy="14" r="13" fill={c||"#dd3311"} opacity=".18"/>
+        {/* 8-point star */}
+        <polygon points="14,1 16.5,10 25,10 18.5,15.5 21,24 14,19 7,24 9.5,15.5 3,10 11.5,10"
+          fill={c||"#dd3311"} stroke={c||"#ff5533"} strokeWidth=".8" opacity=".92"/>
+        <polygon points="14,5 16,11 22,11 17.5,14.5 19,20 14,17 9,20 10.5,14.5 6,11 12,11"
+          fill={c||"#ff6633"} opacity=".7"/>
+        {/* center gem */}
+        <polygon points="14,10 17,14 14,18 11,14" fill="#ffffff" opacity=".35"/>
+        <circle cx="14" cy="14" r="2.5" fill="#ffaa77" opacity=".5"/>
       </svg>
     );
     case"hp_shard":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        <path d="M14 22 Q5 16 5 10 Q5 4 11 4 Q13 4 14 6 Q15 4 17 4 Q23 4 23 10 Q23 16 14 22Z" fill={c||"#dd2233"} stroke={c||"#ff4455"} strokeWidth="1" opacity=".9"/>
-        <path d="M14 19 Q7 14 7 10 Q7 6 11 6 Q13 6 14 8 Q15 6 17 6 Q21 6 21 10 Q21 14 14 19Z" fill={c||"#ff5566"} opacity=".7"/>
-        <polygon points="14,10 15.5,13.5 19,13.5 16.5,15.5 17.5,19 14,17 10.5,19 11.5,15.5 9,13.5 12.5,13.5" fill="#ffffff" opacity=".35" transform="scale(0.7) translate(6,6)"/>
+        {/* outer glow */}
+        <path d="M14,24 Q3,17 3,10 Q3,3 10,3 Q12.5,3 14,6 Q15.5,3 18,3 Q25,3 25,10 Q25,17 14,24 Z"
+          fill={c||"#bb1122"} opacity=".3"/>
+        {/* main heart */}
+        <path d="M14,23 Q4,16 4,10 Q4,4 10,4 Q12.5,4 14,7 Q15.5,4 18,4 Q24,4 24,10 Q24,16 14,23 Z"
+          fill={c||"#cc1122"} stroke={c||"#ff3344"} strokeWidth=".8" opacity=".92"/>
+        {/* shine */}
+        <path d="M14,21 Q6,15 6,10 Q6,6 10,6 Q12.5,6 14,9 Q15.5,6 18,6 Q22,6 22,10 Q22,15 14,21 Z"
+          fill={c||"#ff4455"} opacity=".65"/>
+        {/* star highlight */}
+        <polygon points="14,9 15,12 18,12 15.8,13.8 16.5,17 14,15.5 11.5,17 12.2,13.8 10,12 13,12"
+          fill="#ffffff" opacity=".38"/>
+      </svg>
+    );
+    case"sword_gun":return(
+      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
+        {/* sword blade diagonal */}
+        <polygon points="2,2 4,2 20,18 18,20" fill={c||"#dce8f2"}/>
+        <line x1="3" y1="2" x2="19" y2="19" stroke="#fff" strokeWidth=".9" opacity=".35"/>
+        {/* guard */}
+        <line x1="14" y1="14" x2="20" y2="20" stroke={c||"#ddaa22"} strokeWidth="3.5" strokeLinecap="round"/>
+        {/* pistol body */}
+        <rect x="14" y="14" width="12" height="7" rx="2.5" fill={c||"#3a4a5a"}/>
+        <rect x="15" y="14.5" width="11" height="2.5" rx="1.5" fill={c||"#556677"} opacity=".8"/>
+        {/* barrel */}
+        <rect x="24" y="16" width="4" height="3" rx="1.2" fill={c||"#2a3a4a"}/>
+        {/* grip */}
+        <path d="M17,21 L17,27 Q17,28 18.5,28 L20.5,28 Q22,28 22,27 L22,21 Z" fill={c||"#243038"}/>
+        {/* muzzle flash */}
+        <circle cx="28" cy="17.5" r="2.5" fill="#ffcc22" opacity=".85"/>
+        <line x1="28" y1="17.5" x2="30" y2="15.5" stroke="#ff8811" strokeWidth="1.5" strokeLinecap="round" opacity=".8"/>
+      </svg>
+    );
+    case"knife_shotgun":return(
+      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
+        {/* knife blade */}
+        <polygon points="2,3 4,1 18,15 15,17" fill={c||"#c8d8e4"}/>
+        <line x1="3" y1="2" x2="17" y2="16" stroke="#fff" strokeWidth=".9" opacity=".3"/>
+        <line x1="13" y1="13" x2="18" y2="18" stroke={c||"#ddaa22"} strokeWidth="3" strokeLinecap="round"/>
+        <line x1="15" y1="17" x2="11" y2="23" stroke="#1a0d02" strokeWidth="3.2" strokeLinecap="round"/>
+        {/* shotgun — wide double barrel */}
+        <rect x="11" y="14" width="16" height="5" rx="2" fill={c||"#4a3020"}/>
+        <rect x="11" y="14" width="16" height="2" rx="1.5" fill={c||"#7a5030"} opacity=".6"/>
+        <rect x="25" y="13.5" width="3" height="2.5" rx=".8" fill={c||"#2a1808"}/>
+        <rect x="25" y="16" width="3" height="2.5" rx=".8" fill={c||"#2a1808"}/>
+        {/* spread blast */}
+        {[0,1,2].map(i=><circle key={i} cx={28} cy={14+i*2} r="1.4" fill="#ffcc22" opacity={.7-i*.15}/>)}
+      </svg>
+    );
+    case"sniper_spear":return(
+      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
+        {/* spear shaft */}
+        <line x1="2" y1="26" x2="18" y2="8" stroke={c||"#6b3f16"} strokeWidth="3.5" strokeLinecap="round"/>
+        {/* spear head */}
+        <path d="M17,9 Q19,5 23,2 Q25,6 24,10 Q22,13 19,13 Q21,8 20,5 Z" fill={c||"#b0c4d0"}/>
+        <line x1="23" y1="3" x2="20" y2="11" stroke="#ddeeff" strokeWidth="1.5" strokeLinecap="round" opacity=".5"/>
+        {/* rifle body — long and thin */}
+        <rect x="8" y="15" width="19" height="4" rx="1.5" fill={c||"#2a1808"}/>
+        <rect x="8" y="15" width="19" height="1.8" rx="1.2" fill={c||"#4a3020"} opacity=".7"/>
+        {/* long barrel */}
+        <rect x="24" y="16" width="4" height="2" rx=".8" fill={c||"#1a1008"}/>
+        {/* scope */}
+        <rect x="13" y="12.5" width="7" height="3" rx="1.2" fill={c||"#334455"}/>
+        <circle cx="16.5" cy="14" r="1.3" fill="#88ccff" opacity=".7"/>
+        {/* stock */}
+        <path d="M8,19 L5,19 L4,22 L8,22 Z" fill={c||"#3a2010"}/>
+      </svg>
+    );
+    case"axe_pistol":return(
+      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
+        {/* axe haft */}
+        <line x1="2" y1="26" x2="13" y2="12" stroke={c||"#6b3f16"} strokeWidth="4" strokeLinecap="round"/>
+        {/* axe head */}
+        <path d="M11,10 Q14,4 20,5 Q22,12 19,17 Q15,19 11,17 Q16,12 15,7 Z" fill={c||"#6a7e8e"}/>
+        <path d="M20,5 Q22,12 19,17" stroke="#c8dce8" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity=".7"/>
+        {/* pistol body */}
+        <rect x="14" y="16" width="13" height="6" rx="2" fill={c||"#2e3d4a"}/>
+        <rect x="15" y="16.5" width="12" height="2.2" rx="1.5" fill={c||"#4a5e6a"} opacity=".8"/>
+        {/* barrel */}
+        <rect x="25" y="17.5" width="3" height="2.5" rx=".8" fill={c||"#1e2d38"}/>
+        {/* grip */}
+        <path d="M16,22 L16,27 Q16,28 17.5,28 L19.5,28 Q21,28 21,27 L21,22 Z" fill={c||"#243038"}/>
+        <circle cx="27" cy="18.5" r="1.8" fill="#ffcc22" opacity=".8"/>
+      </svg>
+    );
+    case"club_musket":return(
+      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
+        {/* club head */}
+        <circle cx="7" cy="6" r="6" fill={c||"#5a3a20"}/>
+        <circle cx="5" cy="4" r="2.2" fill={c||"#7a5030"} opacity=".6"/>
+        {[0,60,120,180,240,300].map((deg,i)=>{
+          const r=deg*Math.PI/180;
+          return <circle key={i} cx={7+Math.cos(r)*5.5} cy={6+Math.sin(r)*5.5} r="2" fill={c||"#8a6040"}/>;
+        })}
+        {/* handle */}
+        <line x1="9" y1="10" x2="18" y2="22" stroke={c||"#4a2808"} strokeWidth="4" strokeLinecap="round"/>
+        {/* musket — flintlock long barrel */}
+        <rect x="10" y="16" width="17" height="4" rx="1.5" fill={c||"#3a2010"}/>
+        <rect x="10" y="16" width="17" height="1.8" rx="1.2" fill={c||"#6a4020"} opacity=".6"/>
+        {/* flintlock mechanism */}
+        <rect x="13" y="13.5" width="4" height="3" rx="1" fill={c||"#556677"}/>
+        {/* long barrel tip */}
+        <rect x="25" y="17" width="3" height="2" rx=".8" fill={c||"#1a0c04"}/>
+        {/* smoke puff */}
+        <circle cx="28" cy="18" r="2.2" fill="#aaaaaa" opacity=".4"/>
+        <circle cx="30" cy="16.5" r="1.5" fill="#aaaaaa" opacity=".28"/>
       </svg>
     );
     case"heart":return(
       <svg width={s} height={s} viewBox="0 0 16 16" style={{display:"block"}}>
         <path d="M8 13 Q2 9 2 5 Q2 2 5 2 Q6.5 2 8 4 Q9.5 2 11 2 Q14 2 14 5 Q14 9 8 13Z" fill={c||"#ff4455"}/>
+        <path d="M8 11 Q4 8 4 5.5 Q4 4 5.5 4 Q6.5 4 8 6 Q9.5 4 10.5 4 Q12 4 12 5.5 Q12 8 8 11 Z" fill="#ff7788" opacity=".6"/>
       </svg>
     );
     default:return null;
@@ -1315,7 +1538,8 @@ const SCOLS = { W:"#44ff88", A:"#ff5555", S:"#4499ff", D:"#ffcc44" };
 
 /* ─── PORTAL PROTOCOL ────────────────────────────────────────── */
 // Portal.* provided by portal.js (jam contract — do not inline)
-const FALLBACK_GAMES = [
+// APP_FALLBACK_GAMES — local fallback if portal registry unreachable
+const APP_FALLBACK_GAMES = [
   { id:"fallback1", title:"Another Realm", url:"https://callumhyoung.github.io/gamejam/" }
 ];
 
@@ -1672,6 +1896,29 @@ function App() {
   // Cast timer start — useRef so render always reads real performance.now() delta
   const castStartRef = useRef(null);
 
+  // ── MULTIPLAYER (PeerJS P2P) ──────────────────────────────────
+  const [gameMode,   setGameMode]   = useState("solo");   // "solo" | "race"
+  const [mpStatus,   setMpStatus]   = useState("idle");   // "idle"|"connecting"|"racing"|"pvp_wait"|"pvp"
+  const [oppSnap,    setOppSnap]    = useState(null);     // opponent's synced state
+  const [pvpMyHp,    setPvpMyHp]   = useState(80);
+  const [pvpOppHp,   setPvpOppHp]  = useState(80);
+  const [pvpMaxHp,   setPvpMaxHp]  = useState(80);
+  const [pvpTurn,    setPvpTurn]   = useState("mine");    // "mine" | "theirs"
+  const [pvpWinner,  setPvpWinner] = useState(null);      // null | "me" | "them"
+  const [iWonRace,   setIWonRace]  = useState(false);
+  const [bookOpen,   setBookOpen]  = useState(false);
+  const [bookHoverPotion, setBookHoverPotion] = useState(null);
+  const [pvpLog,     setPvpLog]    = useState([]);
+  const mpRef = useRef({ peer:null, conn:null, isHost:false, syncIv:null, lastAtkTs:null, pvpIncomingDmg:0 });
+  // PvP routing refs — redirect QTE results to pvp handlers when pvpMode=true
+  const pvpModeRef    = useRef(false);
+  const pvpAtkCbRef   = useRef(null); // (q, weapon, dmg) => void — after attack QTE
+  const pvpDefCbRef   = useRef(null); // (q) => void — after defend QTE
+  // Multiplayer UI state
+  const [mpRoomCode,  setMpRoomCode]  = useState("");
+  const [mpJoinInput, setMpJoinInput] = useState("");
+  const [mpMode,      setMpMode]      = useState(null); // null | "hosting" | "join_input" | "joining"
+
   // Screen-transition sounds
   useEffect(()=>{
     if(screen==="victory") sfx.victory();
@@ -1732,6 +1979,38 @@ function App() {
     return ()=>clearInterval(id);
   },[qteAnim?.type]);
 
+  // ── Race state sync — push my state to opponent every 600ms ──
+  useEffect(()=>{
+    if(gameMode!=="race"||mpStatus==="idle") return;
+    const iv = setInterval(mpSync, 600);
+    return ()=>clearInterval(iv);
+  },[gameMode, mpStatus, player]);
+
+  // ── Watch opponent dragonKilled → enter PvP when both ready ──
+  useEffect(()=>{
+    if(gameMode!=="race") return;
+    if(screen==="pvp_wait" && oppSnap?.dragonKilled) {
+      setTimeout(()=>enterPvp(iWonRace), 400);
+    }
+  },[oppSnap?.dragonKilled, screen]);
+
+  // ── Watch opponent pvpAtk in PvP → start defend QTE ──
+  useEffect(()=>{
+    if(screen!=="pvp"||pvpTurn!=="theirs"||!oppSnap?.pvpAtk) return;
+    const atk = oppSnap.pvpAtk;
+    if(!atk||atk.ts===mpRef.current.lastAtkTs) return;
+    mpRef.current.lastAtkTs = atk.ts;
+    setTimeout(()=>pvpStartIncoming(atk), 500);
+  },[oppSnap?.pvpAtk?.ts, screen, pvpTurn]);
+
+  // ── PvP winner check — sync final HP to opponent ──
+  useEffect(()=>{
+    if(pvpWinner) {
+      pvpModeRef.current = false;
+      pvpAtkCbRef.current = null;
+      pvpDefCbRef.current = null;
+    }
+  },[pvpWinner]);
 
   const [particles] = useState(()=>Array.from({length:28},(_,i)=>({
     left:`${(i*41+11)%100}%`,top:`${(i*61+7)%100}%`,size:i%3===0?3:2,
@@ -1765,9 +2044,9 @@ function App() {
       .then(games=>{
         const mine = window.location.href.split('?')[0].replace(/\/$/,'');
         const others = games.filter(g=>g.url && !g.url.replace(/\/$/,'').startsWith(mine));
-        setPortalTargets(others.length ? others : FALLBACK_GAMES);
+        setPortalTargets(others.length ? others : APP_FALLBACK_GAMES);
       })
-      .catch(()=>setPortalTargets(FALLBACK_GAMES));
+      .catch(()=>setPortalTargets(APP_FALLBACK_GAMES));
   },[]);
 
   // ── Send player to another jam game — uses Portal.sendPlayerThroughPortal ──
@@ -1777,6 +2056,184 @@ function App() {
       color: 'e8d5a3',
       speed: 5,
     });
+  };
+
+  // ── MULTIPLAYER FUNCTIONS ──────────────────────────────────────
+
+  // ── PeerJS helpers ────────────────────────────────────────────
+  // mpRef holds: { peer, conn, isHost, syncIv, lastAtkTs, pvpIncomingDmg }
+  // All state sync uses conn.send({ type:"state", ...fields })
+
+  const mpSend = (data) => {
+    const conn = mpRef.current.conn;
+    if (conn?.open) conn.send(data);
+  };
+
+  const mpSync = (extra={}) => {
+    // Only send race progress fields — dragonKilled/pvpReady sent separately on events
+    setPlayer(p => {
+      const payload = {
+        type:   "state",
+        floor:  p?.floor          ?? 0,
+        hp:     p?.hp             ?? 0,
+        maxHp:  p?.maxHp          ?? 60,
+        weapon: p?.weapons?.[0]   ?? "sword",
+        name:   portalName,
+        ...extra,
+      };
+      mpSend(payload);
+      return p;
+    });
+  };
+
+  const onPeerData = (data) => {
+    if (!data || data.type !== "state") return;
+    // Merge — only update fields present in packet (undefined = keep previous)
+    setOppSnap(prev => {
+      const next = { ...(prev ?? {}) };
+      if (data.floor        !== undefined) next.floor        = data.floor;
+      if (data.hp           !== undefined) next.hp           = data.hp;
+      if (data.maxHp        !== undefined) next.maxHp        = data.maxHp;
+      if (data.dragonKilled !== undefined) next.dragonKilled = data.dragonKilled;
+      if (data.pvpReady     !== undefined) next.pvpReady     = data.pvpReady;
+      if (data.weapon       !== undefined) next.weapon       = data.weapon;
+      if (data.name         !== undefined) next.name         = data.name;
+      if (data.pvpMyHp      !== undefined) next.pvpHp        = data.pvpMyHp;
+      if (data.pvpAtk       !== undefined) next.pvpAtk       = data.pvpAtk;
+      return next;
+    });
+  };
+
+  const setupConn = (conn) => {
+    mpRef.current.conn = conn;
+    conn.on("data", onPeerData);
+    conn.on("close", () => { mpRef.current.conn = null; setOppSnap(null); });
+    conn.on("open", () => {
+      // Introduce ourselves
+      mpSend({ type:"state", name: portalName, floor:0, hp:60, maxHp:60,
+               weapon:"sword", dragonKilled:false, pvpReady:false, pvpMyHp:80, pvpAtk:null });
+      setGameMode("race");
+      setMpStatus("racing");
+      setScreen("weapon_select");
+    });
+  };
+
+  const hostGame = () => {
+    if (!window.Peer) { alert("PeerJS not loaded — check internet connection."); return; }
+    const code = Math.random().toString(36).slice(2,7).toUpperCase();
+    const peerId = "rpg2p-" + code;
+    setMpRoomCode(code);
+    setMpMode("hosting");
+    setMpStatus("connecting");
+    const peer = new window.Peer(peerId);
+    mpRef.current.peer = peer;
+    mpRef.current.isHost = true;
+    peer.on("error", e => { console.error("PeerJS host error:", e); setMpStatus("idle"); setMpMode(null); });
+    peer.on("connection", conn => {
+      setupConn(conn);
+    });
+  };
+
+  const joinGame = () => {
+    const code = mpJoinInput.trim().toUpperCase();
+    if (!code) return;
+    if (!window.Peer) { alert("PeerJS not loaded — check internet connection."); return; }
+    const peerId = "rpg2p-" + Math.random().toString(36).slice(2,7).toUpperCase();
+    setMpMode("joining");
+    setMpStatus("connecting");
+    const peer = new window.Peer(peerId);
+    mpRef.current.peer = peer;
+    mpRef.current.isHost = false;
+    peer.on("open", () => {
+      const conn = peer.connect("rpg2p-" + code);
+      setupConn(conn);
+    });
+    peer.on("error", e => { console.error("PeerJS join error:", e); setMpStatus("idle"); setMpMode(null); });
+  };
+
+  // Start PvP after both kill dragon. iWon=true means I killed dragon first (I go first).
+  // Routes through screen="combat" with synthetic cs so all QTE overlays work automatically.
+  const enterPvp = (iWon) => {
+    const oppW = iWon ? (ALL_WEAPONS[oppSnap?.weapon] ?? ALL_WEAPONS.sword) : ALL_WEAPONS.rpg;
+    const startHp = 80;
+    setPvpMyHp(startHp);
+    setPvpOppHp(startHp);
+    setPvpMaxHp(startHp);
+    setPvpTurn(iWon ? "mine" : "theirs");
+    setPvpWinner(null);
+    setPvpLog([`⚔ PvP begins! ${iWon ? "YOU GO FIRST 🚀" : (oppSnap?.name||"RIVAL")+" GOES FIRST 🚀"}`]);
+    pvpModeRef.current = true;
+    mpSend({ type:"state", pvpReady: true, pvpMyHp: startHp });
+    // Synthetic enemy = opponent rendered as HeroSprite via special id "pvp_opp"
+    setCs({
+      enemy: {
+        id: "pvp_opp", name: oppSnap?.name ?? "RIVAL",
+        hp: startHp, maxHp: startHp, atk: oppW.baseDmg, xp: 0,
+        color: "#4466ff",
+        pvpClass: iWon ? (oppW.className ?? "Knight") : "Demolisher",
+        pvpWeapons: [oppW.id],
+      },
+      phase: iWon ? "action" : "enemy_turn",
+      log: [`⚔ PvP! ${iWon ? "You won the race — attack first!" : "Rival won the race — defend!"}`],
+      nodeId: "pvp", nodeFloor: 999, pvpMode: true,
+    });
+    setMpStatus("pvp");
+    setScreen("combat");  // use combat screen — gets all QTE rendering for free
+  };
+
+  // Called after my attack QTE resolves in PvP
+  const pvpOnAttackDone = (q, weapon, dmg) => {
+    pvpAtkCbRef.current = null;
+    const ts = Date.now();
+    triggerProjectileTrail(HR_L+HSW/2, HR_T+HSH/2, ENX, GNDY-40, q==="perfect"?"#ff4400":"#ffcc44");
+    triggerParticles(ENX, GNDY-40, q==="perfect"?"#ff4400":"#ffcc44", q==="perfect"?50:28);
+    setEnemyFlash(true); setTimeout(()=>setEnemyFlash(false), 450);
+    showHit(q==="miss"?`MISS!`:`LAUNCHING −${dmg}`, q==="miss"?"#666":"#ff6600");
+    if (q !== "miss") {
+      mpSend({ type:"state", pvpAtk: { dmg, quality: q, ts } });
+      setPvpOppHp(h => {
+        const nh = Math.max(0, h - dmg);
+        if (nh <= 0) { setPvpWinner("me"); pvpModeRef.current = false; }
+        return nh;
+      });
+      setCs(prev=>prev?{...prev,phase:"enemy_turn",
+        log:[...prev.log,`⚔ You hit ${prev.enemy.name} for ${dmg}!`].slice(-8)}:prev);
+      setPvpLog(lg => [...lg, `⚔ You hit ${oppSnap?.name||"RIVAL"} for ${dmg} (${q})!`].slice(-6));
+    } else {
+      setCs(prev=>prev?{...prev,phase:"enemy_turn",
+        log:[...prev.log,"⚔ Your attack missed!"].slice(-8)}:prev);
+      setPvpLog(lg => [...lg, "⚔ Your attack missed!"].slice(-6));
+    }
+    setPvpTurn("theirs");
+  };
+
+  // Called when opponent's pvpAtk arrives (starts defend QTE)
+  const pvpStartIncoming = (atkData) => {
+    mpRef.current.pvpIncomingDmg = atkData.dmg;
+    pvpDefCbRef.current = (q) => {
+      pvpDefCbRef.current = null;
+      const inDmg = mpRef.current.pvpIncomingDmg;
+      const mult = q==="perfect"?0:q==="good"?0.4:1.0;
+      const finalDmg = Math.floor(inDmg * mult);
+      triggerProjectileTrail(ENX, GNDY-40, HR_L+HSW/2, HR_T+HSH/2, q==="miss"?"#ff4444":"#4488ff");
+      if (q==="perfect") { showHit("PARRIED!", "#44aaff"); setParryFlash(true); setTimeout(()=>setParryFlash(false),900); }
+      else showHit(q==="good"?`BLOCKED −${finalDmg}`:`HIT −${finalDmg}`, q==="good"?"#4488ff":"#ff4444");
+      setPvpMyHp(h => {
+        const nh = Math.max(0, h - finalDmg);
+        mpSend({ type:"state", pvpMyHp: nh });
+        if (nh <= 0) { setPvpWinner("them"); pvpModeRef.current = false; }
+        return nh;
+      });
+      setPvpLog(lg => [...lg, q==="perfect"?`⚡ You parried ${oppSnap?.name||"RIVAL"}'s attack!`:
+        q==="good"?`🛡 Blocked — ${finalDmg} through.`:
+        `💥 ${oppSnap?.name||"RIVAL"} hit you for ${finalDmg}!`].slice(-6));
+      setCs(prev=>prev?{...prev,phase:"action",
+        log:[...prev.log, q==="perfect"?"⚡ Perfect parry!":q==="good"?`Blocked ${finalDmg}.`:`Hit for ${finalDmg}!`].slice(-8)}:prev);
+      setPvpTurn("mine");
+    };
+    // Put cs into defending phase so defend QTE prompt shows
+    setCs(prev=>prev?{...prev,phase:"defending"}:prev);
+    startDefendQTE();
   };
 
   // Burst particles — position:fixed on document.body, screen coords via getBoundingClientRect.
@@ -1829,9 +2286,144 @@ function App() {
     }
   };
 
+  // Dotted projectile trail from one battlefield point to another
+  const triggerProjectileTrail = (bfX1, bfY1, bfX2, bfY2, color, steps=14) => {
+    const anchor = particleContainerRef.current;
+    if (!anchor) return;
+    const rect = anchor.getBoundingClientRect();
+    const zoom = rect.width / BFW;
+    const sx1 = rect.left + bfX1 * zoom;
+    const sy1 = rect.top  + bfY1 * zoom;
+    const sx2 = rect.left + bfX2 * zoom;
+    const sy2 = rect.top  + bfY2 * zoom;
+    for (let i = 0; i <= steps; i++) {
+      const frac = i / steps;
+      const x = sx1 + (sx2 - sx1) * frac;
+      const y = sy1 + (sy2 - sy1) * frac;
+      const delay = frac * 180;
+      const sz = (3 + Math.random() * 3) * zoom;
+      const d = document.createElement("div");
+      d.style.cssText = `position:fixed;left:${x}px;top:${y}px;width:${sz*2}px;height:${sz*2}px;border-radius:50%;background:${color};pointer-events:none;transform:translate(-50%,-50%);z-index:9995;box-shadow:0 0 ${sz*4}px ${color};opacity:0;`;
+      document.body.appendChild(d);
+      d.animate(
+        [{opacity:0},{opacity:.9},{opacity:.9},{opacity:0}],
+        {duration:380, delay, easing:"ease-in-out", fill:"forwards"}
+      );
+      setTimeout(()=>d.remove(), delay + 420);
+    }
+  };
+
   const showHit = (text, color, big=false) => {
     setHitResult({text,color,big});
     setTimeout(()=>setHitResult(null), big?1300:950);
+  };
+
+  // Weapon-specific color palette for swing particles
+  const WEAPON_PART_COL = {
+    sword:"#88ccff", hammer:"#ff9933", daggers:"#eecc22", staff:"#cc55ff",
+    bow:"#44dd88",   boots:"#ffaa33",  axe:"#ff6622",    spear:"#88ddff",
+    wand:"#ff66ff",  rpg:"#ff4411",    default:"#e8d5a3",
+  };
+
+  // Directional weapon swing — fans out from hero toward enemy, weapon-colored
+  const triggerWeaponSwing = (weapon) => {
+    const anchor = particleContainerRef.current;
+    if (!anchor) return;
+    const rect  = anchor.getBoundingClientRect();
+    const zoom  = rect.width / BFW;
+    const hx    = rect.left + (HR_L + HSW/2) * zoom;
+    const hy    = rect.top  + (HR_T + HSH/2) * zoom;
+    const ex    = rect.left + ENX * zoom;
+    const ey    = rect.top  + (GNDY - 40) * zoom;
+    const baseA = Math.atan2(ey - hy, ex - hx); // angle toward enemy
+    const col   = WEAPON_PART_COL[weapon?.id] || WEAPON_PART_COL.default;
+    const count = 22;
+
+    // Fan of particles aimed roughly at the enemy
+    for (let i = 0; i < count; i++) {
+      const spread = (Math.random() - 0.5) * 1.4; // ±0.7 rad fan
+      const angle  = baseA + spread;
+      const speed  = (60 + Math.random() * 120) * zoom;
+      const dx     = Math.cos(angle) * speed;
+      const dy     = Math.sin(angle) * speed;
+      const sz     = (2.5 + Math.random() * 5) * zoom;
+      const dur    = 320 + Math.random() * 180;
+      const delay  = i * 10;
+      const bright = i % 5 === 0 ? "#ffffff" : col;
+      const d = document.createElement("div");
+      d.style.cssText = `position:fixed;left:${hx}px;top:${hy}px;width:${sz*2}px;height:${sz*2}px;border-radius:50%;background:${bright};pointer-events:none;box-shadow:0 0 ${sz*3}px ${col};transform:translate(-50%,-50%);z-index:9997;opacity:0;`;
+      document.body.appendChild(d);
+      d.animate(
+        [{opacity:0,transform:"translate(-50%,-50%) scale(.5)"},
+         {opacity:.9,transform:"translate(-50%,-50%) scale(1)",offset:.12},
+         {opacity:0,transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.05)`}],
+        {duration:dur, delay, easing:"ease-out", fill:"forwards"}
+      );
+      setTimeout(()=>d.remove(), delay + dur + 30);
+    }
+
+    // Slash arc — thin bright line swept across hero center
+    for (let i = 0; i < 6; i++) {
+      const arcA = baseA - 0.55 + (i/5)*1.1;
+      const len  = (28 + Math.random()*20) * zoom;
+      const x2   = hx + Math.cos(arcA)*len;
+      const y2   = hy + Math.sin(arcA)*len;
+      const slash = document.createElement("div");
+      slash.style.cssText = `position:fixed;left:${hx}px;top:${hy}px;width:2px;height:${len}px;background:linear-gradient(to bottom,transparent,${col},white);pointer-events:none;transform-origin:top center;transform:translate(-50%,0) rotate(${arcA*180/Math.PI+90}deg);z-index:9998;opacity:0;border-radius:2px;`;
+      document.body.appendChild(slash);
+      slash.animate(
+        [{opacity:0},{opacity:.85,offset:.1},{opacity:0}],
+        {duration:220, delay: i*18, easing:"ease-out", fill:"forwards"}
+      );
+      setTimeout(()=>slash.remove(), i*18 + 260);
+    }
+  };
+
+  // Enemy wind-up — ominous burst of dark/red embers from enemy position
+  const triggerEnemyWindUp = () => {
+    const anchor = particleContainerRef.current;
+    if (!anchor) return;
+    const rect = anchor.getBoundingClientRect();
+    const zoom = rect.width / BFW;
+    const ex   = rect.left + ENX * zoom;
+    const ey   = rect.top  + (GNDY - 50) * zoom;
+    const cols = ["#ff2200","#ff6600","#ff0044","#cc0000","#ff8800"];
+    const count = 28;
+
+    // Inward swirl then explode outward
+    for (let i = 0; i < count; i++) {
+      const angle  = (i/count)*Math.PI*2 + Math.random()*0.4;
+      const startR = (55 + Math.random()*30) * zoom;
+      const sx     = ex + Math.cos(angle)*startR;
+      const sy     = ey + Math.sin(angle)*startR;
+      const col    = cols[i % cols.length];
+      const sz     = (2 + Math.random()*4.5) * zoom;
+      const dur    = 380 + Math.random()*200;
+      const delay  = Math.floor(i/count*160);
+      const d = document.createElement("div");
+      d.style.cssText = `position:fixed;left:${sx}px;top:${sy}px;width:${sz*2}px;height:${sz*2}px;border-radius:50%;background:${col};pointer-events:none;box-shadow:0 0 ${sz*4}px ${col};transform:translate(-50%,-50%);z-index:9996;opacity:0;`;
+      document.body.appendChild(d);
+      // Travel inward to enemy center, then flare
+      d.animate(
+        [{opacity:0,transform:"translate(-50%,-50%) scale(1.5)"},
+         {opacity:.9,transform:`translate(calc(-50% + ${ex-sx}px),calc(-50% + ${ey-sy}px)) scale(.8)`,offset:.6},
+         {opacity:0,transform:`translate(calc(-50% + ${ex-sx}px),calc(-50% + ${ey-sy}px)) scale(2)`}],
+        {duration:dur, delay, easing:"ease-in", fill:"forwards"}
+      );
+      setTimeout(()=>d.remove(), delay + dur + 30);
+    }
+
+    // Central pulse ring
+    const ring = document.createElement("div");
+    const rSz = 40 * zoom;
+    ring.style.cssText = `position:fixed;left:${ex}px;top:${ey}px;width:${rSz*2}px;height:${rSz*2}px;border-radius:50%;border:2px solid #ff3300;pointer-events:none;transform:translate(-50%,-50%) scale(0);z-index:9997;box-shadow:0 0 18px #ff3300,inset 0 0 12px #ff330055;`;
+    document.body.appendChild(ring);
+    ring.animate(
+      [{transform:"translate(-50%,-50%) scale(0)",opacity:.9},
+       {transform:"translate(-50%,-50%) scale(1.6)",opacity:0}],
+      {duration:500, delay:100, easing:"ease-out", fill:"forwards"}
+    );
+    setTimeout(()=>ring.remove(), 640);
   };
 
   // Impact frames — white screen flash + enhanced enemy shake on attack landing
@@ -1869,9 +2461,19 @@ function App() {
   const resolveAttack = (q, weapon, dmgOverride=null) => {
     const mult = q==="perfect"?1.5:q==="good"?1.0:0.3;
     const dmg  = dmgOverride!==null ? dmgOverride : Math.floor((weapon.baseDmg+(player?.str||0))*mult);
+    // PvP routing — bypass normal combat entirely
+    if (pvpModeRef.current && pvpAtkCbRef.current) {
+      pvpAtkCbRef.current(q, weapon, dmg);
+      return;
+    }
     if (q!=="miss" && dmgOverride===null) triggerImpact(q==="perfect"?2:1);
-    // Particle burst at enemy position
-    if (q!=="miss") triggerParticles(ENX, GNDY-40, q==="perfect"?"#44ff88":"#ffcc44", q==="perfect"?40:24);
+    // Weapon-colored burst at enemy on hit, plus impact trail
+    const wCol = WEAPON_PART_COL[weapon?.id] || WEAPON_PART_COL.default;
+    if (q!=="miss") {
+      triggerProjectileTrail(HR_L+HSW/2, HR_T+HSH/2, ENX, GNDY-40, wCol);
+      triggerParticles(ENX, GNDY-40, wCol, q==="perfect"?48:28);
+      if (q==="perfect") setTimeout(()=>triggerParticles(ENX, GNDY-40, "#ffffff", 18), 60);
+    }
     showHit(q==="perfect"?`PERFECT! −${dmg}`:q==="good"?`HIT −${dmg}`:`MISS −${dmg}`,
             q==="perfect"?"#44ff88":q==="good"?"#ffcc44":"#666");
     setEnemyFlash(true);
@@ -1887,7 +2489,24 @@ function App() {
         sfx.enemyDie();
         setTimeout(()=>{
           setPlayer(p=>p?({...p,xp:p.xp+prev.enemy.xp,floor:p.floor+1,visited:[...p.visited,prev.nodeId]}):p);
-          if (prev.enemy.name === "Ancient Dragon") { setScreen("victory"); return; }
+          if (prev.enemy.name === "Ancient Dragon") {
+            if (gameMode === "race") {
+              const won = !oppSnap?.dragonKilled;
+              setIWonRace(won);
+              // Winner of race gets opponent to drop RPG; loser gets RPG guaranteed
+              setPlayer(p => {
+                if (!p) return p;
+                const newWeapons = won ? p.weapons : [...new Set([...p.weapons, "rpg"])];
+                mpSend({ type:"state", dragonKilled: true, weapon: newWeapons[0] ?? "sword" });
+                return {...p, weapons: newWeapons};
+              });
+              setMpStatus("pvp_wait");
+              setScreen("pvp_wait");
+            } else {
+              setScreen("victory");
+            }
+            return;
+          }
           setPlayer(p=>{ setRewards(pickRewards(p?.weapons||[], prev.elite)); return p; });
           setScreen("reward");
         }, 1100);
@@ -1899,10 +2518,13 @@ function App() {
   };
 
   const handleDefend = (q) => {
+    // PvP routing
+    if (pvpModeRef.current && pvpDefCbRef.current) { pvpDefCbRef.current(q); return; }
     const atk = (cs?.enemy?.atk||0) * (cs?.enemyAtkMult||1);
     const mult = q==="perfect"?0:q==="good"?.4:1.0;
     const dmg  = Math.floor(atk*mult);
-    // Particle burst at hero when hit or blocked
+    // Projectile trail enemy → hero, then burst
+    triggerProjectileTrail(ENX, GNDY-40, HR_L+HSW/2, HR_T+HSH/2, q==="miss"?"#ff4444":"#4488ff");
     if (q==="miss") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ff4444", 36);
     else if (q==="good") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#4488ff", 28);
     else { triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#88ddff", 52); setTimeout(()=>triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ffffff", 24), 80); }
@@ -1950,7 +2572,9 @@ function App() {
           sfx.enemyDie();
           setTimeout(()=>{
             setPlayer(p=>p?({...p,xp:p.xp+prev.enemy.xp,floor:p.floor+1,visited:[...p.visited,prev.nodeId]}):p);
-            if(prev.enemy.name==="Ancient Dragon"){setScreen("victory");return;}
+            if(prev.enemy.name==="Ancient Dragon"){
+              if(gameMode==="race"){const won=!oppSnap?.dragonKilled;setIWonRace(won);setPlayer(p=>{if(!p)return p;const nw=won?p.weapons:[...new Set([...p.weapons,"rpg"])];mpSend({type:"state",dragonKilled:true,weapon:nw[0]??"sword"});return{...p,weapons:nw};});setMpStatus("pvp_wait");setScreen("pvp_wait");}else{setScreen("victory");}return;
+            }
             setPlayer(p=>{setRewards(pickRewards(p?.weapons||[], prev.elite));return p;});
             setScreen("reward");
           },800);
@@ -1986,8 +2610,10 @@ function App() {
       stomp:           ()=>startStompQTE(weapon),
       poke:            ()=>startPokeQTE(weapon),
       archery:         ()=>startArcheryQTE(weapon),
+      dual_action:     ()=>startDualActionQTE(weapon),
     };
     setCs(prev=>prev?{...prev,phase:"attacking"}:prev);
+    triggerWeaponSwing(weapon);
     (starters[weapon.qteType] || starters.swing_beat)();
   };
 
@@ -2091,9 +2717,9 @@ function App() {
   // ── HOLD-RELEASE: charge up the weapon, release in the green zone ──
   // Bar fills 0→100% over CHARGE_MAX_MS. At 100% = auto overcharge (miss).
   // Perfect zone: 78-95% of bar. Good zone: 60-78%.
-  const CHARGE_MAX_MS = 480;
-  const CHARGE_PERFECT_LO = 0.84;
-  const CHARGE_PERFECT_HI = 0.90; // narrow 6% window, harder to hit
+  const CHARGE_MAX_MS = 2500;
+  const CHARGE_PERFECT_LO = 0.72;
+  const CHARGE_PERFECT_HI = 0.94; // 22% window = ~550ms
   const startChargeQTE = (weapon) => {
     const ref = qteRef.current;
     ref.holdStart = null; ref.released = false; ref.releaseCharge = 0;
@@ -2111,7 +2737,7 @@ function App() {
       window.removeEventListener("keydown",onDown);
       window.removeEventListener("keyup",onUp);
       clearTimeout(ref.autoTimer);
-      const q = c>=CHARGE_PERFECT_LO&&c<1.0?"perfect":c>=0.60&&c<1.0?"good":"miss";
+      const q = c>=CHARGE_PERFECT_LO&&c<1.0?"perfect":c>=0.50&&c<1.0?"good":"miss";
       const isOvercharge = c>=1.0;
       if (isOvercharge) {
         sfx.hammerOvercharge();
@@ -2273,7 +2899,7 @@ function App() {
       x:0, y:0,
     }));
     ref.sfxStopBow = sfx.bowDraw();
-    setQteAnim({ type:"archery", weapon, t:0, dots:ref.dots.map(d=>({x:0,y:0})), lockedDots:[], shotsFired:0 });
+    setQteAnim({ type:"archery", weapon, t:0, dots:ref.dots.map(d=>({x:0,y:0})), lockedDots:[], shotsFired:0, dotParams:DOT_PARAMS.map(p=>({...p})) });
 
     const onKey = (e) => {
       if (e.code!=="Space"||ref.done) return;
@@ -2548,44 +3174,52 @@ function App() {
     requestAnimationFrame(tick);
   };
 
-  // ── SEQUENCE REVEAL (RPG): 4 slots, current outlined yellow, remaining reshuffle after each hit ──
+  // ── SEQUENCE REVEAL (RPG): 10 slots, yellow outline jumps randomly after each correct press ──
+  // Max 200 dmg. -5% per wrong press or incomplete slot. Min 30% (60 dmg floor).
   const startRPGQTE = (weapon) => {
     const ref = qteRef.current;
-    const len = weapon.seqLength || 4;
+    const len = weapon.seqLength || 10;
     const genKey = () => ALL_KEYS[Math.floor(Math.random()*ALL_KEYS.length)];
     const seq = Array.from({length:len}, genKey);
-    ref.seq = [...seq]; ref.step = 0; ref.correctCount = 0; ref.done = false;
+    // Pick random starting target
+    const firstTarget = Math.floor(Math.random()*len);
+    ref.seq = [...seq];
+    ref.done = false;
+    ref.doneSet = new Set();
+    ref.targetIdx = firstTarget;
+    ref.missCount = 0;
     ref.startMs = performance.now();
     castStartRef.current = ref.startMs;
     setCastTick(0);
-    setQteAnim({ type:"sequence_reveal", weapon, t:0, seq:[...seq], step:0, correctCount:0, badKey:false });
+    setQteAnim({ type:"sequence_reveal", weapon, t:0, seq:[...seq], targetIdx:firstTarget, doneIndices:[], missCount:0, badKey:false });
 
     const onKey = (e) => {
       if (ref.done) return;
       const k = e.key.toUpperCase();
       if (!/^[A-Z]$/.test(k)) return;
       e.preventDefault();
-      const currentKey = ref.seq[ref.step];
+      const currentKey = ref.seq[ref.targetIdx];
       if (k === currentKey) {
-        sfx.runeCorrect(ref.step);
-        ref.correctCount++;
-        ref.step++;
-        // Remaining slots get new random letters
-        const newSeq = [...ref.seq];
-        for (let i = ref.step; i < len; i++) newSeq[i] = genKey();
-        ref.seq = newSeq;
-        if (ref.step >= len) {
+        sfx.runeCorrect(ref.doneSet.size);
+        ref.doneSet.add(ref.targetIdx);
+        if (ref.doneSet.size >= len) {
+          // All done — perfect
           ref.done = true;
           window.removeEventListener("keydown", onKey);
           clearTimeout(ref.rpgTimer);
-          const dmg = Math.max(1, Math.floor((weapon.baseDmg+(player?.str||0))*1.5));
+          const dmg = Math.round(200 * Math.max(0.30, 1 - ref.missCount * 0.05));
           fireRPGRocket("perfect", dmg, weapon);
         } else {
-          setQteAnim(prev=>prev?{...prev, seq:[...newSeq], step:ref.step, correctCount:ref.correctCount, badKey:false}:null);
+          // Jump to a random remaining (undone) slot
+          const remaining = [];
+          for (let i=0; i<len; i++) if (!ref.doneSet.has(i)) remaining.push(i);
+          ref.targetIdx = remaining[Math.floor(Math.random()*remaining.length)];
+          setQteAnim(prev=>prev?{...prev, targetIdx:ref.targetIdx, doneIndices:[...ref.doneSet], badKey:false}:null);
         }
       } else {
         sfx.runeWrong();
-        setQteAnim(prev=>prev?{...prev, badKey:true}:null);
+        ref.missCount++;
+        setQteAnim(prev=>prev?{...prev, missCount:ref.missCount, badKey:true}:null);
         setTimeout(()=>setQteAnim(prev=>prev?{...prev,badKey:false}:null),200);
       }
     };
@@ -2595,9 +3229,9 @@ function App() {
       if (!ref.done) {
         ref.done = true;
         window.removeEventListener("keydown", onKey);
-        const ratio = ref.correctCount / len;
-        const q = ratio>=.75?"perfect":ratio>=.45?"good":"miss";
-        const dmg = Math.max(1, Math.floor((weapon.baseDmg+(player?.str||0))*ratio*1.8));
+        const incomplete = len - ref.doneSet.size;
+        const dmg = Math.round(200 * Math.max(0.30, 1 - (ref.missCount + incomplete) * 0.05));
+        const q = ref.doneSet.size >= len*0.75 ? "perfect" : ref.doneSet.size >= len*0.45 ? "good" : "miss";
         fireRPGRocket(q, dmg, weapon);
       }
     }, SEQ_DUR);
@@ -2608,6 +3242,110 @@ function App() {
       setQteAnim(prev=>prev?{...prev,t}:null);
       requestAnimationFrame(tick);
     };
+    requestAnimationFrame(tick);
+  };
+
+  // ── DUAL ACTION: hold A+W+D simultaneously, then left-click when dot centers ──
+  const DUAL_DUR = 3500; // ms total window
+  const startDualActionQTE = (weapon) => {
+    const ref = qteRef.current;
+    ref.done = false;
+    ref.keysHeld = { a:false, w:false, d:false };
+    ref.dotPos   = 0;          // 0–1, left→right
+    ref.dotDir   = 1;
+    ref.allHeld  = false;
+    ref.dropCount = 0;         // how many times keys were dropped mid-hold
+    ref.startMs  = performance.now();
+    const dotSpeed   = weapon.dotSpeed   ?? 0.55;  // fraction/sec
+    const centerW    = weapon.centerWidth ?? 0.18;
+
+    let lastNow = performance.now();
+
+    const cleanup = () => {
+      window.removeEventListener("keydown",  onKeyDown);
+      window.removeEventListener("keyup",    onKeyUp);
+      window.removeEventListener("mousedown",onClick);
+    };
+
+    const resolve = (clickPos) => {
+      if (ref.done) return;
+      ref.done = true;
+      cleanup();
+      const dist = Math.abs(clickPos - 0.5);
+      const half = centerW / 2;
+      const q = dist < half*0.32 ? "perfect" : dist < half ? "good" : "miss";
+      const base = (weapon.baseDmg + (player?.str||0)) * (q==="perfect"?1.5:q==="good"?1.0:0.3);
+      const dmg  = Math.max(1, Math.floor(base * Math.max(0.3, 1 - ref.dropCount*0.18)));
+      setQteAnim(null);
+      resolveAttack(q, weapon, dmg);
+    };
+
+    const onKeyDown = (e) => {
+      if (ref.done) return;
+      const k = {a:"a",A:"a",w:"w",W:"w",d:"d",D:"d"}[e.key];
+      if (!k) return;
+      e.preventDefault();
+      ref.keysHeld[k] = true;
+    };
+
+    const onKeyUp = (e) => {
+      if (ref.done) return;
+      const k = {a:"a",A:"a",w:"w",W:"w",d:"d",D:"d"}[e.key];
+      if (!k) return;
+      const wasAllHeld = ref.keysHeld.a && ref.keysHeld.w && ref.keysHeld.d;
+      ref.keysHeld[k] = false;
+      if (wasAllHeld) {
+        // dropped a key while all were held → penalty, reset dot to nearest edge
+        ref.dropCount++;
+        ref.dotPos = ref.dotPos < 0.5 ? 0 : 1;
+        ref.dotDir = ref.dotPos === 0 ? 1 : -1;
+        sfx.runeWrong();
+      }
+    };
+
+    const onClick = (e) => {
+      if (e.button !== 0 || ref.done) return;
+      e.preventDefault();
+      resolve(ref.dotPos);
+    };
+
+    const tick = () => {
+      if (ref.done) return;
+      const now = performance.now();
+      const dt  = (now - lastNow) / 1000;
+      lastNow = now;
+      const t = Math.min(1, (now - ref.startMs) / DUAL_DUR);
+
+      ref.allHeld = ref.keysHeld.a && ref.keysHeld.w && ref.keysHeld.d;
+      if (ref.allHeld) {
+        ref.dotPos += ref.dotDir * dotSpeed * dt;
+        if (ref.dotPos >= 1) { ref.dotPos = 1; ref.dotDir = -1; }
+        if (ref.dotPos <= 0) { ref.dotPos = 0; ref.dotDir =  1; }
+      }
+
+      // Ping SFX when dot crosses perfect center (within 2%)
+      const inCenter = Math.abs(ref.dotPos - 0.5) < centerW * 0.32 * 0.5;
+
+      setQteAnim(prev => prev ? {
+        ...prev, t,
+        dotPos:    ref.dotPos,
+        dotDir:    ref.dotDir,
+        allHeld:   ref.allHeld,
+        keysHeld:  { ...ref.keysHeld },
+        dropCount: ref.dropCount,
+        inCenter,
+      } : null);
+
+      if (t < 1) requestAnimationFrame(tick);
+      else { ref.done=true; cleanup(); resolveAttack("miss", weapon); }
+    };
+
+    setQteAnim({ type:"dual_action", weapon, t:0, dotPos:0, dotDir:1, allHeld:false,
+      keysHeld:{a:false,w:false,d:false}, centerWidth:centerW, dropCount:0, inCenter:false });
+
+    window.addEventListener("keydown",  onKeyDown);
+    window.addEventListener("keyup",    onKeyUp);
+    window.addEventListener("mousedown", onClick);
     requestAnimationFrame(tick);
   };
 
@@ -2622,6 +3360,7 @@ function App() {
     golem:    { dur:1600, launch:0.38, arrive:0.76, projPath:"straight" }, // heavy boulder, direct
     wraith:   { dur: 950, launch:0.22, arrive:0.84, projPath:"zigzag"  }, // ghost energy zips erratically
     dragon:   { dur:1400, launch:0.28, arrive:0.90, projPath:"loop"    }, // fireball loops before impact
+    pvp_opp:  { dur:1100, launch:0.20, arrive:0.82, projPath:"straight" }, // pvp opponent attack
   };
   const startDefendQTE = () => {
     const ref = qteRef.current;
@@ -2631,6 +3370,7 @@ function App() {
     ref.defendArrive = arrive; // store so showDefendCue can use it
     setCs(prev=>prev?{...prev,phase:"defending"}:prev);
     setQteAnim({ type:"defend", t:0, projFrac:0, arrive, projPath: prof.projPath||"straight" });
+    triggerEnemyWindUp();
 
     const onKey = (e) => {
       if (e.code!=="Space"||ref.pressT!==null) return;
@@ -2745,7 +3485,7 @@ function App() {
     return Math.sin(t * Math.PI * 14) * 5;
   })();
 
-  const showDust      = qteAnim?.type==="stomp"&&Math.abs(qteAnim.t-LAND_FRAC)<.04;
+  const showDust      = qteAnim?.type==="stomp"&&qteAnim.t>=0.90&&qteAnim.t<=1.0; // dust at actual visual landing
   const _defArrive    = qteAnim?.arrive ?? 0.82;
   const showDefendCue = qteAnim?.type==="defend"&&qteAnim.t>=(_defArrive-.07)&&qteAnim.t<=(_defArrive+.04);
 
@@ -2755,6 +3495,118 @@ function App() {
   return (
     <div style={{minHeight:"100vh",background:"#020205",color:"#e8d5a3"}}>
       <style>{GS}</style>
+
+      {/* ── PVP HP OVERLAY — fixed top-center during PvP combat ── */}
+      {cs?.pvpMode&&screen==="combat"&&(
+        <div style={{position:"fixed",top:0,left:0,right:0,zIndex:4000,pointerEvents:"none",
+          background:"linear-gradient(to bottom,rgba(4,4,18,.95),rgba(4,4,18,.7))",
+          borderBottom:"1px solid #4466ff33",padding:"10px 24px",
+          display:"flex",alignItems:"center",gap:16}}>
+          {/* My HP */}
+          <div style={{flex:1}}>
+            <div style={{fontFamily:"Cinzel",fontSize:8,letterSpacing:2,color:"#44dd66",marginBottom:3}}>YOU · {(player?.weapons?.includes("rpg")?ALL_WEAPONS.rpg:ALL_WEAPONS[player?.weapons?.[0]])?.name||"?"}</div>
+            <div style={{height:8,background:"#0a1a0a",borderRadius:4,border:"1px solid #22441a"}}>
+              <div style={{height:"100%",borderRadius:4,transition:"width .3s",
+                background:pvpMyHp<pvpMaxHp*.3?"#ff4444":pvpMyHp<pvpMaxHp*.6?"#ffcc44":"#44dd66",
+                width:`${Math.max(0,pvpMyHp/pvpMaxHp*100)}%`,boxShadow:"0 0 8px currentColor"}}/>
+            </div>
+            <div style={{fontFamily:"Cinzel",fontSize:9,color:"#44dd66",marginTop:1}}>{pvpMyHp}/{pvpMaxHp} HP</div>
+          </div>
+          {/* VS */}
+          <div style={{fontFamily:"Cinzel",fontWeight:900,fontSize:18,color:"#ff4400",textShadow:"0 0 16px #ff4400",padding:"0 8px"}}>VS</div>
+          {/* Opponent HP */}
+          <div style={{flex:1,textAlign:"right"}}>
+            <div style={{fontFamily:"Cinzel",fontSize:8,letterSpacing:2,color:"#ff8844",marginBottom:3}}>{(cs?.enemy?.pvpWeapons?.[0]?ALL_WEAPONS[cs.enemy.pvpWeapons[0]]?.name:"?")??""} · {cs?.enemy?.name||"RIVAL"}</div>
+            <div style={{height:8,background:"#1a0a0a",borderRadius:4,border:"1px solid #441a1a"}}>
+              <div style={{height:"100%",borderRadius:4,transition:"width .3s",marginLeft:"auto",
+                background:pvpOppHp<pvpMaxHp*.3?"#ff2222":"#ff6644",
+                width:`${Math.max(0,pvpOppHp/pvpMaxHp*100)}%`,boxShadow:"0 0 8px #ff4422"}}/>
+            </div>
+            <div style={{fontFamily:"Cinzel",fontSize:9,color:"#ff8844",marginTop:1}}>{pvpOppHp}/{pvpMaxHp} HP</div>
+          </div>
+        </div>
+      )}
+
+      {/* ── PVP TURN BADGE — fixed bottom-left ── */}
+      {cs?.pvpMode&&screen==="combat"&&!pvpWinner&&(
+        <div style={{position:"fixed",bottom:24,left:24,zIndex:4000,pointerEvents:"none",
+          fontFamily:"Cinzel",fontSize:11,letterSpacing:3,
+          color:pvpTurn==="mine"?"#00ff88":"#ff8844",
+          textShadow:pvpTurn==="mine"?"0 0 16px #00ff88":"0 0 10px #ff8844",
+          background:"rgba(4,4,18,.8)",borderRadius:6,padding:"6px 14px",
+          border:`1px solid ${pvpTurn==="mine"?"#00ff8844":"#ff884444"}`,
+          animation:pvpTurn==="theirs"?"pulse .7s ease-in-out infinite":"none"}}>
+          {pvpTurn==="mine"?"⚔ YOUR TURN — ATTACK!":pvpTurn==="theirs"?`${cs?.enemy?.name||"RIVAL"} IS ATTACKING…`:""}
+        </div>
+      )}
+
+      {/* ── PVP WINNER OVERLAY ── */}
+      {pvpWinner&&screen==="combat"&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.88)",zIndex:5000,
+          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",animation:"fadeIn .5s"}}>
+          {pvpWinner==="me"
+            ? <>
+                <div style={{fontSize:72,marginBottom:16,animation:"float 1.5s infinite"}}>🏆</div>
+                <h1 style={{fontFamily:"Cinzel",fontWeight:900,fontSize:"clamp(32px,6vw,60px)",color:"#ffcc44",letterSpacing:8,textShadow:"0 0 40px #ffcc44",animation:"glow 1.5s infinite",marginBottom:8}}>YOU WIN!</h1>
+                <p style={{fontFamily:"IM Fell English",fontStyle:"italic",fontSize:16,opacity:.5,marginBottom:40,letterSpacing:3}}>You destroyed {cs?.enemy?.name||"your rival"}. Champion of R.P.G.</p>
+              </>
+            : <>
+                <div style={{fontSize:72,marginBottom:16,opacity:.5}}>💀</div>
+                <h1 style={{fontFamily:"Cinzel",fontWeight:900,fontSize:"clamp(32px,6vw,60px)",color:"#cc2222",letterSpacing:8,textShadow:"0 0 40px #cc2222",marginBottom:8}}>ELIMINATED</h1>
+                <p style={{fontFamily:"IM Fell English",fontStyle:"italic",fontSize:16,opacity:.5,marginBottom:40,letterSpacing:3}}>{cs?.enemy?.name||"Rival"} wins. Get wrecked.</p>
+              </>
+          }
+          {(finalTime||timerDisplay)&&<div style={{fontFamily:"Cinzel",fontSize:22,color:"#ffcc44",letterSpacing:4,marginBottom:32,opacity:.7}}>⏱ {finalTime||timerDisplay}</div>}
+          <button className="btn" style={{fontSize:16,padding:"14px 44px",letterSpacing:5}} onClick={()=>window.location.reload()}>PLAY AGAIN</button>
+        </div>
+      )}
+
+      {/* ── RACE rival — center-top fixed strip ── */}
+      {gameMode==="race"&&oppSnap&&screen!=="pvp"&&screen!=="pvp_wait"&&screen!=="title"&&(
+        <div style={{position:"fixed",top:12,left:"50%",transform:"translateX(-50%)",zIndex:9990,
+          background:"rgba(4,4,18,.92)",backdropFilter:"blur(8px)",
+          border:"1px solid #4466ff66",borderRadius:12,padding:"10px 26px",
+          display:"flex",alignItems:"center",gap:22,pointerEvents:"none",whiteSpace:"nowrap"}}>
+          {/* Label */}
+          <div style={{fontFamily:"Cinzel",fontSize:11,letterSpacing:3,color:"#4466ffcc"}}>
+            ⚔ RIVAL
+          </div>
+          {/* Name */}
+          <div style={{fontFamily:"Cinzel",fontSize:15,fontWeight:700,color:"#88aaff",letterSpacing:1}}>
+            {(oppSnap.name||"?").toUpperCase()}
+          </div>
+          {/* Divider */}
+          <div style={{width:1,height:32,background:"#4466ff33"}}/>
+          {/* Floor bar */}
+          <div style={{display:"flex",flexDirection:"column",gap:4,alignItems:"center"}}>
+            <div style={{fontFamily:"Cinzel",fontSize:10,color:"#6677aa",letterSpacing:1}}>FLOOR {oppSnap.floor}/{FLOOR_CONFIGS.length}</div>
+            <div style={{width:110,height:6,background:"#111122",borderRadius:3,overflow:"hidden"}}>
+              <div style={{height:"100%",background:"#4466ff",borderRadius:3,
+                width:`${Math.min(100,(oppSnap.floor/FLOOR_CONFIGS.length)*100)}%`,
+                boxShadow:"0 0 6px #4466ff",transition:"width .5s"}}/>
+            </div>
+          </div>
+          {/* HP bar */}
+          <div style={{display:"flex",flexDirection:"column",gap:4,alignItems:"center"}}>
+            <div style={{fontFamily:"Cinzel",fontSize:10,color:"#6677aa",letterSpacing:1}}>HP {oppSnap.hp}/{oppSnap.maxHp}</div>
+            <div style={{width:100,height:6,background:"#111122",borderRadius:3,overflow:"hidden"}}>
+              <div style={{height:"100%",borderRadius:3,
+                background:oppSnap.hp<oppSnap.maxHp*.3?"#ff4444":oppSnap.hp<oppSnap.maxHp*.6?"#ffcc44":"#44dd66",
+                width:`${Math.min(100,(oppSnap.hp/Math.max(1,oppSnap.maxHp))*100)}%`,
+                transition:"width .5s"}}/>
+            </div>
+          </div>
+          {oppSnap.dragonKilled&&(
+            <>
+              <div style={{width:1,height:32,background:"#ff442233"}}/>
+              <div style={{fontFamily:"Cinzel",fontSize:12,letterSpacing:2,color:"#ff4422",
+                textShadow:"0 0 8px #ff4422",animation:"pulse .5s ease-in-out infinite"}}>
+                🐉 DRAGON SLAIN!
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* ── Fixed timer (always top-right, foreground) ── */}
       {runStartTime&&screen!=="victory"&&screen!=="gameover"&&(
@@ -2767,6 +3619,189 @@ function App() {
           ⏱ {timerDisplay}
         </div>
       )}
+
+      {/* potions moved into action book widget below */}
+
+      {/* ── ACTION BOOK — bottom-center during action phase ── */}
+      {screen==="combat"&&cs&&player&&cs.phase==="action"&&!qteAnim&&(!cs.pvpMode||pvpTurn==="mine")&&!pvpWinner&&(()=>{
+        const pvp = cs.pvpMode;
+        const potions = (!pvp&&player.potions)||[];
+        const accentCol = pvp?"#ff8833":"#c8a050";
+        const spineTxt = pvp?"COMBAT":"ACTIONS";
+
+        return (
+          <div style={{position:"fixed",bottom:18,left:"50%",transform:"translateX(-50%)",zIndex:3100,userSelect:"none"}}>
+            {!bookOpen?(
+              /* ── CLOSED BOOK ── */
+              <div onClick={()=>{sfx.click();setBookOpen(true);}}
+                style={{cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",
+                  animation:"bookBounce 2.2s ease-in-out infinite"}}>
+                {/* Spine + cover */}
+                <div style={{
+                  width:220,height:240,
+                  background:`linear-gradient(135deg,#1e1208 0%,#2e1e0c 40%,#3a2510 60%,#2a1a08 100%)`,
+                  border:`2px solid ${accentCol}88`,borderRadius:"8px 8px 4px 4px",
+                  boxShadow:`0 6px 32px rgba(0,0,0,.75), 0 0 22px ${accentCol}22, inset 0 1px 0 ${accentCol}33`,
+                  display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,
+                  position:"relative",overflow:"hidden"}}>
+                  {/* Gold corner ornaments */}
+                  <div style={{position:"absolute",top:6,left:8,width:14,height:14,border:`1px solid ${accentCol}88`,borderRight:"none",borderBottom:"none"}}/>
+                  <div style={{position:"absolute",top:6,right:8,width:14,height:14,border:`1px solid ${accentCol}88`,borderLeft:"none",borderBottom:"none"}}/>
+                  <div style={{position:"absolute",bottom:6,left:8,width:14,height:14,border:`1px solid ${accentCol}88`,borderRight:"none",borderTop:"none"}}/>
+                  <div style={{position:"absolute",bottom:6,right:8,width:14,height:14,border:`1px solid ${accentCol}88`,borderLeft:"none",borderTop:"none"}}/>
+                  {/* Center emblem line */}
+                  <div style={{position:"absolute",top:"50%",left:28,right:28,height:1,
+                    background:`linear-gradient(to right,transparent,${accentCol}44,transparent)`,
+                    transform:"translateY(-50%)"}}/>
+                  {/* Title */}
+                  <div style={{fontFamily:"Cinzel",fontWeight:900,fontSize:17,letterSpacing:5,
+                    color:accentCol,textShadow:`0 0 14px ${accentCol}88`}}>{spineTxt}</div>
+                  <div style={{fontFamily:"Cinzel",fontSize:8,opacity:.4,letterSpacing:3,color:"#c8b880"}}>
+                    CLICK TO OPEN
+                  </div>
+                  {/* Spine shadow bar on left */}
+                  <div style={{position:"absolute",left:0,top:0,bottom:0,width:14,
+                    background:"linear-gradient(to right,rgba(0,0,0,.55),transparent)"}}/>
+                </div>
+                {/* Book bottom pages illusion — stacked page edges */}
+                <div style={{width:218,height:10,background:"linear-gradient(to bottom,#d4c8a8,#b0a888)",
+                  borderRadius:"0 0 5px 5px",marginTop:-1,boxShadow:"0 4px 12px rgba(0,0,0,.55)"}}/>
+              </div>
+            ):(
+              /* ── OPEN BOOK ── */
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",animation:"bookPageIn .28s ease-out"}}>
+
+                {/* Dismiss label */}
+                <div style={{fontFamily:"Cinzel",fontSize:7,opacity:.3,letterSpacing:3,
+                  color:"#c8b880",marginBottom:6,cursor:"pointer"}}
+                  onClick={()=>setBookOpen(false)}>▼ CLOSE</div>
+
+                {/* Two-page spread */}
+                <div style={{display:"flex",gap:0,
+                  boxShadow:"0 8px 40px rgba(0,0,0,.85), 0 0 20px rgba(200,160,80,.12)",
+                  borderRadius:8}}>
+
+                  {/* ── LEFT PAGE — Potions ── */}
+                  <div style={{
+                    width:200,minHeight:280,
+                    background:"linear-gradient(160deg,#f5edd8 0%,#e8dcc0 60%,#ddd0aa 100%)",
+                    borderRadius:"8px 0 0 8px",
+                    border:`2px solid ${accentCol}66`,borderRight:"none",
+                    padding:"16px 14px 14px",
+                    boxShadow:"inset -6px 0 18px rgba(0,0,0,.25), inset 2px 0 8px rgba(200,160,80,.1)",
+                    position:"relative",overflow:"visible"}}>
+                    {/* Page lines */}
+                    {[0,1,2,3,4,5,6,7,8].map(i=><div key={i} style={{position:"absolute",left:20,right:14,
+                      top:46+i*26,height:1,background:"rgba(0,0,0,.08)"}}/>)}
+                    {/* Title */}
+                    <div style={{fontFamily:"Cinzel",fontWeight:700,fontSize:10,letterSpacing:3,
+                      color:"#5a3a10",textAlign:"center",marginBottom:12,
+                      borderBottom:"1px solid rgba(90,58,16,.25)",paddingBottom:8}}>
+                      POTION LIST
+                    </div>
+                    {potions.length===0?(
+                      <div style={{fontFamily:"Cinzel",fontSize:9,opacity:.35,
+                        color:"#5a4a28",textAlign:"center",marginTop:20,letterSpacing:2}}>
+                        NO POTIONS
+                      </div>
+                    ):potions.map((pt,idx)=>(
+                      <div key={idx} style={{position:"relative"}}>
+                        <button
+                          onClick={()=>{usePotion(idx);setBookOpen(false);}}
+                          onMouseEnter={()=>setBookHoverPotion(idx)}
+                          onMouseLeave={()=>setBookHoverPotion(null)}
+                          style={{display:"flex",alignItems:"center",gap:9,width:"100%",
+                            padding:"7px 8px",marginBottom:6,
+                            background:bookHoverPotion===idx?"rgba(90,58,16,.14)":"transparent",
+                            border:"none",borderRadius:5,cursor:"pointer",textAlign:"left",
+                            transition:"background .12s"}}>
+                          <Icon type={pt.id} size={26}/>
+                          <div style={{flex:1}}>
+                            <div style={{fontFamily:"Cinzel",fontSize:10,fontWeight:700,
+                              color:"#3a2008",letterSpacing:1}}>{pt.name}</div>
+                          </div>
+                        </button>
+                        {/* Hover tooltip */}
+                        {bookHoverPotion===idx&&(
+                          <div style={{position:"absolute",left:0,bottom:"110%",zIndex:500,
+                            background:"#1a1208",border:"1px solid #c8a05066",borderRadius:6,
+                            padding:"8px 12px",minWidth:170,pointerEvents:"none",
+                            boxShadow:"0 4px 16px rgba(0,0,0,.7)"}}>
+                            <div style={{fontFamily:"Cinzel",fontSize:9,color:"#e8d5a3",letterSpacing:.5,lineHeight:1.6}}>
+                              {pt.desc}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* ── SPINE (binding) ── */}
+                  <div style={{width:14,
+                    background:"linear-gradient(to right,#1a0e04,#3a2008,#1a0e04)",
+                    boxShadow:"inset 0 0 8px rgba(0,0,0,.8)",
+                    display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <div style={{width:2,height:"60%",
+                      background:`linear-gradient(to bottom,transparent,${accentCol}66,transparent)`}}/>
+                  </div>
+
+                  {/* ── RIGHT PAGE — Weapons ── */}
+                  <div style={{
+                    width:220,minHeight:280,
+                    background:"linear-gradient(160deg,#f0e8d0 0%,#e4d8b8 60%,#d8caa8 100%)",
+                    borderRadius:"0 8px 8px 0",
+                    border:`2px solid ${accentCol}66`,borderLeft:"none",
+                    padding:"16px 14px 14px",
+                    boxShadow:"inset 6px 0 18px rgba(0,0,0,.18)",
+                    position:"relative",overflow:"visible"}}>
+                    {/* Page lines */}
+                    {[0,1,2,3,4,5,6,7,8].map(i=><div key={i} style={{position:"absolute",left:14,right:20,
+                      top:46+i*26,height:1,background:"rgba(0,0,0,.08)"}}/>)}
+                    {/* Title */}
+                    <div style={{fontFamily:"Cinzel",fontWeight:700,fontSize:10,letterSpacing:3,
+                      color:pvp?"#6a1a00":"#3a200a",textAlign:"center",marginBottom:12,
+                      borderBottom:"1px solid rgba(90,58,16,.25)",paddingBottom:8}}>
+                      {pvp?"ATTACK":"WEAPONS"}
+                    </div>
+                    {/* Weapon list */}
+                    {player.weapons.map(wid=>{
+                      const w=ALL_WEAPONS[wid]; if(!w) return null;
+                      return (
+                        <button key={wid}
+                          onClick={()=>{
+                            setBookOpen(false);
+                            if(pvp){pvpAtkCbRef.current=pvpOnAttackDone;pvpModeRef.current=true;}
+                            startAttack(w);
+                          }}
+                          onMouseEnter={e=>{e.currentTarget.style.background="rgba(90,58,16,.16)";}}
+                          onMouseLeave={e=>{e.currentTarget.style.background="transparent";}}
+                          style={{display:"flex",alignItems:"center",gap:10,width:"100%",
+                            padding:"7px 8px",marginBottom:6,
+                            background:"transparent",border:"none",borderRadius:5,
+                            cursor:"pointer",textAlign:"left",transition:"background .12s"}}>
+                          <Icon type={w.id} size={26} color={pvp?"#8a2200":"#5a3010"}/>
+                          <div style={{flex:1}}>
+                            <div style={{fontFamily:"Cinzel",fontSize:10,fontWeight:700,
+                              color:pvp?"#5a1a00":"#2a1408",letterSpacing:1}}>{w.name}</div>
+                            <div style={{fontFamily:"Cinzel",fontSize:8,opacity:.45,
+                              color:"#5a4028",letterSpacing:.5}}>{w.baseDmg+(player.str||0)} ATK</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Page bottom illusion */}
+                <div style={{width:434,height:7,
+                  background:"linear-gradient(to bottom,#d4c8a8,#b0a888)",
+                  borderRadius:"0 0 6px 6px",marginTop:-2,
+                  boxShadow:"0 4px 14px rgba(0,0,0,.55)"}}/>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* ── Impact flash overlay ── */}
       {impactFlash>0&&(
@@ -2805,13 +3840,122 @@ function App() {
           {particles.map((p,i)=><div key={i} style={{position:"absolute",left:p.left,top:p.top,width:p.size,height:p.size,background:"#e8d5a3",borderRadius:"50%",opacity:p.opacity,animation:`pulse ${p.dur} ${p.delay} infinite`}}/>)}
           <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 50% 40%, #0c0518 0%, #020205 65%)"}}/>
           <div style={{position:"relative",textAlign:"center",zIndex:1,animation:"fadeIn .8s ease-out"}}>
-            <div style={{marginBottom:24,display:"inline-block",animation:"float 3.5s ease-in-out infinite",filter:"drop-shadow(0 0 35px rgba(232,213,163,.45))"}}>
-              <Icon type="sword" size={96} color="#e8d5a3"/>
+            {/* Cover art — two knights with RPGs */}
+            <div style={{marginBottom:20,display:"inline-flex",alignItems:"center",gap:18,animation:"float 3.5s ease-in-out infinite"}}>
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                <div style={{fontSize:52,filter:"drop-shadow(0 0 16px #ff8800) drop-shadow(0 0 40px #ff4400)"}}>🪖</div>
+                <div style={{fontSize:38,filter:"drop-shadow(0 0 12px #ff6600)",transform:"scaleX(-1)"}}>🚀</div>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+                <div style={{fontSize:14,fontFamily:"Cinzel",letterSpacing:4,color:"#ff6600",textShadow:"0 0 16px #ff4400",opacity:.8}}>VS</div>
+                <div style={{width:2,height:40,background:"linear-gradient(to bottom,#ff6600,transparent)",opacity:.6}}/>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                <div style={{fontSize:52,filter:"drop-shadow(0 0 16px #0088ff) drop-shadow(0 0 40px #0044ff)"}}>⛑️</div>
+                <div style={{fontSize:38,filter:"drop-shadow(0 0 12px #4466ff)"}}>🚀</div>
+              </div>
             </div>
-            <h1 style={{fontFamily:"Cinzel",fontWeight:900,fontSize:"clamp(36px,7vw,72px)",letterSpacing:10,lineHeight:1.25,background:"linear-gradient(to bottom,#fff 0%,#e8d5a3 40%,#c4a96a 100%)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"glow 5s infinite"}}>SPIRE OF<br/>SHADOWS</h1>
-            <p style={{fontFamily:"IM Fell English",fontStyle:"italic",fontSize:17,opacity:.45,margin:"26px 0 64px",letterSpacing:5}}>A dungeon of no return</p>
-            <button className="btn" style={{fontSize:17,padding:"18px 60px",letterSpacing:6,borderColor:"#666"}} onClick={()=>setScreen("weapon_select")}>BEGIN</button>
-            <p style={{marginTop:64,opacity:.18,fontSize:11,fontFamily:"Cinzel",letterSpacing:3}}>CONTROLS: SPACE · W · A · S · D</p>
+
+            <h1 style={{fontFamily:"Cinzel",fontWeight:900,fontSize:"clamp(48px,9vw,88px)",letterSpacing:14,lineHeight:1.1,background:"linear-gradient(to bottom,#fff 0%,#ff9933 40%,#ff4400 100%)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"glow 4s infinite"}}>R.P.G.</h1>
+
+            {/* Tagline steps */}
+            <div style={{margin:"20px 0 8px",display:"flex",alignItems:"center",justifyContent:"center",gap:12,flexWrap:"wrap"}}>
+              {["KILL DRAGON","USE RPG","SHOOT DUMBASS ON THE OTHER END"].map((t,i,arr)=>(
+                <React.Fragment key={i}>
+                  <span style={{fontFamily:"Cinzel",fontSize:12,letterSpacing:3,color:i===2?"#ff4422":i===1?"#ffcc44":"#aabbcc",textShadow:i===2?"0 0 12px #ff4422":i===1?"0 0 10px #ffcc44":"none",fontWeight:700}}>
+                    {t}
+                  </span>
+                  {i<arr.length-1&&<span style={{color:"#444466",fontSize:16}}>›</span>}
+                </React.Fragment>
+              ))}
+            </div>
+
+            <p style={{fontFamily:"IM Fell English",fontStyle:"italic",fontSize:13,opacity:.35,marginBottom:44,letterSpacing:3}}>a dungeon. a dragon. a rocket launcher.</p>
+
+            {/* Solo button */}
+            {!mpMode&&(
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
+                <button className="btn" style={{fontSize:17,padding:"18px 60px",letterSpacing:6,borderColor:"#ff6600",color:"#ff9933",boxShadow:"0 0 24px #ff440033"}} onClick={()=>setScreen("weapon_select")}>
+                  SOLO
+                </button>
+                <div style={{display:"flex",gap:12}}>
+                  <button className="btn" style={{fontSize:13,padding:"10px 24px",letterSpacing:3,borderColor:"#4466ff",color:"#88aaff"}}
+                    onClick={hostGame}>
+                    🖥 HOST GAME
+                  </button>
+                  <button className="btn" style={{fontSize:13,padding:"10px 24px",letterSpacing:3,borderColor:"#44aaff",color:"#88ccff"}}
+                    onClick={()=>setMpMode("join_input")}>
+                    🎮 JOIN GAME
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Host: show room code */}
+            {mpMode==="hosting"&&(
+              <div style={{textAlign:"center"}}>
+                <div style={{fontFamily:"Cinzel",fontSize:11,color:"#4466ff",letterSpacing:3,marginBottom:12}}>
+                  YOUR ROOM CODE — SHARE WITH RIVAL:
+                </div>
+                <div style={{fontFamily:"Cinzel",fontWeight:900,fontSize:52,letterSpacing:12,
+                  color:"#fff",textShadow:"0 0 30px #4466ff, 0 0 60px #4466ff",
+                  background:"rgba(10,10,30,.8)",borderRadius:10,padding:"12px 28px",
+                  border:"2px solid #4466ff",marginBottom:16}}>
+                  {mpRoomCode}
+                </div>
+                <div style={{fontFamily:"Cinzel",fontSize:10,color:"#4466ff",letterSpacing:2,
+                  animation:"pulse .8s ease-in-out infinite"}}>
+                  WAITING FOR OPPONENT TO JOIN…
+                </div>
+                <button className="btn" style={{marginTop:16,fontSize:10,padding:"6px 18px",opacity:.4}}
+                  onClick={()=>{mpRef.current.peer?.destroy();setMpMode(null);setMpStatus("idle");}}>
+                  CANCEL
+                </button>
+              </div>
+            )}
+
+            {/* Join: enter code */}
+            {mpMode==="join_input"&&(
+              <div style={{textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
+                <div style={{fontFamily:"Cinzel",fontSize:11,color:"#44aaff",letterSpacing:3}}>
+                  ENTER RIVAL'S ROOM CODE:
+                </div>
+                <input
+                  value={mpJoinInput}
+                  onChange={e=>setMpJoinInput(e.target.value.toUpperCase().slice(0,5))}
+                  onKeyDown={e=>e.key==="Enter"&&joinGame()}
+                  placeholder="XXXXX"
+                  maxLength={5}
+                  style={{fontFamily:"Cinzel",fontWeight:900,fontSize:36,letterSpacing:10,
+                    textAlign:"center",width:220,background:"#0a0a1e",
+                    border:"2px solid #44aaff",borderRadius:8,padding:"10px 16px",
+                    color:"#fff",outline:"none"}}
+                  autoFocus
+                />
+                <div style={{display:"flex",gap:10}}>
+                  <button className="btn" style={{fontSize:13,padding:"10px 24px",letterSpacing:3,borderColor:"#44aaff",color:"#88ccff"}}
+                    onClick={joinGame} disabled={mpJoinInput.length<4}>
+                    CONNECT
+                  </button>
+                  <button className="btn" style={{fontSize:10,padding:"6px 14px",opacity:.4}}
+                    onClick={()=>setMpMode(null)}>
+                    BACK
+                  </button>
+                </div>
+                {mpStatus==="connecting"&&(
+                  <div style={{fontFamily:"Cinzel",fontSize:10,color:"#44aaff",letterSpacing:2,animation:"pulse .8s ease-in-out infinite"}}>
+                    CONNECTING…
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Joining in progress */}
+            {mpMode==="joining"&&mpStatus==="connecting"&&(
+              <div style={{fontFamily:"Cinzel",fontSize:11,color:"#44aaff",letterSpacing:3,animation:"pulse .8s ease-in-out infinite"}}>
+                CONNECTING TO HOST…
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -2829,20 +3973,20 @@ function App() {
           )}
           <h2 style={{fontFamily:"Cinzel",fontSize:30,letterSpacing:5,marginBottom:6}}>CHOOSE YOUR PATH</h2>
           <p style={{opacity:.4,marginBottom:36,fontStyle:"italic",letterSpacing:2}}>Your weapon shapes your destiny</p>
-          <div style={{display:"flex",gap:14,flexWrap:"wrap",justifyContent:"center",maxWidth:920,marginBottom:36}}>
+          <div style={{display:"flex",flexDirection:"row",gap:12,marginBottom:28,flexWrap:"nowrap",zoom:1.35}}>
             {Object.values(STARTER_WEAPONS).map(w=>{
               const sel=selectedWeapon===w.id;
               const qteLabel=QTE_LABEL[w.qteType]||"?";
               return (
-                <div key={w.id} onClick={()=>setSelectedWeapon(w.id)} style={{width:166,padding:"22px 16px",textAlign:"center",cursor:"pointer",border:`2px solid ${sel?"#e8d5a3":"#2a2a3a"}`,background:sel?"#14142a":"#09090f",boxShadow:sel?"0 0 28px rgba(232,213,163,.2)":"none",transition:"all .2s"}}>
-                  <div style={{width:56,height:56,margin:"0 auto 10px",filter:sel?"drop-shadow(0 0 12px #e8d5a388)":"none",transition:"filter .2s",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <Icon type={w.id} size={52} color={sel?"#e8d5a3":"#8a7a66"}/>
+                <div key={w.id} onClick={()=>setSelectedWeapon(w.id)} style={{width:200,padding:"28px 18px",textAlign:"center",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",border:`2px solid ${sel?"#e8d5a3":"#2a2a3a"}`,background:sel?"#14142a":"#09090f",boxShadow:sel?"0 0 32px rgba(232,213,163,.2)":"none",transition:"all .2s"}}>
+                  <div style={{width:80,height:80,marginBottom:16,display:"flex",alignItems:"center",justifyContent:"center",filter:sel?"drop-shadow(0 0 14px #e8d5a388)":"none",transition:"filter .2s"}}>
+                    <Icon type={w.id} size={74} color={sel?"#e8d5a3":"#8a7a66"}/>
                   </div>
-                  <div style={{fontFamily:"Cinzel",fontSize:10,letterSpacing:3,opacity:.5,marginBottom:6}}>{w.classEmoji} {w.className}</div>
-                  <div style={{fontFamily:"Cinzel",fontSize:14,marginBottom:10,color:sel?"#e8d5a3":"#9a8a73"}}>{w.name}</div>
-                  <div style={{fontSize:11,opacity:.5,lineHeight:1.5,marginBottom:12}}>{w.desc}</div>
-                  <div style={{fontSize:10,fontFamily:"Cinzel",padding:"4px 8px",border:"1px solid #333",display:"inline-block",color:sel?"#ffcc44":"#555",borderColor:sel?"#ffcc4455":"#222"}}>{qteLabel}</div>
-                  <div style={{marginTop:10,fontSize:11,opacity:.4,fontFamily:"Cinzel"}}>ATK {w.baseDmg}</div>
+                  <div style={{fontFamily:"Cinzel",fontSize:11,letterSpacing:2,opacity:.5,marginBottom:8}}>{w.classEmoji} {w.className}</div>
+                  <div style={{fontFamily:"Cinzel",fontSize:16,marginBottom:12,color:sel?"#e8d5a3":"#9a8a73",lineHeight:1.3}}>{w.name}</div>
+                  <div style={{fontSize:12,opacity:.55,lineHeight:1.7,marginBottom:"auto",paddingBottom:14}}>{w.desc}</div>
+                  <div style={{fontSize:11,fontFamily:"Cinzel",padding:"5px 10px",border:`1px solid ${sel?"#ffcc4455":"#222"}`,color:sel?"#ffcc44":"#555",marginBottom:10}}>{qteLabel}</div>
+                  <div style={{fontSize:12,opacity:.45,fontFamily:"Cinzel"}}>ATK {w.baseDmg}</div>
                 </div>
               );
             })}
@@ -2934,7 +4078,7 @@ function App() {
               </button>
             )}
             <button onClick={()=>{
-                const t = portalTargets.length ? portalTargets[Math.floor(Math.random()*portalTargets.length)] : FALLBACK_GAMES[0];
+                const t = portalTargets.length ? portalTargets[Math.floor(Math.random()*portalTargets.length)] : APP_FALLBACK_GAMES[0];
                 sendThroughPortal(t.url);
               }}
               style={{display:"flex",alignItems:"center",gap:10,background:"#080820",
@@ -2965,9 +4109,9 @@ function App() {
         const heroCenterX = (heroPos?heroPos.left:HR_L)+HSW/2;
         const heroCenterY = (heroPos?heroPos.top:HR_T)+HSH/2;
 
-        // Scale battlefield to fill as much vertical height as possible
+        // Scale battlefield — leave room at bottom for action book widget
         const bfZoom = Math.min(
-          (window.innerHeight * 0.82) / BFH,
+          (window.innerHeight * 0.75) / BFH,
           window.innerWidth / BFW
         );
 
@@ -2979,7 +4123,9 @@ function App() {
               borderBottom:"1px solid #1e1e30",display:"flex",justifyContent:"space-between",alignItems:"center",
               fontFamily:"Cinzel",fontSize:14,letterSpacing:1}}>
               <span style={{color:"#c8b888",fontWeight:600}}>{player.classEmoji} {player.class} · Lv{player.level} · {player.hp}/{player.maxHp}</span>
-              <span style={{color:cs.elite?"#aa66ff":enemyData.color,letterSpacing:2,fontWeight:600}}>{cs.elite?"⚡ ELITE — ":""}{enemyData.name} · {cs.enemy.hp}/{cs.enemy.maxHp}hp</span>
+              <span style={{color:cs.pvpMode?"#ff8844":cs.elite?"#aa66ff":enemyData.color,letterSpacing:2,fontWeight:600}}>
+                {cs.pvpMode?"⚔ ":cs.elite?"⚡ ELITE — ":""}{cs.enemy.name} · {cs.pvpMode?pvpOppHp:cs.enemy.hp}/{cs.pvpMode?pvpMaxHp:cs.enemy.maxHp}hp
+              </span>
             </div>
 
             {/* ─── BATTLEFIELD — fills most of screen ──────── */}
@@ -3056,74 +4202,95 @@ function App() {
 
               {/* ── CHARGE: vertical power meter ── */}
               {chargeActive&&(()=>{
-                // Meter dimensions — tall vertical bar, right of center
-                const mH=190, mW=28, mL=BFW/2+80, mT=BFH/2-mH/2;
+                // Meter dimensions — big vertical bar, right of center
+                const mH=230, mW=46, mL=BFW/2+70, mT=BFH/2-mH/2;
                 const pct = Math.min(charge*100, 100);
                 // Zone boundaries (bottom=0%, top=100%)
-                const goodLo=60, perfLo=84, perfHi=90;
-                const fillCol = pct>=100?"#ff3311":pct>=perfHi?"#ff3311":pct>=perfLo?"#33ff66":pct>=goodLo?"#ffaa22":"#ff5533";
+                const goodLo=50, perfLo=CHARGE_PERFECT_LO*100, perfHi=CHARGE_PERFECT_HI*100;
+                const fillCol = pct>=100?"#ff3311":pct>=perfHi?"#ff2200":pct>=perfLo?"#00ff66":pct>=goodLo?"#ffaa22":"#3388ff";
                 const isPerfectZone = pct>=perfLo && pct<perfHi;
                 const isDanger      = pct>=perfHi;
                 // pixel position of zones from bottom of meter
                 const px = (v)=> mH*(1-v/100); // top offset for value v%
+                const borderCol = isDanger?"#ff2200":isPerfectZone?"#00ff66":pct>=goodLo?"#ffaa22":"#334466";
+                const outerGlow = isDanger?"0 0 40px #ff220099, 0 0 18px #ff220066":isPerfectZone?"0 0 40px #00ff6699, 0 0 18px #00ff6666":"0 0 8px #111";
                 return (
                   <>
+                    {/* HOLD instruction — above meter */}
+                    <div style={{position:"absolute",left:mL+mW/2,top:mT-32,
+                      transform:"translateX(-50%)",fontFamily:"Cinzel",fontSize:11,letterSpacing:2,
+                      color:"#6677aa",textShadow:"0 0 6px #334488",zIndex:9,whiteSpace:"nowrap"}}>
+                      HOLD SPACE
+                    </div>
                     {/* Meter track — outer shell */}
                     <div style={{position:"absolute",left:mL,top:mT,width:mW,height:mH,
-                      borderRadius:6,border:`2px solid ${isDanger?"#ff4422":isPerfectZone?"#33ff66":"#2a2a44"}`,
-                      background:"#080810",zIndex:9,overflow:"hidden",
-                      boxShadow:isDanger?"0 0 24px #ff442288":isPerfectZone?"0 0 18px #33ff6655":"0 0 6px #000"}}>
-                      {/* Zone bands — faint, drawn bottom to top: poor / good / perfect / danger */}
-                      {/* Poor: 0-60% = bottom 60% */}
-                      <div style={{position:"absolute",left:0,bottom:0,width:"100%",height:`${goodLo}%`,background:"rgba(180,30,0,.22)"}}/>
-                      {/* Good: 60-84% */}
-                      <div style={{position:"absolute",left:0,bottom:`${goodLo}%`,width:"100%",height:`${perfLo-goodLo}%`,background:"rgba(200,120,0,.25)"}}/>
-                      {/* Perfect: 84-90% */}
-                      <div style={{position:"absolute",left:0,bottom:`${perfLo}%`,width:"100%",height:`${perfHi-perfLo}%`,background:"rgba(0,200,80,.35)"}}/>
+                      borderRadius:8,border:`3px solid ${borderCol}`,
+                      background:"#060610",zIndex:9,overflow:"hidden",
+                      boxShadow:outerGlow}}>
+                      {/* Zone bands */}
+                      <div style={{position:"absolute",left:0,bottom:0,width:"100%",height:`${goodLo}%`,background:"rgba(30,60,180,.30)"}}/>
+                      <div style={{position:"absolute",left:0,bottom:`${goodLo}%`,width:"100%",height:`${perfLo-goodLo}%`,background:"rgba(200,120,0,.28)"}}/>
+                      {/* Perfect zone — bright green band */}
+                      <div style={{position:"absolute",left:0,bottom:`${perfLo}%`,width:"100%",height:`${perfHi-perfLo}%`,
+                        background:"rgba(0,255,100,.55)",boxShadow:"inset 0 0 12px #00ff6699"}}/>
                       {/* Danger: 90-100% */}
-                      <div style={{position:"absolute",left:0,bottom:`${perfHi}%`,width:"100%",height:`${100-perfHi}%`,background:"rgba(220,30,0,.35)"}}/>
+                      <div style={{position:"absolute",left:0,bottom:`${perfHi}%`,width:"100%",height:`${100-perfHi}%`,background:"rgba(255,30,0,.40)"}}/>
                       {/* Fill — grows from bottom */}
                       <div style={{
                         position:"absolute",left:0,bottom:0,width:"100%",height:`${pct}%`,
-                        background:fillCol,
-                        boxShadow:`0 0 14px ${fillCol}`,
-                        transition:"height .04s linear",
+                        background:`linear-gradient(to top, ${fillCol}cc, ${fillCol})`,
+                        boxShadow:`0 0 24px ${fillCol}, inset 0 0 10px rgba(255,255,255,.2)`,
+                        transition:"height .03s linear",
                       }}/>
-                      {/* Sheen */}
-                      <div style={{position:"absolute",left:0,bottom:0,width:"40%",height:`${pct}%`,
-                        background:"rgba(255,255,255,.18)",transition:"height .04s linear",pointerEvents:"none"}}/>
+                      {/* Sheen highlight */}
+                      <div style={{position:"absolute",left:"8%",bottom:0,width:"28%",height:`${pct}%`,
+                        background:"rgba(255,255,255,.22)",transition:"height .03s linear",
+                        borderRadius:"0 0 4px 4px",pointerEvents:"none"}}/>
                     </div>
-                    {/* Zone tick lines + labels — drawn outside track */}
-                    {[{v:goodLo,col:"#ffcc44",lbl:"GOOD"},{v:perfLo,col:"#33ff66",lbl:"PERF"},{v:perfHi,col:"#ff4422",lbl:"MAX"}].map(({v,col,lbl},i)=>(
+                    {/* Zone tick lines + labels — outside track */}
+                    {[{v:goodLo,col:"#ffcc44",lbl:"GOOD"},{v:perfLo,col:"#00ff66",lbl:"★ RELEASE"},{v:perfHi,col:"#ff2200",lbl:"DANGER"}].map(({v,col,lbl},i)=>(
                       <React.Fragment key={i}>
-                        <div style={{position:"absolute",left:mL-2,top:mT+px(v)-1,
-                          width:mW+4,height:2,background:col,zIndex:10,borderRadius:1}}/>
-                        <div style={{position:"absolute",left:mL+mW+5,top:mT+px(v)-6,
-                          fontFamily:"Cinzel",fontSize:8,letterSpacing:1,color:col,
-                          textShadow:`0 0 6px ${col}`,zIndex:10,whiteSpace:"nowrap"}}>
+                        <div style={{position:"absolute",left:mL-3,top:mT+px(v)-1.5,
+                          width:mW+6,height:3,background:col,zIndex:10,borderRadius:2,
+                          boxShadow:`0 0 8px ${col}`}}/>
+                        <div style={{position:"absolute",left:mL-6,top:mT+px(v)-8,
+                          transform:"translateX(-100%)",
+                          fontFamily:"Cinzel",fontSize:9,letterSpacing:1,color:col,
+                          textShadow:`0 0 8px ${col}`,zIndex:10,whiteSpace:"nowrap",fontWeight:700}}>
                           {lbl}
                         </div>
                       </React.Fragment>
                     ))}
-                    {/* Current value needle — horizontal line at exact charge position */}
-                    <div style={{position:"absolute",left:mL-4,top:mT+px(pct)-2,
-                      width:mW+8,height:4,background:"#ffffff",borderRadius:2,zIndex:11,
-                      boxShadow:`0 0 10px #ffffff, 0 0 20px ${fillCol}`,
-                      transition:"top .04s linear"}}/>
-                    {/* HOLD / RELEASE label — below meter */}
-                    <div style={{position:"absolute",left:mL+mW/2,top:mT+mH+12,
+                    {/* Current value needle */}
+                    <div style={{position:"absolute",left:mL-6,top:mT+px(pct)-3,
+                      width:mW+12,height:6,background:"#ffffff",borderRadius:3,zIndex:11,
+                      boxShadow:`0 0 16px #fff, 0 0 32px ${fillCol}, 0 0 6px #fff`,
+                      transition:"top .03s linear"}}/>
+                    {/* BIG RELEASE flash label — appears only in perfect zone */}
+                    {isPerfectZone&&(
+                      <div style={{position:"absolute",left:mL+mW/2,top:mT+px(perfLo)-40,
+                        transform:"translateX(-50%)",
+                        fontFamily:"Cinzel",fontWeight:900,fontSize:18,letterSpacing:3,
+                        color:"#00ff66",textShadow:"0 0 20px #00ff66, 0 0 40px #00ff66",
+                        zIndex:12,whiteSpace:"nowrap",animation:"chargeRelease .25s ease-in-out infinite alternate"}}>
+                        ▼ NOW!
+                      </div>
+                    )}
+                    {/* Status label — below meter */}
+                    <div style={{position:"absolute",left:mL+mW/2,top:mT+mH+14,
                       transform:"translateX(-50%)",
-                      background:"#0e0e1a",border:`2px solid ${fillCol}88`,
-                      borderRadius:5,padding:"3px 10px",fontFamily:"Cinzel",fontSize:10,letterSpacing:2,
-                      color:fillCol,textShadow:`0 0 8px ${fillCol}`,
-                      boxShadow:`0 0 10px ${fillCol}44`,zIndex:9,whiteSpace:"nowrap"}}>
-                      {isDanger?"DANGER!":isPerfectZone?"RELEASE!":pct>=goodLo?"ALMOST...":"HOLD [SPC]"}
+                      background:"#08081a",border:`2px solid ${fillCol}`,
+                      borderRadius:6,padding:"5px 12px",fontFamily:"Cinzel",
+                      fontSize:isDanger||isPerfectZone?13:11,letterSpacing:2,fontWeight:700,
+                      color:fillCol,textShadow:`0 0 12px ${fillCol}`,
+                      boxShadow:`0 0 16px ${fillCol}66`,zIndex:9,whiteSpace:"nowrap"}}>
+                      {isDanger?"⚠ OVERCHARGE!":isPerfectZone?"★ RELEASE NOW!":pct>=goodLo?"ALMOST...":"HOLD [SPC]"}
                     </div>
                     {/* Hammer icon above hero */}
                     <div style={{position:"absolute",left:(heroPos?.left||HR_L)+HSW/2-9,top:(heroPos?.top||HR_T)-30,
                       zIndex:9,animation:"float .4s ease-in-out infinite",
-                      filter:isPerfectZone?"drop-shadow(0 0 10px #44ff88)":isDanger?"drop-shadow(0 0 10px #ff4422)":"none"}}>
-                      <Icon type={qteAnim?.weapon?.id||"hammer"} size={18}/>
+                      filter:isPerfectZone?"drop-shadow(0 0 14px #00ff66)":isDanger?"drop-shadow(0 0 14px #ff2200)":"none"}}>
+                      <Icon type={qteAnim?.weapon?.id||"hammer"} size={20}/>
                     </div>
                   </>
                 );
@@ -3235,6 +4402,48 @@ function App() {
                     <line x1={cx-R-4} y1={cy} x2={cx+R+4} y2={cy} stroke="#ffffff08" strokeWidth="1"/>
                     <line x1={cx} y1={cy-R-4} x2={cx} y2={cy+R+4} stroke="#ffffff08" strokeWidth="1"/>
 
+                    {/* ── Dot path trails ── */}
+                    {(()=>{
+                      const dp = qteAnim.dotParams||[];
+                      const elapsed = (qteAnim.t||0) * 4.5; // seconds (ARCHERY_DUR/1000)
+                      const TRAIL_STEPS = 48;
+                      const TRAIL_SECS  = 1.4;
+                      return dots.map((dd,i)=>{
+                        const params = dp[i]; if(!params) return null;
+                        const isActive = i === (qteAnim.shotsFired||0);
+                        const isLocked = i < (qteAnim.shotsFired||0);
+                        if(isLocked) return null;
+                        const pts=[];
+                        if(isActive){
+                          // Recent trail behind active dot
+                          for(let s=0;s<=TRAIL_STEPS;s++){
+                            const tAgo=(TRAIL_STEPS-s)/TRAIL_STEPS*Math.min(elapsed,TRAIL_SECS);
+                            const tSec=Math.max(0,elapsed-tAgo);
+                            const r=(Math.sin(tSec*params.pulseFreq*Math.PI*2+params.pulsePhase)+1)*0.5;
+                            const a=tSec*params.spinFreq*Math.PI*2+params.spinPhase;
+                            pts.push({x:r*Math.cos(a)*R*0.90, y:r*Math.sin(a)*R*0.90, op:(s/TRAIL_STEPS)*0.7});
+                          }
+                          return (<g key={i}>{pts.map((pt,si)=>(
+                            <circle key={si} cx={cx+pt.x} cy={cy+pt.y} r={si%3===0?2.2:1.2}
+                              fill={si%3===0?"#ffffff":"#88ccff"} opacity={pt.op}/>
+                          ))}</g>);
+                        } else {
+                          // Future dot — show ghost orbit path
+                          const fullSteps=60;
+                          for(let s=0;s<=fullSteps;s++){
+                            const tSec=elapsed+(s/fullSteps)*1.2;
+                            const r=(Math.sin(tSec*params.pulseFreq*Math.PI*2+params.pulsePhase)+1)*0.5;
+                            const a=tSec*params.spinFreq*Math.PI*2+params.spinPhase;
+                            pts.push({x:r*Math.cos(a)*R*0.90, y:r*Math.sin(a)*R*0.90});
+                          }
+                          return (<g key={i}>{pts.map((pt,si)=>si%4===0?(
+                            <circle key={si} cx={cx+pt.x} cy={cy+pt.y} r="1"
+                              fill="#6655aa" opacity=".2"/>
+                          ):null)}</g>);
+                        }
+                      });
+                    })()}
+
                     {/* ── All 3 dots: active=bright, future=dim, locked=result ── */}
                     {dots.map((dd,i)=>{
                       const isActive  = i===activeDotIdx;
@@ -3340,6 +4549,122 @@ function App() {
                         </g>
                       );
                     })}
+                  </svg>
+                );
+              })()}
+
+              {/* ── DUAL ACTION: hold A+W+D, click when dot centers ── */}
+              {qteAnim?.type==="dual_action"&&(()=>{
+                const { dotPos=0, allHeld=false, keysHeld={}, centerWidth=0.18,
+                        dropCount=0, inCenter=false, t=0 } = qteAnim;
+                const trackW = BFW * 0.28;
+                const trackX = (BFW - trackW) / 2;
+                const trackY = BFH / 2 - 12;
+                const trackH = 9;
+                const dotX   = trackX + dotPos * trackW;
+                const zoneX  = trackX + (0.5 - centerWidth/2) * trackW;
+                const zoneW  = centerWidth * trackW;
+                const perfW  = zoneW * 0.32;          // inner perfect strip
+                const perfX  = trackX + (0.5 - centerWidth*0.32/2) * trackW;
+                const wCol   = WEAPON_PART_COL[qteAnim.weapon?.id] || "#e8d5a3";
+                const timeLeft = 1 - t;
+                const timerCol = timeLeft > 0.4 ? "#44ff88" : timeLeft > 0.2 ? "#ffcc44" : "#ff4422";
+                const KEY_DEFS = [
+                  { k:"a", label:"A", held: keysHeld.a },
+                  { k:"w", label:"W", held: keysHeld.w },
+                  { k:"d", label:"D", held: keysHeld.d },
+                ];
+                return (
+                  <svg style={{position:"absolute",left:0,top:0,zIndex:9,pointerEvents:"none",overflow:"visible"}}
+                    width={BFW} height={BFH}>
+
+                    {/* Timer bar */}
+                    <rect x={trackX} y={trackY-14} width={trackW} height={4} rx="1" fill="#08080f"/>
+                    <rect x={trackX} y={trackY-14} width={trackW*timeLeft} height={4} rx="1" fill={timerCol}/>
+
+                    {/* Track background */}
+                    <rect x={trackX} y={trackY} width={trackW} height={trackH} rx="2" fill="#08080e"/>
+
+                    {/* Good zone */}
+                    <rect x={zoneX} y={trackY} width={zoneW} height={trackH} rx="1"
+                      fill={wCol} opacity={allHeld?.28:.14}/>
+
+                    {/* Perfect zone */}
+                    <rect x={perfX} y={trackY} width={perfW} height={trackH} rx="1"
+                      fill={allHeld?"#ffffff":wCol} opacity={allHeld?.42:.20}/>
+
+                    {/* Center tick */}
+                    <line x1={trackX+trackW/2} y1={trackY-3} x2={trackX+trackW/2} y2={trackY+trackH+3}
+                      stroke={wCol} strokeWidth="1" opacity={allHeld?.8:.35}/>
+
+                    {/* Moving indicator */}
+                    {allHeld&&(
+                      <>
+                        {/* Trail */}
+                        {[1,2,3].map(i=>{
+                          const tx2 = dotX - qteAnim.dotDir*(i*6);
+                          if (tx2 < trackX || tx2 > trackX+trackW) return null;
+                          const tw = Math.max(1, 5-i*1.2);
+                          return <rect key={i} x={tx2-tw/2} y={trackY+1} width={tw} height={trackH-2} rx="1"
+                            fill={wCol} opacity={0.28-i*0.07}/>;
+                        })}
+                        {/* Core bar */}
+                        <rect x={dotX-4} y={trackY} width={8} height={trackH} rx="1"
+                          fill={inCenter?"#ffffff":wCol}
+                          opacity={inCenter?1:.9}/>
+                      </>
+                    )}
+
+                    {/* Placeholder when keys not held */}
+                    {!allHeld&&(
+                      <rect x={dotX-3} y={trackY+1} width={6} height={trackH-2} rx="1" fill="#3a3a4a" opacity=".5"/>
+                    )}
+
+                    {/* Track border */}
+                    <rect x={trackX} y={trackY} width={trackW} height={trackH} rx="2"
+                      fill="none" stroke={allHeld?wCol:"#2a2a3a"} strokeWidth={allHeld?1.5:1}
+                      opacity={allHeld?.8:.35}/>
+
+                    {/* Key indicators */}
+                    {KEY_DEFS.map((kd,i)=>{
+                      const kx = BFW/2 - 44 + i*44;
+                      const ky = trackY + trackH + 18;
+                      const held = kd.held;
+                      return (
+                        <g key={kd.k}>
+                          <rect x={kx-14} y={ky} width={28} height={28} rx="5"
+                            fill={held?"#1a1208":"#0a0a14"}
+                            stroke={held?wCol:"#2a2a3a"} strokeWidth={held?2:1}
+                            style={{filter:held?`drop-shadow(0 0 8px ${wCol})`:"none",
+                              animation:held?"dualKeyPop .15s ease-out":"none"}}/>
+                          <text x={kx} y={ky+18} textAnchor="middle"
+                            fontFamily="Cinzel" fontWeight="700" fontSize="13"
+                            fill={held?wCol:"#3a3a5a"}
+                            style={{filter:held?`drop-shadow(0 0 6px ${wCol})`:"none"}}>
+                            {kd.label}
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {/* Instruction label */}
+                    <text x={BFW/2} y={trackY+trackH+68} textAnchor="middle"
+                      fontFamily="Cinzel" fontSize="10" letterSpacing="3"
+                      fill={allHeld?"#ffffff":wCol} opacity={allHeld?1:.65}
+                      style={{filter:allHeld?`drop-shadow(0 0 8px #ffffff)`:"none"}}>
+                      {allHeld
+                        ? inCenter ? "★ CLICK NOW! ★" : "← DUAL — CLICK WHEN CENTERED →"
+                        : "DUAL — HOLD  A + W + D"}
+                    </text>
+
+                    {/* Drop penalty indicator */}
+                    {dropCount>0&&(
+                      <text x={BFW/2} y={trackY-28} textAnchor="middle"
+                        fontFamily="Cinzel" fontSize="9" fill="#ff4422"
+                        style={{filter:"drop-shadow(0 0 6px #ff4422)"}}>
+                        ✗ KEY DROPPED ×{dropCount}  −{dropCount*18}% DMG
+                      </text>
+                    )}
                   </svg>
                 );
               })()}
@@ -3463,31 +4788,57 @@ function App() {
                 );
               })()}
 
-              {/* ── SEQUENCE REVEAL (RPG): 4 key slots, current outlined yellow ── */}
+              {/* ── SEQUENCE REVEAL (RPG): 2×5 grid, yellow outline jumps randomly ── */}
               {qteAnim?.type==="sequence_reveal"&&qteAnim.seq&&(
-                <div style={{position:"absolute",top:16,left:"50%",transform:"translateX(-50%)",
-                  display:"flex",gap:10,zIndex:9,alignItems:"center"}}>
-                  {qteAnim.seq.map((k,i)=>{
-                    const done = i<(qteAnim.step||0);
-                    const cur  = i===(qteAnim.step||0);
-                    const bad  = cur&&qteAnim.badKey;
-                    return (
-                      <div key={i} style={{
-                        width:46,height:46,display:"flex",alignItems:"center",justifyContent:"center",
-                        fontFamily:"Cinzel",fontWeight:700,fontSize:20,borderRadius:8,
-                        border:`2.5px solid ${done?"#1e1e28":cur?(bad?"#ff4422":"#ffcc44"):"#2a2a3a"}`,
-                        color:done?"#2a2a3a":cur?(bad?"#ff4422":"#ffcc44"):"#55556a",
-                        background:done?"#040408":cur?(bad?"#1a0808":"#1a1400"):"#07070e",
-                        boxShadow:done?"none":cur&&!bad?"0 0 22px #ffcc4466, 0 0 8px #ffcc4433":"none",
-                        transform:cur&&!bad?"scale(1.2)":"scale(1)",
-                        opacity:done?0.25:cur?1:0.45,
-                        transition:"all .08s",
-                        animation:cur&&!bad?"runeIn .1s ease-out":"none",
-                      }}>
-                        {done?"✓":k}
-                      </div>
-                    );
-                  })}
+                <div style={{position:"absolute",top:12,left:"50%",transform:"translateX(-50%)",
+                  display:"flex",flexDirection:"column",gap:7,zIndex:9,alignItems:"center"}}>
+                  {/* Title */}
+                  <div style={{fontFamily:"Cinzel",fontSize:10,letterSpacing:3,color:"#886644",
+                    textShadow:"0 0 8px #886644",marginBottom:2}}>
+                    🚀 RPG — PRESS THE GLOWING KEY
+                  </div>
+                  {/* 2 rows × 5 cols */}
+                  {[0,1].map(row=>(
+                    <div key={row} style={{display:"flex",gap:7}}>
+                      {[0,1,2,3,4].map(col=>{
+                        const i = row*5+col;
+                        const k = qteAnim.seq[i];
+                        const done = (qteAnim.doneIndices||[]).includes(i);
+                        const cur  = i===qteAnim.targetIdx;
+                        const bad  = cur&&qteAnim.badKey;
+                        return (
+                          <div key={i} style={{
+                            width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
+                            fontFamily:"Cinzel",fontWeight:700,fontSize:19,borderRadius:8,
+                            border:`2.5px solid ${done?"#1a1a24":cur?(bad?"#ff4422":"#ffdd00"):"#252535"}`,
+                            color:done?"#1e1e28":cur?(bad?"#ff4422":"#ffee44"):"#44445a",
+                            background:done?"#030306":cur?(bad?"#1a0606":"#1a1600"):"#06060e",
+                            boxShadow:done?"none":cur&&!bad?"0 0 30px #ffdd0088, 0 0 12px #ffdd0055, inset 0 0 8px #ffdd0033":"none",
+                            transform:cur&&!bad?"scale(1.22)":"scale(1)",
+                            opacity:done?0.20:cur?1:0.50,
+                            transition:"transform .07s, box-shadow .07s, border-color .07s",
+                            animation:cur&&!bad?"runeIn .12s ease-out":"none",
+                          }}>
+                            {done?"✓":k}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                  {/* Miss / damage preview */}
+                  <div style={{display:"flex",gap:14,marginTop:2,fontFamily:"Cinzel",fontSize:9,letterSpacing:1}}>
+                    {(qteAnim.missCount||0)>0&&(
+                      <span style={{color:"#ff4422",textShadow:"0 0 8px #ff4422"}}>
+                        ✗ {qteAnim.missCount} MISS (-{(qteAnim.missCount||0)*5}%)
+                      </span>
+                    )}
+                    <span style={{color:"#aaaacc"}}>
+                      DMG: {Math.round(200*Math.max(0.30,1-(qteAnim.missCount||0)*0.05))}
+                    </span>
+                    <span style={{color:"#556677"}}>
+                      {(qteAnim.doneIndices||[]).length}/10
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -3543,12 +4894,17 @@ function App() {
                 <ellipse cx={ENX} cy={GNDY+4} rx={eW*0.42} ry={5} fill="#000" opacity=".35"/>
               </svg>
 
-              {/* Enemy sprite */}
+              {/* Enemy sprite — HeroSprite when PvP opponent */}
               <div style={{position:"absolute",left:eLeft,top:eTop,zIndex:4,
-                filter:`drop-shadow(0 0 22px ${enemyData.color}bb) drop-shadow(0 8px 4px #00000088)`,
+                filter:cs.enemy.id==="pvp_opp"
+                  ?(enemyFlash?"brightness(3) drop-shadow(0 0 18px #ff4400)":"drop-shadow(0 0 14px #4466ffaa)")
+                  :`drop-shadow(0 0 22px ${enemyData.color}bb) drop-shadow(0 8px 4px #00000088)`,
                 animation:enemyFlash?`hitFlash .35s ease-out, squish .3s ease-out`:`float ${2.8+eDims.h*.01}s ease-in-out infinite`,
                 transformOrigin:"bottom center"}}>
-                <EnemySpriteSmall id={cs.enemy.id} scale={eScale}/>
+                {cs.enemy.id==="pvp_opp"
+                  ? <HeroSprite className={cs.enemy.pvpClass??'Knight'} scale={eScale} weapons={cs.enemy.pvpWeapons??['sword']}/>
+                  : <EnemySpriteSmall id={cs.enemy.id} scale={eScale}/>
+                }
               </div>
 
               {/* ── ENEMY PROJECTILE (defend QTE) ── */}
@@ -3710,9 +5066,9 @@ function App() {
                 const t = qteAnim.t||0;
                 const bounce = qteAnim.bounce||0;
                 // For contact 0: show prompt right away; for bounce: show after hero launches
-                const visible = bounce===0 ? t<0.85 : t>0.08&&t<0.88;
-                // Pulse brighter in the final 15% of approach (about to land)
-                const nearLand = bounce===0 ? t>0.70 : t>0.75;
+                const visible = bounce===0 ? t<0.94 : t>0.08&&t<0.94;
+                // Pulse brighter in the final 20% (about to land at t=1)
+                const nearLand = t>0.80;
                 const col = nearLand?"#ffcc44":"#e8d5a3";
                 const glow = nearLand?"0 0 18px #ffcc44":"0 0 8px #00000088";
                 if(!visible) return null;
@@ -3765,21 +5121,50 @@ function App() {
                 :null}
               </div>
 
-              {/* HP bars */}
-              <div style={{position:"absolute",left:8,bottom:8,width:300,zIndex:9}}>
-                <div style={{fontFamily:"Cinzel",fontSize:15,color:enemyData.color,letterSpacing:2,marginBottom:6,opacity:.95,fontWeight:700,textShadow:`0 0 12px ${enemyData.color}66`}}>
-                  {cs.elite&&<span style={{color:"#aa66ff"}}>⚡ </span>}{enemyData.name}
-                  {cs.enemyAtkMult&&cs.enemyAtkMult<1&&<span style={{fontSize:10,color:"#88ccff",marginLeft:6,opacity:.8}}>WEAKENED</span>}
+              {/* HP bars — slim, label+value below */}
+              <div style={{position:"absolute",left:8,bottom:6,width:220,zIndex:9}}>
+                {/* bar */}
+                <div style={{height:7,background:"#050508",border:`1px solid ${cs.pvpMode?"#ff8844aa":enemyData.color+"88"}`,
+                  borderRadius:4,overflow:"hidden",
+                  boxShadow:`0 0 8px ${cs.pvpMode?"#ff884444":enemyData.color+"33"}`}}>
+                  <div style={{height:"100%",
+                    background:`linear-gradient(to right,${cs.pvpMode?"#ff884488":""+enemyData.color+"88"},${cs.pvpMode?"#ff8844":enemyData.color})`,
+                    width:`${Math.max(0,((cs.pvpMode?pvpOppHp:cs.enemy.hp)/(cs.pvpMode?pvpMaxHp:cs.enemy.maxHp))*100)}%`,
+                    transition:"width .4s"}}/>
                 </div>
-                <CompactHP label="" current={cs.enemy.hp} max={cs.enemy.maxHp} color={enemyData.color}/>
+                {/* name + value */}
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:3,
+                  fontFamily:"Cinzel",fontSize:8,letterSpacing:1}}>
+                  <span style={{color:cs.pvpMode?"#ff8844":enemyData.color,fontWeight:700}}>
+                    {cs.elite&&"⚡ "}{cs.enemy.name}
+                    {cs.enemyAtkMult&&cs.enemyAtkMult<1&&<span style={{fontSize:7,color:"#88ccff",marginLeft:4}}>WK</span>}
+                  </span>
+                  <span style={{opacity:.55,color:"#a8a8b8"}}>
+                    {cs.pvpMode?pvpOppHp:cs.enemy.hp}/{cs.pvpMode?pvpMaxHp:cs.enemy.maxHp}
+                  </span>
+                </div>
               </div>
-              <div style={{position:"absolute",right:8,bottom:8,width:300,zIndex:9}}>
-                <div style={{fontFamily:"Cinzel",fontSize:15,color:"#e8d5a3",letterSpacing:2,marginBottom:6,opacity:.95,textAlign:"right",fontWeight:700}}>{player.class}</div>
-                <CompactHP label="" current={player.hp} max={player.maxHp} color={player.hp<player.maxHp*.3?"#ff4444":player.hp<player.maxHp*.6?"#ffcc44":"#22cc55"} align="right"/>
+              <div style={{position:"absolute",right:8,bottom:6,width:220,zIndex:9}}>
+                {/* bar */}
+                {(()=>{const myHp=cs.pvpMode?pvpMyHp:player.hp,myMax=cs.pvpMode?pvpMaxHp:player.maxHp,
+                  hCol=myHp<myMax*.3?"#ff4444":myHp<myMax*.6?"#ffcc44":"#22cc55";
+                  return <>
+                    <div style={{height:7,background:"#050508",border:`1px solid ${hCol}88`,
+                      borderRadius:4,overflow:"hidden",boxShadow:`0 0 8px ${hCol}33`}}>
+                      <div style={{height:"100%",background:`linear-gradient(to right,${hCol}88,${hCol})`,
+                        width:`${Math.max(0,(myHp/myMax)*100)}%`,transition:"width .4s"}}/>
+                    </div>
+                    <div style={{display:"flex",justifyContent:"space-between",marginTop:3,
+                      fontFamily:"Cinzel",fontSize:8,letterSpacing:1}}>
+                      <span style={{opacity:.55,color:"#a8a8b8"}}>{myHp}/{myMax}</span>
+                      <span style={{color:"#c8b888",fontWeight:700}}>{player.class}</span>
+                    </div>
+                  </>;
+                })()}
               </div>
-              {/* ── Action log — bottom-left corner, one line only ── */}
+              {/* ── Action log — top-left corner, one line only ── */}
               {cs.log.length>0&&(
-                <div style={{position:"absolute",bottom:4,left:4,maxWidth:140,zIndex:20,pointerEvents:"none"}}>
+                <div style={{position:"absolute",top:4,left:4,maxWidth:140,zIndex:20,pointerEvents:"none"}}>
                   <div style={{fontSize:7,lineHeight:1.3,letterSpacing:.3,
                     color:"#d4c89a",opacity:.6,textShadow:"0 1px 3px #000",
                     whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
@@ -3890,46 +5275,7 @@ function App() {
               </>
             )}
 
-            {/* ── Attack buttons + potions — compact bar at bottom ── */}
-            {cs.phase==="action"&&!qteAnim&&(
-              <div style={{flexShrink:0,background:"rgba(0,0,0,.6)",backdropFilter:"blur(6px)",borderTop:"1px solid #1a1a2e"}}>
-                {/* Potion row — only if player has potions */}
-                {(player.potions||[]).length>0&&(
-                  <div style={{display:"flex",gap:6,justifyContent:"center",padding:"6px 16px 2px",borderBottom:"1px solid #1a1a2e22"}}>
-                    <span style={{fontFamily:"Cinzel",fontSize:9,opacity:.4,letterSpacing:2,alignSelf:"center",marginRight:4}}>POTIONS</span>
-                    {(player.potions||[]).map((pt,idx)=>(
-                      <button key={idx} onClick={()=>usePotion(idx)}
-                        title={pt.desc}
-                        style={{display:"flex",alignItems:"center",gap:5,padding:"4px 10px",
-                          background:"#0a0818",border:"1px solid #553388",borderRadius:6,
-                          cursor:"pointer",fontFamily:"Cinzel",fontSize:10,color:"#cc88ff",
-                          boxShadow:"0 0 8px #55228855",transition:"all .15s"}}
-                        onMouseEnter={e=>{e.currentTarget.style.background="#140828";e.currentTarget.style.borderColor="#8855cc";}}
-                        onMouseLeave={e=>{e.currentTarget.style.background="#0a0818";e.currentTarget.style.borderColor="#553388";}}>
-                        <Icon type={pt.id} size={20}/>
-                        <span>{pt.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {/* Weapons row */}
-                <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",padding:"8px 16px 10px"}}>
-                  {player.weapons.map(wid=>{
-                    const w=ALL_WEAPONS[wid]; if(!w) return null;
-                    const tip = w.qteType==="stomp"?"Time it perfectly on the enemy's head":undefined;
-                    return (
-                      <button key={wid} className="btn" title={tip}
-                        style={{display:"flex",alignItems:"center",gap:8,padding:"7px 16px"}}
-                        onClick={()=>startAttack(w)}>
-                        <Icon type={w.id} size={22}/>
-                        <span style={{fontSize:11}}>{w.name}</span>
-                        <span style={{fontSize:10,opacity:.4}}>{w.baseDmg+(player.str||0)}·{QTE_LABEL[w.qteType]||"?"}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            {/* bottom bar removed — actions now in fixed side panel */}
 
           </div>
         );
@@ -4001,6 +5347,234 @@ function App() {
           <button className="btn" style={{fontSize:16,padding:"14px 44px",letterSpacing:5}} onClick={()=>window.location.reload()}>PLAY AGAIN</button>
         </div>
       )}
+
+      {/* ══ PVP WAIT — killed dragon, waiting for opponent ══ */}
+      {screen==="pvp_wait"&&(
+        <div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",animation:"fadeIn .5s",background:"radial-gradient(ellipse at 50% 40%,#1a0a00,#020205)"}}>
+          <div style={{marginBottom:24,animation:"float 2s ease-in-out infinite",filter:"drop-shadow(0 0 30px #ff4400)"}}>
+            <Icon type="boss" size={80} color="#ff6600"/>
+          </div>
+          <h1 style={{fontFamily:"Cinzel",fontWeight:900,fontSize:"clamp(28px,5vw,52px)",letterSpacing:8,color:"#ff6600",textShadow:"0 0 40px #ff4400",animation:"glow 2s infinite",marginBottom:10}}>
+            {iWonRace?"🏆 DRAGON SLAIN FIRST!":"💀 DRAGON DEFEATED"}
+          </h1>
+          <p style={{fontFamily:"IM Fell English",fontStyle:"italic",opacity:.5,fontSize:16,marginBottom:30,letterSpacing:3}}>
+            {iWonRace
+              ? "You won the race. Waiting for your rival to finish..."
+              : "You got the RPG. Now take down the winner."}
+          </p>
+          {/* Opponent progress while waiting */}
+          {oppSnap&&(
+            <div style={{background:"#0a0814",border:"1px solid #4466ff44",borderRadius:10,padding:"16px 28px",marginBottom:30,minWidth:260}}>
+              <div style={{fontFamily:"Cinzel",fontSize:11,letterSpacing:3,color:"#4466ff",marginBottom:12,textAlign:"center"}}>
+                ⚔ RIVAL: {(oppSnap.name||"?").toUpperCase()}
+              </div>
+              {oppSnap.dragonKilled
+                ? <div style={{fontFamily:"Cinzel",fontSize:14,color:"#ff4422",textShadow:"0 0 12px #ff4422",textAlign:"center",animation:"pulse .6s infinite"}}>🐉 DRAGON KILLED — HEADING TO FIGHT!</div>
+                : <>
+                    <div style={{fontFamily:"Cinzel",fontSize:9,color:"#555577",letterSpacing:2,marginBottom:4}}>FLOOR {oppSnap.floor}/{FLOOR_CONFIGS.length}</div>
+                    <div style={{height:6,background:"#111122",borderRadius:3,marginBottom:10}}>
+                      <div style={{height:"100%",background:"#4466ff",borderRadius:3,boxShadow:"0 0 8px #4466ff",
+                        width:`${Math.min(100,(oppSnap.floor/FLOOR_CONFIGS.length)*100)}%`,transition:"width .8s"}}/>
+                    </div>
+                    <div style={{fontFamily:"Cinzel",fontSize:9,color:"#555577",letterSpacing:2,marginBottom:4}}>HP {oppSnap.hp}/{oppSnap.maxHp}</div>
+                    <div style={{height:6,background:"#111122",borderRadius:3}}>
+                      <div style={{height:"100%",borderRadius:3,background:oppSnap.hp<oppSnap.maxHp*.3?"#ff4444":oppSnap.hp<oppSnap.maxHp*.6?"#ffcc44":"#44dd66",
+                        width:`${Math.min(100,(oppSnap.hp/Math.max(1,oppSnap.maxHp))*100)}%`,transition:"width .8s"}}/>
+                    </div>
+                  </>
+              }
+            </div>
+          )}
+          {!oppSnap&&(
+            <p style={{fontFamily:"Cinzel",fontSize:10,color:"#4466ff",letterSpacing:2,animation:"pulse .8s infinite",marginBottom:30}}>
+              CONNECTING TO OPPONENT…
+            </p>
+          )}
+          <p style={{fontFamily:"Cinzel",fontSize:9,opacity:.25,letterSpacing:2}}>PVP ARENA LOADING ONCE RIVAL IS READY</p>
+        </div>
+      )}
+
+      {/* pvp screen = combat screen + fixed overlays above — see pvpMode overlays */}
+      {screen==="pvp_unused"&&player&&(()=>{
+        const myWeaponObj = player.weapons?.includes("rpg") ? ALL_WEAPONS.rpg : ALL_WEAPONS[player.weapons?.[0]] ?? ALL_WEAPONS.sword;
+        const oppWeaponObj = iWonRace ? (ALL_WEAPONS[oppSnap?.weapon] ?? ALL_WEAPONS.sword) : ALL_WEAPONS.rpg;
+        const oppName = oppSnap?.name ?? "RIVAL";
+        const myHpPct  = Math.max(0, pvpMyHp  / pvpMaxHp * 100);
+        const oppHpPct = Math.max(0, pvpOppHp / pvpMaxHp * 100);
+        const isMyTurn = pvpTurn === "mine" && !pvpWinner;
+        const isTheirTurn = pvpTurn === "theirs" && !pvpWinner;
+
+        const doAttack = () => {
+          if (!isMyTurn || qteAnim) return;
+          pvpAtkCbRef.current = pvpOnAttackDone;
+          pvpModeRef.current = true;
+          const startQTE = {
+            swing_beat:  ()=>startSwingBeatQTE(myWeaponObj),
+            hold_release:()=>startChargeQTE(myWeaponObj),
+            rapid_tap:   ()=>startRapidTapQTE(myWeaponObj),
+            sequence:    ()=>startSequenceQTE(myWeaponObj),
+            stomp:       ()=>startStompQTE(myWeaponObj),
+            poke:        ()=>startPokeQTE(myWeaponObj),
+            archery:     ()=>startArcheryQTE(myWeaponObj),
+            sequence_reveal: ()=>startRPGQTE(myWeaponObj),
+          }[myWeaponObj.qteType] || (()=>startSwingBeatQTE(myWeaponObj));
+          startQTE();
+        };
+
+        return (
+          <div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+            background:"radial-gradient(ellipse at 50% 30%,#1a0818 0%,#06040e 70%)",animation:"fadeIn .4s",position:"relative",overflow:"hidden"}}>
+            {/* Background particle field */}
+            {particles.map((p,i)=><div key={i} style={{position:"absolute",left:p.left,top:p.top,width:p.size,height:p.size,background:"#4466ff",borderRadius:"50%",opacity:p.opacity*.8,animation:`pulse ${p.dur} ${p.delay} infinite`}}/>)}
+
+            {/* Title */}
+            <div style={{fontFamily:"Cinzel",fontWeight:900,fontSize:"clamp(18px,3vw,28px)",letterSpacing:8,
+              color:"#ff4400",textShadow:"0 0 30px #ff4400",marginBottom:20,zIndex:1}}>
+              ⚔ FINAL SHOWDOWN ⚔
+            </div>
+
+            {/* HP bars */}
+            <div style={{display:"flex",gap:40,alignItems:"center",marginBottom:18,zIndex:1,width:"min(700px,90vw)"}}>
+              {/* My HP */}
+              <div style={{flex:1}}>
+                <div style={{fontFamily:"Cinzel",fontSize:9,letterSpacing:2,color:"#44dd66",marginBottom:4}}>
+                  YOU · {myWeaponObj.emoji} {myWeaponObj.name}
+                </div>
+                <div style={{height:12,background:"#0a1a0a",borderRadius:6,border:"1px solid #22441a"}}>
+                  <div style={{height:"100%",borderRadius:6,transition:"width .4s",
+                    background:pvpMyHp<pvpMaxHp*.3?"#ff4444":pvpMyHp<pvpMaxHp*.6?"#ffcc44":"#44dd66",
+                    width:`${myHpPct}%`,boxShadow:`0 0 10px ${pvpMyHp<pvpMaxHp*.3?"#ff4444":"#44dd66"}`}}/>
+                </div>
+                <div style={{fontFamily:"Cinzel",fontSize:10,color:"#44dd66",marginTop:2}}>{pvpMyHp}/{pvpMaxHp}</div>
+              </div>
+              <div style={{fontFamily:"Cinzel",fontSize:20,color:"#ff4400",textShadow:"0 0 12px #ff4400"}}>VS</div>
+              {/* Opponent HP */}
+              <div style={{flex:1,textAlign:"right"}}>
+                <div style={{fontFamily:"Cinzel",fontSize:9,letterSpacing:2,color:"#ff6644",marginBottom:4}}>
+                  {oppWeaponObj.emoji} {oppWeaponObj.name} · {oppName.toUpperCase()}
+                </div>
+                <div style={{height:12,background:"#1a0a0a",borderRadius:6,border:"1px solid #441a1a"}}>
+                  <div style={{height:"100%",borderRadius:6,transition:"width .4s",marginLeft:"auto",
+                    background:pvpOppHp<pvpMaxHp*.3?"#ff4444":"#ff8844",
+                    width:`${oppHpPct}%`,boxShadow:"0 0 10px #ff4444"}}/>
+                </div>
+                <div style={{fontFamily:"Cinzel",fontSize:10,color:"#ff8844",marginTop:2}}>{pvpOppHp}/{pvpMaxHp}</div>
+              </div>
+            </div>
+
+            {/* Battle viewport (reuses existing QTE rendering) */}
+            <div ref={particleContainerRef}
+              style={{position:"relative",width:BFW,height:BFH,zoom:Math.min((window.innerWidth-40)/BFW,(window.innerHeight-280)/BFH),
+                background:"linear-gradient(to bottom,#0c0820 0%,#14102a 55%,#0a0818 100%)",
+                borderRadius:8,border:"1px solid #4466ff22",overflow:"hidden",zIndex:1,flexShrink:0}}>
+
+              {/* Impact flash */}
+              {impactFlash>0&&(
+                <div style={{position:"absolute",inset:0,background:impactFlash===2?"rgba(255,100,0,.35)":"rgba(255,80,0,.2)",zIndex:50,pointerEvents:"none",borderRadius:8}}/>
+              )}
+
+              {/* Parry flash */}
+              {parryFlash&&(
+                <div style={{position:"absolute",inset:0,background:"rgba(68,150,255,.18)",zIndex:49,pointerEvents:"none",animation:"parryFlash .9s ease-out forwards"}}/>
+              )}
+
+              {/* Hit result */}
+              {hitResult&&(
+                <div style={{position:"absolute",top:"22%",left:"50%",transform:"translateX(-50%)",
+                  fontFamily:"Cinzel",fontWeight:900,fontSize:hitResult.big?28:20,
+                  color:hitResult.color,textShadow:`0 0 20px ${hitResult.color}`,
+                  zIndex:30,whiteSpace:"nowrap",animation:"slideUp .35s ease-out",pointerEvents:"none"}}>
+                  {hitResult.text}
+                </div>
+              )}
+
+              {/* Ground */}
+              <div style={{position:"absolute",bottom:0,left:0,right:0,height:28,
+                background:"linear-gradient(to bottom,transparent,#1a1530 40%,#12102a)",borderTop:"1px solid #2a2460"}}/>
+
+              {/* Opponent (left side, flipped) */}
+              <div style={{position:"absolute",left:ENX-HSW/2,top:HR_T,zIndex:6,
+                filter:enemyFlash?"drop-shadow(0 0 18px #ff6600) brightness(2.5)":"none",transition:"filter .1s"}}>
+                <HeroSprite className={iWonRace?(ALL_WEAPONS[oppSnap?.weapon]?.className??'Knight'):'Demolisher'} scale={0.85} weapons={[oppWeaponObj.id]}/>
+              </div>
+
+              {/* My hero (right side) */}
+              <div style={{position:"absolute",
+                left:heroPos?heroPos.left:HR_L, top:heroPos?heroPos.top:HR_T,
+                zIndex:6,transform:"scaleX(-1)",
+                animation:!heroPos?"float 2.4s ease-in-out infinite":"none"}}>
+                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]}/>
+              </div>
+
+              {/* All existing QTE overlays render here via existing render code — they check qteAnim type */}
+              {/* Turn indicator */}
+              {!qteAnim&&!pvpWinner&&(
+                <div style={{position:"absolute",top:10,left:"50%",transform:"translateX(-50%)",
+                  fontFamily:"Cinzel",fontSize:isMyTurn?14:10,letterSpacing:3,
+                  color:isMyTurn?"#00ff88":"#ff8844",
+                  textShadow:isMyTurn?"0 0 16px #00ff88":"0 0 10px #ff8844",
+                  animation:isTheirTurn?"pulse .6s ease-in-out infinite":"none",zIndex:9}}>
+                  {isMyTurn?"⚔ YOUR TURN":isTheirTurn?`${oppName.toUpperCase()} ATTACKING...`:""}
+                </div>
+              )}
+
+            </div>
+
+            {/* PvP log */}
+            <div style={{marginTop:12,zIndex:1,width:"min(500px,90vw)",maxHeight:56,overflow:"hidden"}}>
+              {pvpLog.slice(-3).map((l,i)=>(
+                <div key={i} style={{fontFamily:"IM Fell English",fontSize:11,opacity:0.3+i*0.25,color:"#e8d5a3",
+                  textAlign:"center",letterSpacing:1,fontStyle:"italic"}}>{l}</div>
+              ))}
+            </div>
+
+            {/* Attack button / status */}
+            {!pvpWinner&&(
+              <div style={{marginTop:14,zIndex:1}}>
+                {isMyTurn&&!qteAnim&&(
+                  <button className="btn" onClick={doAttack}
+                    style={{fontSize:15,padding:"12px 40px",letterSpacing:4,
+                      borderColor:"#ff6600",color:"#ff9933",boxShadow:"0 0 20px #ff440044"}}>
+                    {myWeaponObj.emoji} ATTACK [{QTE_LABEL[myWeaponObj.qteType]||"QTE"}]
+                  </button>
+                )}
+                {isTheirTurn&&!qteAnim&&(
+                  <div style={{fontFamily:"Cinzel",fontSize:10,color:"#4466ff",letterSpacing:3,
+                    animation:"pulse .6s ease-in-out infinite"}}>
+                    WAITING FOR {oppName.toUpperCase()}'S ATTACK…
+                  </div>
+                )}
+                {qteAnim&&(
+                  <div style={{fontFamily:"Cinzel",fontSize:10,color:"#ffcc44",letterSpacing:3,
+                    animation:"pulse .4s ease-in-out infinite"}}>
+                    QTE IN PROGRESS…
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Winner overlay */}
+            {pvpWinner&&(
+              <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",animation:"fadeIn .5s"}}>
+                {pvpWinner==="me"
+                  ? <>
+                      <div style={{fontSize:72,marginBottom:16,animation:"float 1.5s infinite"}}>🏆</div>
+                      <h1 style={{fontFamily:"Cinzel",fontWeight:900,fontSize:"clamp(32px,6vw,60px)",color:"#ffcc44",letterSpacing:8,textShadow:"0 0 40px #ffcc44",animation:"glow 1.5s infinite",marginBottom:8}}>YOU WIN!</h1>
+                      <p style={{fontFamily:"IM Fell English",fontStyle:"italic",fontSize:16,opacity:.5,marginBottom:40,letterSpacing:3}}>You destroyed {oppName}. Champion of R.P.G.</p>
+                    </>
+                  : <>
+                      <div style={{fontSize:72,marginBottom:16,opacity:.5}}>💀</div>
+                      <h1 style={{fontFamily:"Cinzel",fontWeight:900,fontSize:"clamp(32px,6vw,60px)",color:"#cc2222",letterSpacing:8,textShadow:"0 0 40px #cc2222",marginBottom:8}}>ELIMINATED</h1>
+                      <p style={{fontFamily:"IM Fell English",fontStyle:"italic",fontSize:16,opacity:.5,marginBottom:40,letterSpacing:3}}>{oppName} wins this time. Get wrecked.</p>
+                    </>
+                }
+                {(finalTime||timerDisplay)&&<div style={{fontFamily:"Cinzel",fontSize:22,color:"#ffcc44",letterSpacing:4,marginBottom:32,opacity:.7}}>⏱ {finalTime||timerDisplay}</div>}
+                <button className="btn" style={{fontSize:16,padding:"14px 44px",letterSpacing:5}} onClick={()=>window.location.reload()}>PLAY AGAIN</button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
