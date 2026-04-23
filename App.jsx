@@ -93,11 +93,11 @@ const ENEMIES = {
   eye:      { name:"Void Eye",         hp:28,  emoji:"👁️", xp:35,  atk:10, color:"#9944ff", desc:"It sees into your soul"     },
   golem:    { name:"Stone Golem",      hp:65,  emoji:"🗿", xp:55,  atk:12, color:"#aa7744", desc:"Ancient earth made flesh"   },
   wraith:   { name:"Wailing Wraith",   hp:40,  emoji:"👻", xp:45,  atk:14, color:"#4488ff", desc:"A spirit of pure malice"    },
-  dragon:   { name:"Ancient Dragon",   hp:150, emoji:"🐉", xp:500, atk:18, color:"#ff4422", desc:"The apex of draconic terror" },
+  dragon:   { name:"Demon Slime",       hp:150, emoji:"🟢", xp:500, atk:18, color:"#44dd66", desc:"A demonic mass of pure malice" },
 };
 const ENEMY_DIMS = {
   goblin:{w:64,h:78}, skeleton:{w:56,h:88}, eye:{w:80,h:80},
-  golem:{w:84,h:88},  wraith:{w:64,h:96},   dragon:{w:110,h:88},
+  golem:{w:84,h:88},  wraith:{w:64,h:96},   dragon:{w:128,h:128},
 };
 
 // Enemy sprite pool — 9 variants randomized per encounter (dragon excluded)
@@ -374,93 +374,30 @@ function HeroSprite({ className="Knight", scale=1, weapons=[], heroLooks=null, i
   );
 }
 
-function EnemySpriteSmall({ id, scale=1, sprite=null, attacking=false }) {
-  if (id==="dragon") return (
-    <svg width={110*scale} height={88*scale} viewBox="0 0 110 88" style={{display:"block",overflow:"visible"}}>
-      <ellipse cx="55" cy="86" rx="36" ry="5" fill="#000" opacity=".22"/>
-      {/* Left wing */}
-      <g style={{animation:"dragonWingL 1.3s ease-in-out infinite",transformOrigin:"55px 34px"}}>
-        <path d="M55,34 L4,4 L22,48 Z" fill="#8a1808" opacity=".9"/>
-        <path d="M55,34 L4,4 L14,28 Z" fill="#aa2210" opacity=".65"/>
-        <path d="M55,34 L14,28 L22,48" fill="#7a1408" opacity=".4"/>
-        <line x1="55" y1="34" x2="4"  y2="4"  stroke="#660e06" strokeWidth="2"   opacity=".6"/>
-        <line x1="55" y1="34" x2="14" y2="28" stroke="#660e06" strokeWidth="1.5" opacity=".45"/>
-        <line x1="55" y1="34" x2="22" y2="48" stroke="#660e06" strokeWidth="1.5" opacity=".45"/>
-      </g>
-      {/* Right wing */}
-      <g style={{animation:"dragonWingR 1.3s ease-in-out infinite",transformOrigin:"55px 34px"}}>
-        <path d="M55,34 L106,4 L88,48 Z" fill="#8a1808" opacity=".9"/>
-        <path d="M55,34 L106,4 L96,28 Z" fill="#aa2210" opacity=".65"/>
-        <path d="M55,34 L96,28 L88,48" fill="#7a1408" opacity=".4"/>
-        <line x1="55" y1="34" x2="106" y2="4"  stroke="#660e06" strokeWidth="2"   opacity=".6"/>
-        <line x1="55" y1="34" x2="96"  y2="28" stroke="#660e06" strokeWidth="1.5" opacity=".45"/>
-        <line x1="55" y1="34" x2="88"  y2="48" stroke="#660e06" strokeWidth="1.5" opacity=".45"/>
-      </g>
-      {/* Tail */}
-      <path d="M70,70 Q88,74 96,68 Q102,62 100,56" stroke="#cc2211" strokeWidth="10" fill="none" strokeLinecap="round"/>
-      <path d="M100,56 L108,50 L102,60 Z" fill="#aa1808"/>
-      {/* Body */}
-      <ellipse cx="55" cy="58" rx="30" ry="22" fill="#bb2010"/>
-      <ellipse cx="55" cy="56" rx="27" ry="19" fill="#cc2211"/>
-      <ellipse cx="55" cy="55" rx="24" ry="16" fill="#dd3322"/>
-      {/* Belly plates */}
-      <ellipse cx="55" cy="62" rx="16" ry="10" fill="#ff9966" opacity=".45"/>
-      {[55,62,68].map((y,i)=>(
-        <ellipse key={y} cx="55" cy={y} rx={14-i*3} ry="3.5" fill="#ffaa55" opacity={.18+i*.08}/>
-      ))}
-      {/* Scale texture */}
-      {[[44,52],[55,50],[66,52],[48,60],[62,60]].map(([x,y],i)=>(
-        <path key={i} d={`M${x-4},${y} Q${x},${y-4} ${x+4},${y}`} stroke="#aa1a08" strokeWidth="1" fill="none" opacity=".4"/>
-      ))}
-      {/* Legs */}
-      <path d="M38,72 L30,82 L44,86 L42,74 Z" fill="#bb2010"/>
-      <path d="M72,72 L80,82 L66,86 L68,74 Z" fill="#bb2010"/>
-      {/* Claws */}
-      {[30,34,38].map(x=><line key={x} x1={x} y1="86" x2={x-2} y2="90" stroke="#770000" strokeWidth="2" strokeLinecap="round"/>)}
-      {[72,76,80].map(x=><line key={x} x1={x} y1="86" x2={x+2} y2="90" stroke="#770000" strokeWidth="2" strokeLinecap="round"/>)}
-      {/* Neck + head */}
-      <g style={{animation:"dragonHead 1.8s ease-in-out infinite",transformOrigin:"55px 34px"}}>
-        {/* Neck */}
-        <ellipse cx="55" cy="38" rx="13" ry="20" fill="#cc2211"/>
-        <ellipse cx="55" cy="37" rx="10" ry="17" fill="#dd3322"/>
-        {[20,25,30,36].map(y=>(
-          <ellipse key={y} cx="55" cy={y} rx="8" ry="3" fill="#ff7744" opacity=".22"/>
-        ))}
-        {/* Head */}
-        <ellipse cx="55" cy="16" rx="22" ry="16" fill="#cc2211"/>
-        <ellipse cx="55" cy="15" rx="19" ry="13" fill="#dd3322"/>
-        <ellipse cx="55" cy="14" rx="16" ry="11" fill="#ee4433"/>
-        {/* Horns — swept back */}
-        <path d="M42,8 L32,-4 L44,9"  fill="#7a1008"/>
-        <path d="M68,8 L78,-4 L66,9"  fill="#7a1008"/>
-        <path d="M42,8 L33,-2 L44,10" fill="#aa2010" opacity=".6"/>
-        <path d="M68,8 L77,-2 L66,10" fill="#aa2010" opacity=".6"/>
-        {/* Brow spikes */}
-        <polygon points="46,8 44,2 48,8" fill="#880e06"/>
-        <polygon points="64,8 66,2 62,8" fill="#880e06"/>
-        {/* Eyes — amber slit */}
-        <ellipse cx="47" cy="14" rx="6.5" ry="5" fill="#ffcc00"/>
-        <ellipse cx="63" cy="14" rx="6.5" ry="5" fill="#ffcc00"/>
-        <ellipse cx="47" cy="14" rx="5"   ry="4" fill="#ff9900"/>
-        <ellipse cx="63" cy="14" rx="5"   ry="4" fill="#ff9900"/>
-        <ellipse cx="47" cy="14" rx="2"   ry="4" fill="#111"/>
-        <ellipse cx="63" cy="14" rx="2"   ry="4" fill="#111"/>
-        <circle  cx="46" cy="12.5" r="1.2" fill="#fff" opacity=".45"/>
-        <circle  cx="62" cy="12.5" r="1.2" fill="#fff" opacity=".45"/>
-        {/* Nostrils */}
-        <ellipse cx="51" cy="22" rx="1.8" ry="1.4" fill="#991808"/>
-        <ellipse cx="59" cy="22" rx="1.8" ry="1.4" fill="#991808"/>
-        {/* Jaw */}
-        <path d="M38,24 L42,30 L55,28 L68,30 L72,24" fill="#bb2010" stroke="#991808" strokeWidth="1"/>
-        {[42,47,52,57,62,67].map(x=><polygon key={x} points={`${x},28 ${x+1.5},33 ${x+3},28`} fill="#fffff0"/>)}
-        {/* Fire breath */}
-        <g style={{animation:"dragonBreath 2.4s ease-in-out infinite 1s"}}>
-          <ellipse cx="55" cy="34" rx="8" ry="3" fill="#ff6600" opacity=".35"/>
-          <ellipse cx="55" cy="36" rx="5" ry="2" fill="#ffaa00" opacity=".3"/>
-        </g>
-      </g>
-    </svg>
+const BOSS_GIF_BASE = "/icons/sprites/boss/boss_demon_slime_FREE_v1.0/gifs";
+function DemonSlimeSprite({ scale=1, enemyFlash=false, phase="action" }) {
+  const sz = Math.round(128 * scale);
+  // Priority: dying > hit > attacking > idle
+  const src = phase==="won"       ? `${BOSS_GIF_BASE}/05_d_death.gif`
+            : enemyFlash          ? `${BOSS_GIF_BASE}/04_d_take_hit.gif`
+            : phase==="enemy_turn"? `${BOSS_GIF_BASE}/03_d_cleave.gif`
+            : `${BOSS_GIF_BASE}/01_d_idle.gif`;
+  // Key on src so browser reloads/restarts gif when animation changes
+  return (
+    <div style={{position:"relative",width:sz,height:sz}}>
+      <img key={src} src={src} width={sz} height={sz}
+        style={{display:"block",imageRendering:"pixelated",objectFit:"contain"}}/>
+      {/* Green glow under boss */}
+      <div style={{position:"absolute",bottom:-6,left:"50%",transform:"translateX(-50%)",
+        width:sz*0.7,height:10,borderRadius:"50%",
+        background:"radial-gradient(ellipse,#22dd4466 0%,transparent 70%)",
+        pointerEvents:"none"}}/>
+    </div>
   );
+}
+
+function EnemySpriteSmall({ id, scale=1, sprite=null, attacking=false, enemyFlash=false, phase="action" }) {
+  if (id==="dragon") return <DemonSlimeSprite scale={scale} enemyFlash={enemyFlash} phase={phase}/>;
 
   if (sprite) {
     const dims = ENEMY_DIMS[id]||{w:80,h:96};
@@ -1765,7 +1702,7 @@ function App() {
         sfx.enemyDie();
         setTimeout(()=>{
           setPlayer(p=>p?({...p,xp:p.xp+prev.enemy.xp,floor:p.floor+1,visited:[...p.visited,prev.nodeId]}):p);
-          if (prev.enemy.name === "Ancient Dragon") {
+          if (prev.enemy.id === "dragon") {
             if (gameMode === "race") {
               const won = !oppSnap?.dragonKilled;
               setIWonRace(won);
@@ -1850,7 +1787,7 @@ function App() {
           sfx.enemyDie();
           setTimeout(()=>{
             setPlayer(p=>p?({...p,xp:p.xp+prev.enemy.xp,floor:p.floor+1,visited:[...p.visited,prev.nodeId]}):p);
-            if(prev.enemy.name==="Ancient Dragon"){
+            if(prev.enemy.id==="dragon"){
               if(gameMode==="race"){const won=!oppSnap?.dragonKilled;setIWonRace(won);setPlayer(p=>{if(!p)return p;const nw=won?p.weapons:[...new Set([...p.weapons,"rpg"])];mpSend({type:"state",dragonKilled:true,weapon:nw[0]??"sword"});return{...p,weapons:nw};});setMpStatus("pvp_wait");setScreen("pvp_wait");}else{setPlayer(p=>p?{...p,weapons:[...new Set([...p.weapons,"rpg"])]}:p);setScreen("victory");}return;
             }
             setPlayer(p=>{setRewards(pickRewards(p?.weapons||[], prev.elite));return p;});
@@ -3499,7 +3436,7 @@ function App() {
                 const nodeBorder= isV?`1px solid #2a2a40`:isA?`2px solid ${nodeColor}99`:`1px solid #1e1e2e`;
                 const nodeGlow  = isA?`0 0 20px ${nodeColor}44`:"none";
                 const sz = isB?54:isE?46:42;
-                const title = isA?(isR?"Campfire: restore 25 HP":isB?"BOSS: Ancient Dragon":isE?`ELITE ${ENEMIES[n.enemy]?.name||""}`:ENEMIES[n.enemy]?.name||""):"";
+                const title = isA?(isR?"Campfire: restore 25 HP":isB?"BOSS: Demon Slime":isE?`ELITE ${ENEMIES[n.enemy]?.name||""}`:ENEMIES[n.enemy]?.name||""):"";
                 return (
                   <button key={n.id} title={title}
                     onClick={()=>{ if(!isA)return; if(isR){setPlayer(p=>({...p,hp:Math.min(p.maxHp,p.hp+25),floor:p.floor+1,visited:[...p.visited,n.id]}));}else{startCombat(n);} }}
@@ -4356,7 +4293,7 @@ function App() {
                 transformOrigin:"bottom center"}}>
                 {cs.enemy.id==="pvp_opp"
                   ? <HeroSprite className={cs.enemy.pvpClass??'Knight'} scale={eScale} weapons={cs.enemy.pvpWeapons??['sword']}/>
-                  : <EnemySpriteSmall id={cs.enemy.id} scale={eScale} sprite={cs?.enemySprite}/>
+                  : <EnemySpriteSmall id={cs.enemy.id} scale={eScale} sprite={cs?.enemySprite} enemyFlash={enemyFlash} phase={cs.phase}/>
                 }
               </div>
 
@@ -4774,7 +4711,7 @@ function App() {
         <div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",animation:"fadeIn .6s"}}>
           <div style={{marginBottom:20,animation:"float 2s infinite",filter:"drop-shadow(0 0 30px gold)"}}><Icon type="boss" size={80} color="#ffcc44"/></div>
           <h1 style={{fontFamily:"Cinzel",fontSize:"clamp(32px,7vw,60px)",color:"#ffcc44",letterSpacing:6,animation:"glow 2s infinite",marginBottom:10}}>VICTORIOUS!</h1>
-          <p style={{opacity:.5,marginBottom:10,fontStyle:"italic",letterSpacing:2}}>The Ancient Dragon falls. The Spire is yours.</p>
+          <p style={{opacity:.5,marginBottom:10,fontStyle:"italic",letterSpacing:2}}>The Demon Slime is vanquished. The Spire is yours.</p>
           {player&&<p style={{fontFamily:"Cinzel",fontSize:12,opacity:.35,marginBottom:10,letterSpacing:2}}>Lv.{player.level} {player.class} · {player.xp} XP</p>}
           {(finalTime||timerDisplay)&&<div style={{fontFamily:"Cinzel",fontSize:28,color:"#ffcc44",letterSpacing:4,marginBottom:44,textShadow:"0 0 24px #ffcc44",fontVariantNumeric:"tabular-nums",animation:"glow 2s infinite"}}>⏱ {finalTime||timerDisplay}</div>}
           <button className="btn" style={{fontSize:16,padding:"14px 44px",letterSpacing:5}} onClick={()=>window.location.reload()}>PLAY AGAIN</button>
