@@ -100,6 +100,66 @@ const ENEMY_DIMS = {
   golem:{w:84,h:88},  wraith:{w:64,h:96},   dragon:{w:110,h:88},
 };
 
+// Enemy sprite pool — 9 variants randomized per encounter (dragon excluded)
+const ENEMY_SPRITE_POOL = [
+  {variant:"Gorgon_1",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16},
+  {variant:"Gorgon_2",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16},
+  {variant:"Gorgon_3",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16},
+  {variant:"Minotaur_1",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack.png",  atkFrames:8 },
+  {variant:"Minotaur_2",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack.png",  atkFrames:8 },
+  {variant:"Minotaur_3",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack.png",  atkFrames:8 },
+  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:8 },
+  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:8 },
+  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:8 },
+];
+
+// Gandalf layered hero sprites — randomized per run
+const BASE = "/icons/sprites/GandalfHardcore Character Asset Pack";
+const HERO_LAYERS = {
+  male: {
+    skins:    ["Male Skin1.png","Male Skin2.png","Male Skin3.png","Male Skin4.png","Male Skin5.png"],
+    clothing: ["Blue Pants.png","Blue Shirt v2.png","Boots.png","Green Pants.png","Green Shirt v2.png",
+               "Orange Pants.png","Pants.png","Purple Pants.png","Purple Shirt v2.png","Shirt.png","Shoes.png"],
+    hair:     ["Male Hair1.png","Male Hair2.png","Male Hair3.png","Male Hair4.png","Male Hair5.png"],
+    hand:     ["Male Sword.png"],
+    skinDir:  `${BASE}/Character skin colors`,
+    clothDir: `${BASE}/Male Clothing`,
+    hairDir:  `${BASE}/Male Hair`,
+    handDir:  `${BASE}/Male Hand`,
+    frameW:96, frameH:96,  // each frame in the sprite grid
+    cols:8, idleRow:0, atkRow:4,  // row 0 = idle, row 4 = attack
+  },
+  female: {
+    skins:    ["Female Skin1.png","Female Skin2.png","Female Skin3.png","Female Skin4.png","Female Skin5.png"],
+    clothing: ["Blue Corset.png","Blue Corset v2.png","Boots.png","Corset.png","Green Corset.png",
+               "Orange Corset.png","Purple Corset.png","Skirt.png","Socks.png"],
+    hair:     ["Female Hair1.png","Female Hair2.png","Female Hair3.png","Female Hair4.png","Female Hair5.png"],
+    hand:     ["Female Sword.png"],
+    skinDir:  `${BASE}/Character skin colors`,
+    clothDir: `${BASE}/Female Clothing`,
+    hairDir:  `${BASE}/Female Hair`,
+    handDir:  `${BASE}/Female Hand`,
+    frameW:96, frameH:96,
+    cols:8, idleRow:0, atkRow:4,
+  },
+};
+const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
+const randomHeroLooks = () => {
+  const gender = Math.random()<0.5?"male":"female";
+  const g = HERO_LAYERS[gender];
+  return {
+    gender,
+    skin:     `${g.skinDir}/${pick(g.skins)}`,
+    clothing: `${g.clothDir}/${pick(g.clothing)}`,
+    hair:     `${g.hairDir}/${pick(g.hair)}`,
+    hand:     `${g.handDir}/${pick(g.hand)}`,
+    frameW:   g.frameW,
+    frameH:   g.frameH,
+    cols:     g.cols,
+    idleRow:  g.idleRow,
+  };
+};
+
 /* ─── MAP DATA ───────────────────────────────────────────────── */
 const MAP_W = 520, MAP_H = 480;
 
@@ -217,6 +277,62 @@ function heroStompBouncePos(t, landLeft, landTop) {
 }
 
 /* ─── SVG CHARACTER SPRITES ──────────────────────────────────── */
+
+// Animates a horizontal sprite strip — JS-driven frame counter
+function AnimatedSprite({ src, numFrames, fps=8, displayW, displayH, flip=false }) {
+  const [frame, setFrame] = React.useState(0);
+  React.useEffect(()=>{
+    const iv = setInterval(()=>setFrame(f=>(f+1)%numFrames), 1000/fps);
+    return ()=>clearInterval(iv);
+  },[src, numFrames, fps]);
+  return (
+    <div style={{width:displayW,height:displayH,overflow:"hidden",position:"relative",
+      transform:flip?"scaleX(-1)":"none",imageRendering:"pixelated"}}>
+      <img src={src} style={{
+        position:"absolute",left:-frame*displayW,top:0,
+        height:displayH,width:numFrames*displayW,
+        imageRendering:"pixelated",
+      }}/>
+    </div>
+  );
+}
+
+// Layered hero sprite from Gandalf asset pack — stacked PNGs share same frame grid
+// Frames are 96×96 (square); displayW drives rendered frame size to avoid row bleed.
+function LayeredHeroSprite({ looks, displayW=48, isAttacking=false }) {
+  if (!looks) return null;
+  const cols     = looks.cols   || 8;
+  const idleRow  = looks.idleRow ?? 0;
+  const atkRow   = looks.atkRow  ?? 4;
+  const row      = isAttacking ? atkRow : idleRow;
+  const fps      = isAttacking ? 12 : 8;
+  const [animFrame, setAnimFrame] = React.useState(0);
+  React.useEffect(()=>{
+    setAnimFrame(0);
+    const iv = setInterval(()=>setAnimFrame(f=>(f+1)%cols), 1000/fps);
+    return ()=>clearInterval(iv);
+  },[isAttacking, cols, fps]);
+  const frameSize = displayW; // frames are square — use width for both axes
+  const xPct = cols>1 ? animFrame/(cols-1)*100 : 0;
+  const yPx  = -(row * frameSize);              // negative scrolls image up to correct row
+  const layers = [looks.skin, looks.clothing, looks.hair, looks.hand].filter(Boolean);
+  const frameStyle = {
+    position:"absolute",left:0,top:0,
+    width:"100%",height:"100%",
+    backgroundRepeat:"no-repeat",
+    backgroundSize:`${cols*100}% auto`,
+    backgroundPosition:`${xPct}% ${yPx}px`,
+    imageRendering:"pixelated",
+  };
+  return (
+    <div style={{position:"relative",width:frameSize,height:frameSize,overflow:"hidden"}}>
+      {layers.map((src,i)=>(
+        <div key={i} style={{...frameStyle, backgroundImage:`url("${src.replace(/\\/g,"/").replace(/ /g,"%20")}")`}}/>
+      ))}
+    </div>
+  );
+}
+
 const CLASS_COLORS = {
   Knight:{body:"#4466bb",trim:"#ddaa33"}, Berserker:{body:"#882222",trim:"#dd6622"},
   Rogue:{body:"#223344",trim:"#44aaaa"},  Mage:{body:"#442288",trim:"#aa44ff"},
@@ -226,581 +342,39 @@ const CLASS_COLORS = {
 };
 const SKIN = "#e8c47a";
 
-function HeroSprite({ className="Knight", scale=1, weapons=[] }) {
+function HeroSprite({ className="Knight", scale=1, weapons=[], heroLooks=null, isAttacking=false }) {
+  const displayW = Math.round(48 * scale);
+  const displayH = Math.round(72 * scale);
+  if (heroLooks) {
+    return <LayeredHeroSprite looks={heroLooks} displayW={displayW} isAttacking={isAttacking}/>;
+  }
+  // Fallback SVG hero (when no heroLooks — e.g. opponent in PvP)
   const c = CLASS_COLORS[className] || CLASS_COLORS.Knight;
-  const pw = weapons[0] || null;
-  // Extra weapons orbiting (all except primary)
-  const orbitWeapons = [...new Set(weapons.filter(w=>w&&w!==pw))];
-
-  const WeaponRight = () => {
-    switch(pw){
-      case"sword":return(<g>
-        <line x1="36" y1="28" x2="44" y2="40" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
-        <line x1="44" y1="40" x2="47" y2="52" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
-        <ellipse cx="47" cy="53" rx="3.5" ry="3" fill={c.trim}/>
-        <polygon points="48,54 51,57 33,76 30,73" fill="#ccdde8"/>
-        <line x1="50" y1="55" x2="31" y2="75" stroke="#eef5ff" strokeWidth="1.2" opacity=".55" strokeLinecap="round"/>
-        <line x1="31" y1="68" x2="37" y2="74" stroke="#ccaa22" strokeWidth="3.5" strokeLinecap="round"/>
-        <line x1="34" y1="72" x2="30" y2="78" stroke="#5a2a08" strokeWidth="2.5" strokeLinecap="round"/>
-        <circle cx="29" cy="79" r="2.2" fill="#ccaa22"/>
-      </g>);
-      case"hammer":return(<g>
-        <line x1="36" y1="28" x2="43" y2="20" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
-        <line x1="43" y1="20" x2="41" y2="10" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
-        <ellipse cx="40" cy="9" rx="3.5" ry="3" fill={c.trim}/>
-        <line x1="40" y1="8" x2="40" y2="34" stroke="#7a4a22" strokeWidth="3.5" strokeLinecap="round"/>
-        <rect x="30" y="1" width="20" height="11" rx="2.5" fill="#6a7a8a"/>
-        <rect x="30" y="1" width="20" height="5" rx="2" fill="#8eaabb" opacity=".9"/>
-        <line x1="50" y1="3" x2="50" y2="11" stroke="#ddeeff" strokeWidth="2" strokeLinecap="round" opacity=".8"/>
-      </g>);
-      case"daggers":return(<g>
-        <line x1="36" y1="28" x2="45" y2="35" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
-        <line x1="45" y1="35" x2="50" y2="44" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
-        <ellipse cx="50" cy="45" rx="3" ry="2.5" fill={c.trim}/>
-        <polygon points="51,46 53,49 43,59 41,56" fill="#ccdde8"/>
-        <line x1="46" y1="48" x2="44" y2="51" stroke="#ccaa22" strokeWidth="2.5" strokeLinecap="round"/>
-        <line x1="12" y1="28" x2="4" y2="35" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
-        <line x1="4" y1="35" x2="0" y2="44" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
-        <ellipse cx="0" cy="45" rx="3" ry="2.5" fill={c.trim}/>
-        <polygon points="-1,46 -3,49 7,59 9,56" fill="#ccdde8"/>
-        <line x1="4" y1="48" x2="6" y2="51" stroke="#ccaa22" strokeWidth="2.5" strokeLinecap="round"/>
-      </g>);
-      case"staff":return(<g>
-        <line x1="36" y1="28" x2="43" y2="18" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
-        <line x1="43" y1="18" x2="41" y2="8" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
-        <ellipse cx="40" cy="7" rx="3.5" ry="3" fill={c.trim}/>
-        <line x1="40" y1="6" x2="40" y2="82" stroke="#7a4a22" strokeWidth="3.5" strokeLinecap="round"/>
-        <line x1="40" y1="6" x2="36" y2="2" stroke={c.trim} strokeWidth="2" strokeLinecap="round"/>
-        <line x1="40" y1="6" x2="44" y2="2" stroke={c.trim} strokeWidth="2" strokeLinecap="round"/>
-        <circle cx="40" cy="-1" r="6" fill={c.trim} opacity=".25"/>
-        <circle cx="40" cy="-1" r="4.5" fill={c.trim} opacity=".9"/>
-        <circle cx="38.5" cy="-2.5" r="1.8" fill="#fff" opacity=".45"/>
-      </g>);
-      case"bow":return(<g>
-        <line x1="12" y1="28" x2="4" y2="31" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
-        <line x1="4" y1="31" x2="2" y2="42" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
-        <path d="M2,20 Q-4,31 2,42" stroke="#8a5a28" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
-        <path d="M2,20 Q4,22 5,25" stroke="#8a5a28" strokeWidth="3" fill="none" strokeLinecap="round"/>
-        <path d="M2,42 Q4,40 5,37" stroke="#8a5a28" strokeWidth="3" fill="none" strokeLinecap="round"/>
-        <line x1="5" y1="25" x2="5" y2="37" stroke="#e8d5a3" strokeWidth="1.5" opacity=".9"/>
-        <line x1="36" y1="28" x2="43" y2="32" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
-        <line x1="43" y1="32" x2="46" y2="40" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
-        <line x1="5" y1="31" x2="46" y2="31" stroke="#9a6a30" strokeWidth="2" strokeLinecap="round"/>
-        <polygon points="5,31 10,29 9.5,31 10,33" fill="#cc3322"/>
-        <polygon points="46,31 42,29 42.5,31 42,33" fill="#ccdde8"/>
-      </g>);
-      case"axe":return(<g>
-        <line x1="36" y1="28" x2="44" y2="40" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
-        <line x1="44" y1="40" x2="47" y2="53" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
-        <ellipse cx="47" cy="54" rx="3.5" ry="3" fill={c.trim}/>
-        <line x1="47" y1="53" x2="46" y2="76" stroke="#7a4a22" strokeWidth="3.5" strokeLinecap="round"/>
-        <path d="M43,55 Q50,48 53,55 Q53,64 49,67 Q51,61 49,57 Q46,56 43,57Z" fill="#7a8a9a"/>
-        <path d="M53,55 Q53,64 49,67" stroke="#ccdde8" strokeWidth="2" fill="none" strokeLinecap="round"/>
-        <polygon points="42,54 43,54 44,60 43,67 42,67 40,60" fill="#4a5a68"/>
-      </g>);
-      case"spear":return(<g>
-        <line x1="36" y1="28" x2="44" y2="20" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
-        <line x1="44" y1="20" x2="47" y2="11" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
-        <ellipse cx="47" cy="10" rx="3.5" ry="3" fill={c.trim}/>
-        <line x1="47" y1="9" x2="28" y2="82" stroke="#7a4a22" strokeWidth="3" strokeLinecap="round"/>
-        <polygon points="47,9 45,5 50,2 53,8 50,12" fill="#ccdde8"/>
-        <line x1="47" y1="9" x2="50" y2="2" stroke="#eef5ff" strokeWidth="1.2" opacity=".6" strokeLinecap="round"/>
-        <line x1="45" y1="12" x2="40" y2="16" stroke="#9aaabb" strokeWidth="2.5" strokeLinecap="round"/>
-      </g>);
-      case"rpg":return(<g>
-        <line x1="36" y1="28" x2="43" y2="22" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
-        <line x1="43" y1="22" x2="48" y2="14" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
-        <line x1="12" y1="28" x2="8" y2="24" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
-        <line x1="8" y1="24" x2="5" y2="18" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
-        <rect x="4" y="11" width="46" height="8" rx="4" fill="#44556a"/>
-        <rect x="4" y="11" width="46" height="4" rx="3" fill="#5a6e84" opacity=".9"/>
-        <line x1="5" y1="12.5" x2="48" y2="12.5" stroke="#7799bb" strokeWidth="1.2" strokeLinecap="round" opacity=".5"/>
-        <polygon points="50,11 58,15 50,19" fill="#dd3311"/>
-        <path d="M4,11 Q1,15 4,19" fill="#334455"/>
-        <rect x="20" y="19" width="10" height="8" rx="1.5" fill="#334455"/>
-      </g>);
-      case"wand":return(<g>
-        <line x1="36" y1="28" x2="46" y2="22" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
-        <line x1="46" y1="22" x2="51" y2="15" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
-        <ellipse cx="51" cy="14" rx="3" ry="2.5" fill={c.trim}/>
-        <line x1="51" y1="13" x2="39" y2="36" stroke="#5522aa" strokeWidth="3" strokeLinecap="round"/>
-        <polygon points="39,36 37,34 39,30 43,32 42,36" fill="#cc88ff"/>
-        <circle cx="40" cy="32" r="3.5" fill="#aa44ff" opacity=".25"/>
-        <circle cx="40" cy="32" r="1.4" fill="#fff" opacity=".65"/>
-        <line x1="40" y1="28" x2="40" y2="25" stroke="#ee99ff" strokeWidth="1.2" strokeLinecap="round" opacity=".8"/>
-        <line x1="43" y1="29.5" x2="45" y2="27.5" stroke="#ee99ff" strokeWidth="1.2" strokeLinecap="round" opacity=".7"/>
-      </g>);
-      case"boots":return(<g>
-        <line x1="36" y1="28" x2="44" y2="38" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
-        <line x1="44" y1="38" x2="43" y2="50" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
-        <ellipse cx="43" cy="51" rx="4" ry="3.5" fill={c.trim}/>
-      </g>);
-      default:return(<g>
-        <line x1="36" y1="28" x2="44" y2="40" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
-        <line x1="44" y1="40" x2="43" y2="52" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
-        <ellipse cx="43" cy="53" rx="3.5" ry="3" fill={c.trim}/>
-      </g>);
-    }
-  };
-
-  const LeftArm = () => {
-    if(pw==="daggers"||pw==="bow"||pw==="rpg") return null;
-    return(<g>
-      <line x1="12" y1="28" x2="4" y2="40" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
-      <line x1="4" y1="40" x2="5" y2="52" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
-      <ellipse cx="5" cy="53" rx="3.5" ry="3" fill={c.trim}/>
-    </g>);
-  };
-
+  const sw = displayW, sh = displayH;
   return (
-    <div style={{position:"relative",width:56*scale,height:86*scale,display:"inline-block"}}>
-      {/* Orbiting weapons */}
-      {orbitWeapons.map((wid,i)=>{
-        const period = 4 + i*0.8;
-        const delay  = -(period * i / Math.max(orbitWeapons.length,1));
-        return (
-          <div key={wid} style={{
-            position:"absolute", left:"50%", top:"42%",
-            width:0, height:0, pointerEvents:"none",
-            "--r":`${Math.round(46*scale)}px`,
-            animation:`weaponOrbit ${period}s linear infinite`,
-            animationDelay:`${delay}s`,
-          }}>
-            <div style={{
-              position:"absolute", transform:"translate(-12px,-12px)",
-              animation:"weaponBob 2s ease-in-out infinite",
-              filter:`drop-shadow(0 0 6px ${c.trim}aa)`,
-            }}>
-              <Icon type={wid} size={Math.round(22*scale)}/>
-            </div>
-          </div>
-        );
-      })}
-      <svg width={56*scale} height={86*scale} viewBox="0 0 56 86" style={{display:"block",overflow:"visible"}}>
-        {/* ── Shadow ── */}
-        <ellipse cx="28" cy="84" rx="16" ry="3" fill="#000" opacity=".25"/>
-
-        {/* ── Legs ── */}
-        {/* Left leg */}
-        <line x1="22" y1="52" x2="19" y2="67" stroke={c.body} strokeWidth="10" strokeLinecap="round"/>
-        <line x1="19" y1="67" x2="17" y2="80" stroke={c.body} strokeWidth="9" strokeLinecap="round"/>
-        {/* Left greave highlight */}
-        <line x1="20" y1="67" x2="18" y2="80" stroke={c.trim} strokeWidth="1.2" strokeLinecap="round" opacity=".4"/>
-        {/* Left boot */}
-        <rect x="10" y="78" width="15" height="6" rx="2.5" fill="#3a2818"/>
-        <rect x="10" y="78" width="15" height="3"  rx="2"   fill="#5a3a20" opacity=".85"/>
-        <rect x="9"  y="82" width="16" height="3"  rx="1.5" fill="#2a1810"/>
-        {/* Right leg */}
-        <line x1="34" y1="52" x2="37" y2="67" stroke={c.body} strokeWidth="10" strokeLinecap="round"/>
-        <line x1="37" y1="67" x2="39" y2="80" stroke={c.body} strokeWidth="9" strokeLinecap="round"/>
-        <line x1="36" y1="67" x2="38" y2="80" stroke={c.trim} strokeWidth="1.2" strokeLinecap="round" opacity=".4"/>
-        {/* Right boot */}
-        <rect x="31" y="78" width="15" height="6" rx="2.5" fill="#3a2818"/>
-        <rect x="31" y="78" width="15" height="3"  rx="2"   fill="#5a3a20" opacity=".85"/>
-        <rect x="30" y="82" width="16" height="3"  rx="1.5" fill="#2a1810"/>
-        {/* Knee caps */}
-        <circle cx="19" cy="67" r="4" fill={c.trim} opacity=".55"/>
-        <circle cx="37" cy="67" r="4" fill={c.trim} opacity=".55"/>
-
-        {/* ── Left arm ── */}
-        <LeftArm/>
-
-        {/* ── Torso ── */}
-        {/* Waist / hips */}
-        <ellipse cx="28" cy="52" rx="14" ry="5" fill={c.body} opacity=".9" style={{animation:"heroBreath 3s ease-in-out infinite"}}/>
-        {/* Belt */}
-        <rect x="14" y="49" width="28" height="5" rx="1.5" fill={c.trim} opacity=".75"/>
-        <rect x="25" y="49" width="6"  height="5" rx="1"   fill={c.trim}/>
-        <circle cx="28" cy="51.5" r="2.5" fill="#ffeeaa"/>
-        {/* Chest — broad armored plate */}
-        <rect x="12" y="26" width="32" height="26" rx="4" fill={c.body}/>
-        {/* Chest highlight / bevel */}
-        <rect x="14" y="27" width="28" height="6" rx="3" fill={c.body} opacity=".7"/>
-        <line x1="14" y1="29" x2="42" y2="29" stroke={c.trim} strokeWidth="1" opacity=".3"/>
-        {/* Center line */}
-        <line x1="28" y1="27" x2="28" y2="49" stroke={c.trim} strokeWidth="1.2" opacity=".3"/>
-        {/* Trim arcs */}
-        <path d="M16,32 Q28,38 40,32" stroke={c.trim} strokeWidth="1.5" fill="none" opacity=".5"/>
-        <path d="M16,41 Q28,47 40,41" stroke={c.trim} strokeWidth="1.2" fill="none" opacity=".35"/>
-        {/* Pauldrons */}
-        <ellipse cx="11" cy="28" rx="6"   ry="5"   fill={c.body} stroke={c.trim} strokeWidth="1"/>
-        <ellipse cx="45" cy="28" rx="6"   ry="5"   fill={c.body} stroke={c.trim} strokeWidth="1"/>
-        <line x1="7"  y1="27" x2="15" y2="27" stroke={c.trim} strokeWidth=".8" opacity=".5"/>
-        <line x1="41" y1="27" x2="49" y2="27" stroke={c.trim} strokeWidth=".8" opacity=".5"/>
-
-        {/* ── Right arm + weapon ── */}
-        <WeaponRight/>
-
-        {/* ── Neck ── */}
-        <rect x="24" y="21" width="8" height="7" rx="2.5" fill={SKIN}/>
-        {/* Gorget / neck guard */}
-        <rect x="22" y="24" width="12" height="4" rx="1.5" fill={c.body} opacity=".7"/>
-
-        {/* ── Head ── */}
-        {/* Helmet shell */}
-        <ellipse cx="28" cy="11" rx="13" ry="7" fill={c.body}/>
-        {/* Cheek guards */}
-        <rect x="15" y="13" width="5" height="7" rx="2" fill={c.body} opacity=".9"/>
-        <rect x="36" y="13" width="5" height="7" rx="2" fill={c.body} opacity=".9"/>
-        {/* Helmet brow band */}
-        <rect x="15" y="14" width="26" height="3" rx="1.5" fill={c.trim} opacity=".85"/>
-        {/* Face */}
-        <ellipse cx="28" cy="17" rx="11" ry="10" fill={SKIN}/>
-        {/* Eye whites */}
-        <ellipse cx="23.5" cy="15" rx="2.5" ry="2.2" fill="#fff"/>
-        <ellipse cx="32.5" cy="15" rx="2.5" ry="2.2" fill="#fff"/>
-        {/* Pupils */}
-        <circle cx="23.5" cy="15.3" r="1.5" fill="#1a1008"/>
-        <circle cx="32.5" cy="15.3" r="1.5" fill="#1a1008"/>
-        {/* Catchlights */}
-        <circle cx="24"   cy="14.7" r=".6"  fill="#fff" opacity=".75"/>
-        <circle cx="33"   cy="14.7" r=".6"  fill="#fff" opacity=".75"/>
-        {/* Eyebrows */}
-        <path d="M21,12.8 Q23.5,12 26,12.8" stroke="#3a1a08" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
-        <path d="M30,12.8 Q32.5,12 35,12.8" stroke="#3a1a08" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
-        {/* Nose */}
-        <path d="M27,17 Q26,19 27.5,19.5 Q29,19 28,17" stroke="#b8904a" strokeWidth=".8" fill="none" strokeLinecap="round"/>
-        {/* Mouth */}
-        <path d="M25,22 Q28,24 31,22" stroke="#8a4a28" strokeWidth="1.1" fill="none" strokeLinecap="round"/>
-        {/* Nasal guard */}
-        <rect x="27" y="11" width="2.5" height="7" rx="1.2" fill={c.body} opacity=".6"/>
-        {/* Visor slits */}
-        <line x1="16" y1="16" x2="22" y2="16" stroke={c.trim} strokeWidth=".7" opacity=".45"/>
-        <line x1="34" y1="16" x2="40" y2="16" stroke={c.trim} strokeWidth=".7" opacity=".45"/>
-        {/* Helmet crest / plume */}
-        <rect x="26" y="4" width="4" height="7" rx="2" fill={c.trim} opacity=".7"/>
-      </svg>
-    </div>
+    <svg width={sw} height={sh} viewBox="0 0 48 72" style={{display:"block",overflow:"visible"}}>
+      {/* Body */}
+      <ellipse cx="24" cy="45" rx="13" ry="14" fill={c.body}/>
+      <ellipse cx="24" cy="43" rx="11" ry="11" fill={c.trim} opacity=".5"/>
+      {/* Head */}
+      <circle cx="24" cy="22" r="13" fill={c.body}/>
+      <circle cx="24" cy="20" r="10" fill={c.trim} opacity=".4"/>
+      {/* Eyes */}
+      <circle cx="20" cy="21" r="2.5" fill="#fff"/>
+      <circle cx="28" cy="21" r="2.5" fill="#fff"/>
+      <circle cx="20.8" cy="21.5" r="1.3" fill="#222"/>
+      <circle cx="28.8" cy="21.5" r="1.3" fill="#222"/>
+      {/* Legs */}
+      <line x1="18" y1="57" x2="14" y2="68" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
+      <line x1="30" y1="57" x2="34" y2="68" stroke={c.body} strokeWidth="7" strokeLinecap="round"/>
+      {/* Arms */}
+      <line x1="12" y1="40" x2="4" y2="52" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
+      <line x1="36" y1="40" x2="44" y2="52" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
+    </svg>
   );
 }
 
-function EnemySpriteSmall({ id, scale=1 }) {
-  const e = ENEMIES[id] || ENEMIES.goblin;
-
-  if (id==="goblin") return (
-    <svg width={64*scale} height={78*scale} viewBox="0 0 64 78" style={{display:"block",overflow:"visible"}}>
-      <ellipse cx="32" cy="76" rx="20" ry="3.5" fill="#000" opacity=".2"/>
-      {/* Body */}
-      <g style={{animation:"goblinBob 1.3s ease-in-out infinite",transformOrigin:"32px 50px"}}>
-        {/* Legs */}
-        <line x1="25" y1="58" x2="20" y2="70" stroke="#1e6a1e" strokeWidth="8" strokeLinecap="round"/>
-        <line x1="39" y1="58" x2="44" y2="70" stroke="#1e6a1e" strokeWidth="8" strokeLinecap="round"/>
-        {/* Feet with claws */}
-        <ellipse cx="20" cy="72" rx="6" ry="4" fill="#1a5a1a"/>
-        <ellipse cx="44" cy="72" rx="6" ry="4" fill="#1a5a1a"/>
-        {[-3,0,3].map((dx,i)=><line key={i} x1={20+dx} y1="75" x2={19+dx} y2="78" stroke="#0a2a0a" strokeWidth="1.5" strokeLinecap="round"/>)}
-        {[-3,0,3].map((dx,i)=><line key={i} x1={44+dx} y1="75" x2={45+dx} y2="78" stroke="#0a2a0a" strokeWidth="1.5" strokeLinecap="round"/>)}
-        {/* Torso */}
-        <ellipse cx="32" cy="48" rx="17" ry="16" fill="#1e6a1e"/>
-        <ellipse cx="32" cy="46" rx="14" ry="13" fill="#2e8a2e"/>
-        {/* Leather chest straps */}
-        <path d="M20,40 L44,40 L44,55 L20,55 Z" fill="none" stroke="#5a3a18" strokeWidth="1.5" opacity=".5"/>
-        <path d="M20,42 L44,56" stroke="#5a3a18" strokeWidth="1.5" opacity=".4" strokeLinecap="round"/>
-        <path d="M44,42 L20,56" stroke="#5a3a18" strokeWidth="1.5" opacity=".4" strokeLinecap="round"/>
-        {/* Loincloth */}
-        <path d="M22,56 Q32,62 42,56 L40,68 Q32,72 24,68 Z" fill="#5a3a18"/>
-        <rect x="20" y="54" width="24" height="4" rx="2" fill="#3a2208"/>
-        <circle cx="32" cy="56" r="2" fill="#cc9922"/>
-        {/* Arms */}
-        <line x1="17" y1="42" x2="8"  y2="52" stroke="#2a8a2a" strokeWidth="7" strokeLinecap="round"/>
-        <line x1="8"  y1="52" x2="4"  y2="62" stroke="#2a8a2a" strokeWidth="6" strokeLinecap="round"/>
-        <line x1="47" y1="42" x2="56" y2="50" stroke="#2a8a2a" strokeWidth="7" strokeLinecap="round"/>
-        <line x1="56" y1="50" x2="60" y2="60" stroke="#2a8a2a" strokeWidth="6" strokeLinecap="round"/>
-        {/* Hands / claws */}
-        <ellipse cx="4"  cy="63" rx="4" ry="3.5" fill="#1e6a1e"/>
-        <ellipse cx="60" cy="61" rx="4" ry="3.5" fill="#1e6a1e"/>
-        {[-2,0,2].map((dx,i)=><line key={i} x1={4+dx} y1="66" x2={3+dx} y2="70" stroke="#0a2a0a" strokeWidth="1.3" strokeLinecap="round"/>)}
-        {/* Club */}
-        <line x1="60" y1="60" x2="64" y2="46" stroke="#5a3a1a" strokeWidth="4" strokeLinecap="round"/>
-        <ellipse cx="64.5" cy="43" rx="5" ry="3.5" fill="#4a3010" stroke="#2a1a08" strokeWidth="1"/>
-        {[-2,0,2].map((dy,i)=><circle key={i} cx="66" cy={42+dy*1.5} r=".8" fill="#2a1808"/>)}
-      </g>
-      {/* Head */}
-      <g style={{animation:"goblinBob 1.3s ease-in-out infinite .08s",transformOrigin:"32px 20px"}}>
-        {/* Big bat ears */}
-        <path d="M14,22 L4,10 L16,18" fill="#3a9a3a"/>
-        <path d="M14,22 L6,12 L16,19" fill="#55bb55" opacity=".55"/>
-        <path d="M50,22 L60,10 L48,18" fill="#3a9a3a"/>
-        <path d="M50,22 L58,12 L48,19" fill="#55bb55" opacity=".55"/>
-        {/* Skull */}
-        <circle cx="32" cy="22" r="18" fill="#2a8a2a"/>
-        <circle cx="32" cy="20" r="15" fill="#3aaa3a"/>
-        {/* Forehead bumps */}
-        <circle cx="26" cy="12" r="2.5" fill="#1e6a1e"/>
-        <circle cx="38" cy="12" r="2"   fill="#1e6a1e"/>
-        {/* Heavy brow */}
-        <path d="M14,18 Q32,12 50,18" stroke="#1a5a1a" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
-        {/* Eyes — big amber with slit pupils */}
-        <circle cx="23" cy="21" r="6" fill="#ffaa00"/>
-        <circle cx="41" cy="21" r="6" fill="#ffaa00"/>
-        <circle cx="23" cy="21" r="4.5" fill="#dd8800"/>
-        <circle cx="41" cy="21" r="4.5" fill="#dd8800"/>
-        <g style={{animation:"goblinEye 1.8s ease-in-out infinite",transformOrigin:"23px 21px"}}>
-          <ellipse cx="23" cy="21" rx="1.5" ry="3" fill="#111"/>
-          <circle  cx="23.8" cy="19.5" r=".9"  fill="#fff" opacity=".6"/>
-        </g>
-        <g style={{animation:"goblinEye 1.8s ease-in-out infinite .25s",transformOrigin:"41px 21px"}}>
-          <ellipse cx="41" cy="21" rx="1.5" ry="3" fill="#111"/>
-          <circle  cx="41.8" cy="19.5" r=".9"  fill="#fff" opacity=".6"/>
-        </g>
-        {/* Nose — broad, flat */}
-        <ellipse cx="32" cy="28" rx="4"   ry="3"   fill="#1e6a1e"/>
-        <circle  cx="29.5" cy="28" r="1.2" fill="#111"/>
-        <circle  cx="34.5" cy="28" r="1.2" fill="#111"/>
-        {/* Jagged mouth */}
-        <path d="M20,34 Q32,40 44,34" stroke="#111" strokeWidth="2" fill="none" strokeLinecap="round"/>
-        {[22,26,30,34,38,42].map(x=><rect key={x} x={x-1.2} y="33" width="2.5" height="4" rx=".8" fill="#ffffee"/>)}
-        <polygon points="24,35 22,40 26,37" fill="#ffffee"/>
-        <polygon points="40,35 38,37 42,40" fill="#ffffee"/>
-      </g>
-    </svg>
-  );
-
-  if (id==="skeleton") return (
-    <svg width={56*scale} height={88*scale} viewBox="0 0 56 88" style={{display:"block",overflow:"visible"}}>
-      <ellipse cx="28" cy="86" rx="18" ry="3" fill="#000" opacity=".2"/>
-      <g style={{animation:"skelRattle 0.85s ease-in-out infinite",transformOrigin:"28px 48px"}}>
-        {/* Spine */}
-        <line x1="28" y1="26" x2="28" y2="62" stroke="#d4d4aa" strokeWidth="4" strokeLinecap="round"/>
-        {[30,36,42,48,54].map(y=>(
-          <g key={y}>
-            <path d={`M28,${y} Q14,${y+3} 12,${y+8}`} stroke="#d4d4aa" strokeWidth="3" fill="none" strokeLinecap="round"/>
-            <path d={`M28,${y} Q42,${y+3} 44,${y+8}`} stroke="#d4d4aa" strokeWidth="3" fill="none" strokeLinecap="round"/>
-          </g>
-        ))}
-        {/* Pelvis */}
-        <path d="M16,62 Q28,68 40,62 L38,70 Q28,74 18,70 Z" fill="#c4c4a0"/>
-        <ellipse cx="28" cy="63" rx="12" ry="5" fill="#c4c4a0"/>
-        <ellipse cx="28" cy="63" rx="8"  ry="3" fill="#111"/>
-        {/* Legs */}
-        <line x1="22" y1="64" x2="18" y2="78" stroke="#d4d4aa" strokeWidth="5" strokeLinecap="round"/>
-        <line x1="18" y1="78" x2="15" y2="88" stroke="#d4d4aa" strokeWidth="4.5" strokeLinecap="round"/>
-        <ellipse cx="14" cy="88" rx="7" ry="2.5" fill="#c4c4a0"/>
-        <circle  cx="18" cy="78" r="4" fill="#b4b494"/>
-        <line x1="34" y1="64" x2="38" y2="78" stroke="#d4d4aa" strokeWidth="5" strokeLinecap="round"/>
-        <line x1="38" y1="78" x2="41" y2="88" stroke="#d4d4aa" strokeWidth="4.5" strokeLinecap="round"/>
-        <ellipse cx="42" cy="88" rx="7" ry="2.5" fill="#c4c4a0"/>
-        <circle  cx="38" cy="78" r="4" fill="#b4b494"/>
-        {/* Left arm */}
-        <line x1="16" y1="30" x2="8"  y2="44" stroke="#d4d4aa" strokeWidth="3.5" strokeLinecap="round"/>
-        <line x1="8"  y1="44" x2="4"  y2="58" stroke="#d4d4aa" strokeWidth="3" strokeLinecap="round"/>
-        <circle cx="8" cy="44" r="3.5" fill="#b4b494"/>
-        <ellipse cx="4" cy="59" rx="3.5" ry="3" fill="#c4c4a0"/>
-        {/* Right arm with sword */}
-        <g style={{animation:"skelSwing 2s ease-in-out infinite",transformOrigin:"40px 30px"}}>
-          <line x1="40" y1="30" x2="48" y2="44" stroke="#d4d4aa" strokeWidth="3.5" strokeLinecap="round"/>
-          <line x1="48" y1="44" x2="52" y2="58" stroke="#d4d4aa" strokeWidth="3" strokeLinecap="round"/>
-          <circle cx="48" cy="44" r="3.5" fill="#b4b494"/>
-          {/* Rusty sword */}
-          <polygon points="52,58 55,61 42,74 39,71" fill="#8a7a5a"/>
-          <line x1="54" y1="59" x2="41" y2="73" stroke="#aa9a6a" strokeWidth="1" opacity=".55" strokeLinecap="round"/>
-          <line x1="39" y1="68" x2="45" y2="74" stroke="#bb8822" strokeWidth="3" strokeLinecap="round"/>
-          <line x1="42" y1="72" x2="38" y2="77" stroke="#8a6a3a" strokeWidth="2.2" strokeLinecap="round"/>
-          <circle cx="37" cy="78" r="2" fill="#aa8822"/>
-        </g>
-        {/* Collar bones */}
-        <path d="M16,26 Q28,30 40,26" stroke="#d4d4aa" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-      </g>
-      {/* Head */}
-      <g style={{animation:"skelRattle 0.85s ease-in-out infinite .12s",transformOrigin:"28px 13px"}}>
-        <circle cx="28" cy="13" r="13" fill="#c4c4a0" stroke="#a4a488" strokeWidth="1"/>
-        <circle cx="28" cy="12" r="11" fill="#d8d8b8"/>
-        {/* Cranium brow shelf */}
-        <path d="M15,15 Q28,9 41,15" stroke="#c4c4a0" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-        {/* Cracks */}
-        <line x1="28" y1="4" x2="31" y2="12" stroke="#aaa" strokeWidth=".7" opacity=".5"/>
-        <line x1="20" y1="6" x2="23" y2="12" stroke="#aaa" strokeWidth=".6" opacity=".4"/>
-        {/* Eye sockets */}
-        <ellipse cx="21" cy="13" rx="5.5" ry="5" fill="#0a0a0a"/>
-        <ellipse cx="35" cy="13" rx="5.5" ry="5" fill="#0a0a0a"/>
-        {/* Hellfire glow */}
-        <circle cx="21" cy="13" r="3"   fill="#ff2200" opacity=".8"/>
-        <circle cx="35" cy="13" r="3"   fill="#ff2200" opacity=".8"/>
-        <circle cx="21" cy="13" r="1.4" fill="#ffaa00"/>
-        <circle cx="35" cy="13" r="1.4" fill="#ffaa00"/>
-        <circle cx="20.5" cy="12.2" r=".5" fill="#fff" opacity=".7"/>
-        <circle cx="34.5" cy="12.2" r=".5" fill="#fff" opacity=".7"/>
-        {/* Nose cavity */}
-        <path d="M26,19 L28,23 L30,19" fill="#111"/>
-        {/* Jaw */}
-        <g style={{animation:"skelJaw 1.1s ease-in-out infinite",transformOrigin:"28px 26px"}}>
-          <path d="M16,26 L20,31 L36,31 L40,26" fill="#c4c4a0" stroke="#a4a488" strokeWidth=".8"/>
-          {[19,23,27,31,35].map(x=><rect key={x} x={x} y="27" width="3" height="4" rx="1" fill="#eeeedd"/>)}
-        </g>
-      </g>
-    </svg>
-  );
-
-  if (id==="golem") return (
-    <svg width={84*scale} height={88*scale} viewBox="0 0 84 88" style={{display:"block",overflow:"visible"}}>
-      <ellipse cx="42" cy="86" rx="30" ry="5" fill="#000" opacity=".25"/>
-      <g style={{animation:"golemRumble 2s ease-in-out infinite",transformOrigin:"42px 44px"}}>
-        {/* Legs — thick stone pillars */}
-        <rect x="14" y="64" width="22" height="22" rx="4" fill="#5a3a1a"/>
-        <rect x="48" y="64" width="22" height="22" rx="4" fill="#5a3a1a"/>
-        <rect x="14" y="64" width="22" height="9"  rx="3" fill="#7a5a3a"/>
-        <rect x="48" y="64" width="22" height="9"  rx="3" fill="#7a5a3a"/>
-        {/* Stone crack lines on legs */}
-        <line x1="22" y1="66" x2="20" y2="76" stroke="#3a2810" strokeWidth="1" opacity=".6"/>
-        <line x1="58" y1="66" x2="62" y2="76" stroke="#3a2810" strokeWidth="1" opacity=".6"/>
-        {/* Torso — massive block */}
-        <rect x="4"  y="28" width="76" height="40" rx="6" fill="#5a3a1a"/>
-        <rect x="7"  y="31" width="70" height="35" rx="5" fill="#7a5a3a"/>
-        <rect x="10" y="33" width="64" height="18" rx="4" fill="#9a7a5a"/>
-        {/* Torso cracks */}
-        <path d="M30,36 L38,50 L44,44 L50,56" stroke="#3a2810" strokeWidth="2" fill="none" opacity=".65"/>
-        <path d="M52,38 L58,48" stroke="#3a2810" strokeWidth="1.5" fill="none" opacity=".5"/>
-        <line x1="7"  y1="48" x2="77" y2="48" stroke="#3a2810" strokeWidth="1.2" opacity=".4"/>
-        {/* Glowing magma core */}
-        <ellipse cx="42" cy="48" rx="12" ry="9" fill="#ff5500" opacity=".18"/>
-        <ellipse cx="42" cy="48" rx="8"  ry="6" fill="#ff7700" opacity=".35"/>
-        <ellipse cx="42" cy="48" rx="4"  ry="3" fill="#ffcc00" opacity=".7"/>
-        <ellipse cx="42" cy="48" rx="2"  ry="1.5" fill="#fff" opacity=".5"/>
-        {/* Arms — massive rectangular */}
-        <g style={{animation:"golemFist 2.4s ease-in-out infinite",transformOrigin:"4px 42px"}}>
-          <rect x="-8"  y="24" width="18" height="46" rx="6" fill="#5a3a1a"/>
-          <rect x="-6"  y="26" width="14" height="42" rx="5" fill="#7a5a3a"/>
-          <rect x="-8"  y="60" width="18" height="14" rx="4" fill="#4a2a10"/>
-          <line x1="-4" y1="30" x2="-4" y2="58" stroke="#3a2810" strokeWidth="1" opacity=".5"/>
-        </g>
-        <g style={{animation:"golemFist 2.4s ease-in-out infinite .5s",transformOrigin:"80px 42px"}}>
-          <rect x="74" y="24" width="18" height="46" rx="6" fill="#5a3a1a"/>
-          <rect x="76" y="26" width="14" height="42" rx="5" fill="#7a5a3a"/>
-          <rect x="74" y="60" width="18" height="14" rx="4" fill="#4a2a10"/>
-          <line x1="88" y1="30" x2="88" y2="58" stroke="#3a2810" strokeWidth="1" opacity=".5"/>
-        </g>
-        {/* Stone texture horizontals */}
-        <line x1="7"  y1="58" x2="77" y2="58" stroke="#3a2810" strokeWidth="1" opacity=".35"/>
-        {/* Head */}
-        <rect x="16" y="4"  width="52" height="28" rx="6" fill="#7a5a3a"/>
-        <rect x="18" y="6"  width="48" height="24" rx="5" fill="#8a6a4a"/>
-        <rect x="20" y="7"  width="44" height="12" rx="4" fill="#a08060"/>
-        {/* Head cracks */}
-        <line x1="42" y1="7" x2="44" y2="16" stroke="#4a3020" strokeWidth="1.2" opacity=".6"/>
-        {/* Eye sockets */}
-        <rect x="20" y="10" width="14" height="10" rx="3" fill="#111"/>
-        <rect x="50" y="10" width="14" height="10" rx="3" fill="#111"/>
-        <ellipse cx="27" cy="15" rx="5"   ry="4"   fill="#ff5500" opacity=".9"/>
-        <ellipse cx="57" cy="15" rx="5"   ry="4"   fill="#ff5500" opacity=".9"/>
-        <ellipse cx="27" cy="15" rx="3"   ry="2.5" fill="#ffbb00" opacity=".85"/>
-        <ellipse cx="57" cy="15" rx="3"   ry="2.5" fill="#ffbb00" opacity=".85"/>
-        <circle  cx="27" cy="15" r="1.2"  fill="#fff" opacity=".5"/>
-        <circle  cx="57" cy="15" r="1.2"  fill="#fff" opacity=".5"/>
-        {/* Mouth grille */}
-        <rect x="22" y="25" width="40" height="6" rx="2.5" fill="#3a2810"/>
-        {[25,30,35,40,45,50,55].map(x=><rect key={x} x={x} y="25.5" width="2.5" height="5" rx=".8" fill="#4a3018" opacity=".75"/>)}
-        {/* Lava seeping from mouth */}
-        <ellipse cx="42" cy="31" rx="6" ry="1.5" fill="#ff6600" opacity=".4"/>
-      </g>
-    </svg>
-  );
-
-  if (id==="wraith") return (
-    <svg width={64*scale} height={96*scale} viewBox="0 0 64 96" style={{display:"block",overflow:"visible"}}>
-      <g style={{animation:"wraithDrift 2.2s ease-in-out infinite",transformOrigin:"32px 48px"}}>
-        {/* Wispy tails — 3 tendrils */}
-        <path d="M16,60 Q8,72 12,88 Q18,80 22,88 Q28,78 32,88 Q36,78 42,88 Q46,80 52,88 Q56,72 48,60"
-          fill="#1a1a88" opacity=".5"/>
-        <path d="M20,64 Q16,76 20,86" stroke="#3344cc" strokeWidth="2" fill="none" opacity=".4" strokeLinecap="round"/>
-        <path d="M44,64 Q48,76 44,86" stroke="#3344cc" strokeWidth="2" fill="none" opacity=".4" strokeLinecap="round"/>
-        {/* Body layers */}
-        <ellipse cx="32" cy="38" rx="26" ry="32" fill="#12126a" opacity=".45"/>
-        <ellipse cx="32" cy="34" rx="22" ry="27" fill="#1e1e99" opacity=".55"/>
-        <ellipse cx="32" cy="30" rx="18" ry="22" fill="#2a2aaa" opacity=".65"/>
-        {/* Cloak hood */}
-        <path d="M8,22 Q14,8 32,6 Q50,8 56,22 L54,36 Q44,28 32,28 Q20,28 10,36 Z" fill="#0d0d44" opacity=".9"/>
-        <path d="M10,24 Q18,12 32,10 Q46,12 54,24" stroke="#4455dd" strokeWidth="2" fill="none" opacity=".55"/>
-        {/* Ethereal arms */}
-        <g style={{animation:"wraithWail 2.6s ease-in-out infinite",transformOrigin:"10px 44px"}}>
-          <path d="M10,36 Q2,44 4,54 Q8,50 10,56 Q14,50 14,44 Z" fill="#2233bb" opacity=".75"/>
-          <path d="M4,54 Q2,60 5,64"  stroke="#5566cc" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity=".7"/>
-          <path d="M10,56 Q9,62 12,65" stroke="#5566cc" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity=".7"/>
-          <path d="M14,52 Q14,58 17,62" stroke="#5566cc" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity=".6"/>
-        </g>
-        <g style={{animation:"wraithWail 2.6s ease-in-out infinite .4s",transformOrigin:"54px 44px"}}>
-          <path d="M54,36 Q62,44 60,54 Q56,50 54,56 Q50,50 50,44 Z" fill="#2233bb" opacity=".75"/>
-          <path d="M60,54 Q62,60 59,64"  stroke="#5566cc" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity=".7"/>
-          <path d="M54,56 Q55,62 52,65" stroke="#5566cc" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity=".7"/>
-          <path d="M50,52 Q50,58 47,62" stroke="#5566cc" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity=".6"/>
-        </g>
-        {/* Face */}
-        <ellipse cx="32" cy="26" rx="14" ry="16" fill="#1a1a88" opacity=".92"/>
-        {/* Piercing eyes */}
-        <ellipse cx="25" cy="23" rx="5"   ry="6.5" fill="#0022aa" opacity=".85"/>
-        <ellipse cx="39" cy="23" rx="5"   ry="6.5" fill="#0022aa" opacity=".85"/>
-        <ellipse cx="25" cy="23" rx="3.5" ry="5"   fill="#22ccff" opacity=".95"/>
-        <ellipse cx="39" cy="23" rx="3.5" ry="5"   fill="#22ccff" opacity=".95"/>
-        <circle  cx="25" cy="23" r="2.5"  fill="#aaeeff"/>
-        <circle  cx="39" cy="23" r="2.5"  fill="#aaeeff"/>
-        <circle  cx="25.8" cy="21.5" r="1.1" fill="#fff" opacity=".85"/>
-        <circle  cx="39.8" cy="21.5" r="1.1" fill="#fff" opacity=".85"/>
-        {/* Wailing mouth */}
-        <ellipse cx="32" cy="34" rx="7"   ry="5.5" fill="#00001a"/>
-        <ellipse cx="32" cy="35" rx="4.5" ry="3.5" fill="#1122aa" opacity=".6"/>
-        {/* Screech lines from mouth */}
-        <line x1="26" y1="38" x2="22" y2="44" stroke="#4455cc" strokeWidth="1" opacity=".4" strokeLinecap="round"/>
-        <line x1="32" y1="40" x2="32" y2="46" stroke="#4455cc" strokeWidth="1" opacity=".4" strokeLinecap="round"/>
-        <line x1="38" y1="38" x2="42" y2="44" stroke="#4455cc" strokeWidth="1" opacity=".4" strokeLinecap="round"/>
-      </g>
-    </svg>
-  );
-
-  if (id==="eye") return (
-    <svg width={80*scale} height={80*scale} viewBox="0 0 80 80" style={{display:"block",overflow:"visible"}}>
-      {/* Outer glow */}
-      <ellipse cx="40" cy="40" rx="38" ry="32" fill="#440066" opacity=".2"/>
-      {/* Long outer tentacles */}
-      <g style={{animation:"eyeTendril 7s linear infinite",transformOrigin:"40px 40px"}}>
-        {[0,36,72,108,144,180,216,252,288,324].map((deg,i)=>{
-          const r=deg*Math.PI/180;
-          return <path key={i}
-            d={`M40,40 Q${40+Math.cos(r)*24},${40+Math.sin(r)*22} ${40+Math.cos(r)*38},${40+Math.sin(r)*34}`}
-            stroke="#990099" strokeWidth={i%2===0?2.5:1.5} fill="none" opacity={i%2===0?.65:.4} strokeLinecap="round"/>;
-        })}
-      </g>
-      {/* Counter-rotating short veins */}
-      <g style={{animation:"eyeTendril 10s linear infinite reverse",transformOrigin:"40px 40px"}}>
-        {[18,54,90,126,162,198,234,270,306,342].map((deg,i)=>{
-          const r=deg*Math.PI/180;
-          return <line key={i} x1="40" y1="40"
-            x2={40+Math.cos(r)*22} y2={40+Math.sin(r)*20}
-            stroke="#cc00cc" strokeWidth="1.2" opacity=".35"/>;
-        })}
-      </g>
-      {/* Eyeball body */}
-      <ellipse cx="40" cy="40" rx="30" ry="24" fill="#1a0030"/>
-      <ellipse cx="40" cy="40" rx="26" ry="20" fill="#550077"/>
-      <ellipse cx="40" cy="40" rx="22" ry="17" fill="#7700aa"/>
-      {/* Iris — pulsing */}
-      <g style={{animation:"eyeIris 1.6s ease-in-out infinite",transformOrigin:"40px 40px"}}>
-        <circle cx="40" cy="40" r="16" fill="#bb00dd"/>
-        <circle cx="40" cy="40" r="12" fill="#dd00ff"/>
-        {/* Iris ring pattern */}
-        {[0,45,90,135,180,225,270,315].map((deg,i)=>{
-          const r=deg*Math.PI/180;
-          return <line key={i} x1="40" y1="40"
-            x2={40+Math.cos(r)*11} y2={40+Math.sin(r)*11}
-            stroke="#ee66ff" strokeWidth=".8" opacity=".4"/>;
-        })}
-      </g>
-      {/* Slit pupil */}
-      <ellipse cx="40" cy="40" rx="4"  ry="9"  fill="#0d000d"/>
-      <ellipse cx="40" cy="40" rx="2"  ry="6"  fill="#220022"/>
-      {/* Highlight cluster */}
-      <circle cx="34" cy="33" r="4"   fill="#ff66ff" opacity=".45"/>
-      <circle cx="34" cy="33" r="2"   fill="#fff"    opacity=".4"/>
-      <circle cx="46" cy="35" r="2"   fill="#fff"    opacity=".2"/>
-      {/* Eyelid folds */}
-      <path d="M10,40 Q24,22 40,22 Q56,22 70,40" stroke="#220033" strokeWidth="4" fill="none" strokeLinecap="round"/>
-      <path d="M10,40 Q24,58 40,58 Q56,58 70,40" stroke="#220033" strokeWidth="4" fill="none" strokeLinecap="round"/>
-      {/* Flesh veins on eyelids */}
-      <path d="M16,38 Q24,32 32,36" stroke="#550055" strokeWidth="1" fill="none" opacity=".5"/>
-      <path d="M48,36 Q56,32 64,38" stroke="#550055" strokeWidth="1" fill="none" opacity=".5"/>
-      {/* Outer glow ring */}
-      <ellipse cx="40" cy="40" rx="30" ry="24" fill="none" stroke="#cc00ff" strokeWidth="1.5" opacity=".35" style={{animation:"eyePulse 2s ease-in-out infinite"}}/>
-    </svg>
-  );
-
+function EnemySpriteSmall({ id, scale=1, sprite=null, attacking=false }) {
   if (id==="dragon") return (
     <svg width={110*scale} height={88*scale} viewBox="0 0 110 88" style={{display:"block",overflow:"visible"}}>
       <ellipse cx="55" cy="86" rx="36" ry="5" fill="#000" opacity=".22"/>
@@ -888,7 +462,20 @@ function EnemySpriteSmall({ id, scale=1 }) {
     </svg>
   );
 
-  return <div style={{fontSize:60*scale,lineHeight:1,filter:`drop-shadow(0 0 12px ${e.color})`}}>{e.emoji}</div>;
+  if (sprite) {
+    const dims = ENEMY_DIMS[id]||{w:80,h:96};
+    const displayW = Math.round(dims.w*scale);
+    const displayH = Math.round(dims.h*scale);
+    const base = `/icons/sprites/${sprite.dir}/${sprite.variant}`;
+    const src = attacking
+      ? `${base}/${sprite.atkFile}`
+      : `${base}/Idle.png`;
+    const frames = attacking ? sprite.atkFrames : sprite.idleFrames;
+    return <AnimatedSprite src={src} numFrames={frames} fps={attacking?12:8} displayW={displayW} displayH={displayH}/>;
+  }
+  // Fallback — invisible placeholder (shouldn't normally reach here for non-dragon)
+  const dims = ENEMY_DIMS[id]||{w:64,h:78};
+  return <div style={{width:dims.w*scale,height:dims.h*scale}}/>;
 }
 
 /* ─── GAME ICONS — SVG replacements for all emoji ────────────── */
@@ -896,257 +483,17 @@ function Icon({ type, size=28, color }) {
   const s=size, c=color;
   switch(type){
     /* ── WEAPONS ── */
-    case"sword":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* main blade — wide tapered steel */}
-        <polygon points="27,1 25,4 5,24 7,26" fill={c||"#dce8f2"}/>
-        <polygon points="27,1 26,2.5 6,25 7,26" fill="#ffffff" opacity=".28"/>
-        {/* fuller groove */}
-        <line x1="24" y1="4" x2="8" y2="24" stroke="#8aadc0" strokeWidth="1.4" strokeLinecap="round" opacity=".55"/>
-        {/* crossguard */}
-        <rect x="1" y="20.5" width="14" height="3.5" rx="1.7" fill={c||"#c8971a"} transform="rotate(-45,8,22.25)"/>
-        <circle cx="3.5" cy="19.5" r="2.2" fill={c||"#f0b622"}/>
-        <circle cx="14.5" cy="25.5" r="2.2" fill={c||"#f0b622"}/>
-        {/* grip */}
-        <line x1="10" y1="24" x2="5" y2="28.5" stroke="#1c0d03" strokeWidth="4.2" strokeLinecap="round"/>
-        <line x1="9.5" y1="23.5" x2="8.2" y2="24.8" stroke="#7a3b10" strokeWidth="1.5" strokeLinecap="round" opacity=".85"/>
-        <line x1="7.8" y1="25.2" x2="6.5" y2="26.5" stroke="#7a3b10" strokeWidth="1.5" strokeLinecap="round" opacity=".85"/>
-        {/* pommel */}
-        <circle cx="4" cy="28" r="2.9" fill={c||"#d4a01a"}/>
-        <circle cx="3" cy="27" r="1.1" fill="#ffe566" opacity=".6"/>
-      </svg>
-    );
-    case"hammer":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* handle */}
-        <line x1="3" y1="28" x2="15" y2="14" stroke={c||"#6b3f16"} strokeWidth="4.5" strokeLinecap="round"/>
-        <line x1="4.5" y1="26" x2="6.5" y2="24" stroke="#a06530" strokeWidth="1.5" strokeLinecap="round" opacity=".7"/>
-        <line x1="7.5" y1="23" x2="9.5" y2="21" stroke="#a06530" strokeWidth="1.5" strokeLinecap="round" opacity=".65"/>
-        <line x1="10.5" y1="20" x2="12.5" y2="18" stroke="#a06530" strokeWidth="1.5" strokeLinecap="round" opacity=".6"/>
-        {/* head — left spike */}
-        <polygon points="12,15 14,12 10,9 8,13" fill={c||"#5a6d7e"}/>
-        <line x1="10" y1="9" x2="8" y2="13" stroke="#c0d4e4" strokeWidth="1" opacity=".5"/>
-        {/* head — main block */}
-        <rect x="12" y="3" width="15" height="12" rx="2.5" fill={c||"#4f6070"}/>
-        <rect x="12.5" y="3.5" width="14" height="5" rx="2" fill={c||"#7090a8"} opacity=".8"/>
-        {/* striking face highlight */}
-        <line x1="26.5" y1="4.5" x2="26.5" y2="14.5" stroke="#c8dde8" strokeWidth="2.8" strokeLinecap="round" opacity=".65"/>
-        {/* rivet details */}
-        <circle cx="16" cy="7" r="1.2" fill="#384858" opacity=".8"/>
-        <circle cx="24" cy="7" r="1.2" fill="#384858" opacity=".8"/>
-        {/* collar band */}
-        <rect x="12" y="11" width="5.5" height="4" rx="1" fill={c||"#38505e"}/>
-      </svg>
-    );
-    case"daggers":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* dagger A — upper-left to lower-right */}
-        <polygon points="3,3 5,1 27,21 25,23" fill={c||"#d0e0ec"}/>
-        <line x1="4" y1="2" x2="26" y2="22" stroke="#fff" strokeWidth="1" opacity=".38"/>
-        <line x1="5" y1="3" x2="25" y2="22" stroke="#7aaabb" strokeWidth="1.3" strokeLinecap="round" opacity=".4"/>
-        {/* guard A */}
-        <line x1="22" y1="17" x2="28" y2="23" stroke={c||"#d4a01a"} strokeWidth="4" strokeLinecap="round"/>
-        <circle cx="21.5" cy="16.5" r="1.8" fill={c||"#eebb22"}/>
-        <circle cx="28" cy="23.5" r="1.8" fill={c||"#eebb22"}/>
-        {/* grip A */}
-        <line x1="25.5" y1="22.5" x2="28" y2="27" stroke="#180a02" strokeWidth="3.5" strokeLinecap="round"/>
-        {/* dagger B — upper-right to lower-left (behind) */}
-        <polygon points="25,3 23,1 1,21 3,23" fill={c||"#bccedd"} opacity=".88"/>
-        <line x1="24" y1="2" x2="2" y2="22" stroke="#fff" strokeWidth="1" opacity=".25"/>
-        {/* guard B */}
-        <line x1="6" y1="17" x2="0" y2="23" stroke={c||"#c49018"} strokeWidth="4" strokeLinecap="round"/>
-        <circle cx="6.5" cy="16.5" r="1.8" fill={c||"#dda822"}/>
-        {/* grip B */}
-        <line x1="2.5" y1="22.5" x2="0" y2="27" stroke="#180a02" strokeWidth="3.5" strokeLinecap="round"/>
-        {/* central clash spark */}
-        <circle cx="14" cy="12" r="3.2" fill="#ffe855" opacity=".5"/>
-        <circle cx="14" cy="12" r="1.6" fill="#ffffff" opacity=".85"/>
-        <line x1="14" y1="12" x2="14" y2="6" stroke="#ffee22" strokeWidth="1.8" strokeLinecap="round" opacity=".85"/>
-        <line x1="14" y1="12" x2="19" y2="7" stroke="#ffcc22" strokeWidth="1.4" strokeLinecap="round" opacity=".7"/>
-        <line x1="14" y1="12" x2="9" y2="7" stroke="#ffcc22" strokeWidth="1.4" strokeLinecap="round" opacity=".7"/>
-      </svg>
-    );
-    case"staff":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* shaft */}
-        <line x1="15" y1="28" x2="12" y2="10" stroke={c||"#5e3412"} strokeWidth="4.5" strokeLinecap="round"/>
-        <line x1="15.5" y1="26" x2="13" y2="12" stroke="#9a6a32" strokeWidth="1.3" strokeLinecap="round" opacity=".45"/>
-        {/* gnarl bands */}
-        <ellipse cx="13.5" cy="20" rx="3" ry="1.2" fill="#3e2208" opacity=".65"/>
-        <ellipse cx="14" cy="15" rx="2.5" ry="1" fill="#3e2208" opacity=".5"/>
-        {/* crown prongs */}
-        <line x1="12" y1="10" x2="5" y2="4" stroke={c||"#7733cc"} strokeWidth="2.8" strokeLinecap="round"/>
-        <line x1="12" y1="9" x2="12" y2="3" stroke={c||"#7733cc"} strokeWidth="2.4" strokeLinecap="round"/>
-        <line x1="12" y1="10" x2="19" y2="5" stroke={c||"#7733cc"} strokeWidth="2.8" strokeLinecap="round"/>
-        <line x1="12" y1="10" x2="7" y2="8" stroke={c||"#5511aa"} strokeWidth="2" strokeLinecap="round"/>
-        <line x1="12" y1="10" x2="17" y2="8" stroke={c||"#5511aa"} strokeWidth="2" strokeLinecap="round"/>
-        {/* orb outer glow */}
-        <circle cx="12" cy="5" r="7.5" fill={c||"#aa22ee"} opacity=".15"/>
-        <circle cx="12" cy="5" r="5.8" fill={c||"#9933ee"} opacity=".38"/>
-        {/* orb core */}
-        <circle cx="12" cy="5" r="4.5" fill={c||"#cc55ff"}/>
-        {/* inner shine */}
-        <circle cx="10" cy="3.2" r="2.5" fill="#ffffff" opacity=".3"/>
-        <circle cx="9.5" cy="2.8" r="1.1" fill="#ffffff" opacity=".65"/>
-        {/* magic sparks */}
-        <line x1="18" y1="1" x2="20" y2="-1" stroke="#ee88ff" strokeWidth="1.8" strokeLinecap="round" opacity=".85"/>
-        <line x1="19.5" y1="4" x2="22" y2="4" stroke="#ee66ff" strokeWidth="1.8" strokeLinecap="round" opacity=".75"/>
-        <line x1="4" y1="0" x2="3" y2="-2" stroke="#dd77ff" strokeWidth="1.6" strokeLinecap="round" opacity=".7"/>
-      </svg>
-    );
-    case"bow":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* bow stave */}
-        <path d="M6,1 Q0,5 1,14 Q0,23 6,27" stroke={c||"#7a4a22"} strokeWidth="4.5" fill="none" strokeLinecap="round"/>
-        {/* recurve tips flare */}
-        <path d="M6,1 Q3,0 4,2.5" stroke={c||"#9a6832"} strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-        <path d="M6,27 Q3,28 4,25.5" stroke={c||"#9a6832"} strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-        {/* stave highlight */}
-        <path d="M6,2 Q2,6 2.5,14 Q2,22 6,26" stroke="#c89050" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity=".4"/>
-        {/* bowstring */}
-        <line x1="6" y1="1" x2="6" y2="27" stroke={c||"#e0d090"} strokeWidth="1.6" opacity=".95"/>
-        {/* arrow shaft */}
-        <line x1="6" y1="14" x2="27" y2="14" stroke={c||"#9a6820"} strokeWidth="2.2" strokeLinecap="round"/>
-        {/* arrowhead */}
-        <polygon points="28,14 21,11 22.5,14 21,17" fill={c||"#b8ccd8"}/>
-        <line x1="28" y1="14" x2="21" y2="11" stroke="#ddeeff" strokeWidth=".9" opacity=".65"/>
-        {/* nock point */}
-        <rect x="4.5" y="12.5" width="3" height="3" rx=".8" fill={c||"#5a3010"}/>
-        {/* fletching */}
-        <path d="M6,14 L6,10 L11,14 Z" fill={c||"#cc2222"}/>
-        <path d="M6,14 L6,18 L11,14 Z" fill={c||"#cc2222"}/>
-        <path d="M7.5,14 L7.5,11.2 L11,14 Z" fill="#ff5544" opacity=".45"/>
-      </svg>
-    );
-    case"boots":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* speed lines — motion feel */}
-        <line x1="1" y1="13" x2="6" y2="13" stroke="#5588cc" strokeWidth="1.5" strokeLinecap="round" opacity=".6"/>
-        <line x1="1" y1="16" x2="5" y2="16" stroke="#5588cc" strokeWidth="1.2" strokeLinecap="round" opacity=".4"/>
-        <line x1="1" y1="10" x2="4" y2="10" stroke="#5588cc" strokeWidth="1" strokeLinecap="round" opacity=".3"/>
-        {/* shin guard */}
-        <rect x="9" y="3" width="9" height="14" rx="3" fill={c||"#4a5e70"}/>
-        <rect x="9.5" y="3.5" width="8" height="6.5" rx="2.5" fill={c||"#6a8098"} opacity=".8"/>
-        {/* shin rivets */}
-        <circle cx="11" cy="7" r="1.1" fill="#28404e" opacity=".85"/>
-        <circle cx="16" cy="7" r="1.1" fill="#28404e" opacity=".85"/>
-        <circle cx="11" cy="12" r="1.1" fill="#28404e" opacity=".85"/>
-        <circle cx="16" cy="12" r="1.1" fill="#28404e" opacity=".85"/>
-        {/* knee dome */}
-        <ellipse cx="13.5" cy="3.2" rx="5" ry="2.8" fill={c||"#5a7080"}/>
-        <ellipse cx="13.5" cy="3" rx="3.8" ry="1.8" fill={c||"#80a0b0"} opacity=".7"/>
-        {/* ankle cuff */}
-        <rect x="8" y="16.5" width="11" height="3.2" rx="1.6" fill={c||"#384a58"}/>
-        {/* boot body */}
-        <path d="M9,19.5 L9,23 Q9,26 14,26 L27,26 L27,23 Q20,23 19,20 L18,19.5 Z" fill={c||"#3a4e5c"}/>
-        {/* toe cap */}
-        <path d="M13,25 Q11,25 10,27 L27,27 L27,25 Z" fill={c||"#5a7080"}/>
-        {/* sole */}
-        <rect x="9" y="27" width="18" height="2" rx="1" fill="#1e2c36"/>
-      </svg>
-    );
-    case"axe":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* haft */}
-        <line x1="3" y1="27" x2="18" y2="10" stroke={c||"#6b3f16"} strokeWidth="4.5" strokeLinecap="round"/>
-        <line x1="4" y1="26" x2="17" y2="11" stroke="#a06530" strokeWidth="1.3" strokeLinecap="round" opacity=".45"/>
-        {/* binding wraps */}
-        <line x1="6" y1="24" x2="8" y2="22" stroke="#e09030" strokeWidth="2.2" strokeLinecap="round" opacity=".75"/>
-        <line x1="9" y1="21" x2="11" y2="19" stroke="#e09030" strokeWidth="2.2" strokeLinecap="round" opacity=".65"/>
-        {/* main crescent blade */}
-        <path d="M15,8 Q20,1 27,3 Q30,13 27,20 Q22,25 16,22 Q23,15 22,8 Q19,4 15,8 Z" fill={c||"#6a7e8e"}/>
-        {/* blade edge highlight */}
-        <path d="M27,3 Q30,13 27,20" stroke="#c8dce8" strokeWidth="3" fill="none" strokeLinecap="round" opacity=".75"/>
-        {/* top edge highlight */}
-        <path d="M15,8 Q20,1 27,3" stroke="#aac0cc" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity=".55"/>
-        {/* fuller */}
-        <path d="M22,6 Q26,13 24,19" stroke="#7a9aaa" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity=".45"/>
-        {/* beard hook */}
-        <path d="M16,22 Q21,27 14,28 Q12,24 17,22" fill={c||"#5a6e7e"}/>
-        <path d="M14,28 Q11,25 16,22" stroke="#aabccc" strokeWidth="1" fill="none" strokeLinecap="round" opacity=".5"/>
-        {/* eye hole */}
-        <circle cx="18" cy="11" r="1.8" fill="#3a4e5a" opacity=".85"/>
-      </svg>
-    );
-    case"spear":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* shaft */}
-        <line x1="2" y1="28" x2="20" y2="8" stroke={c||"#6b3f16"} strokeWidth="4" strokeLinecap="round"/>
-        <line x1="3" y1="27" x2="19" y2="9" stroke="#a06530" strokeWidth="1.2" strokeLinecap="round" opacity=".42"/>
-        {/* wrap binding mid-shaft */}
-        <line x1="7" y1="23" x2="9" y2="21" stroke="#e09030" strokeWidth="2.5" strokeLinecap="round" opacity=".7"/>
-        {/* socket collar */}
-        <rect x="16.5" y="7" width="5" height="4.5" rx="1.5" fill={c||"#384858"} transform="rotate(-45,19,9.25)"/>
-        {/* broad leaf blade */}
-        <path d="M19,8 Q21,4 26,1 Q29,6 27,11 Q25,15 21,16 Q24,9 22,4 Q20,3 19,8 Z" fill={c||"#b0c4d0"}/>
-        {/* blade edge */}
-        <line x1="26" y1="2" x2="23" y2="13" stroke="#ddeeff" strokeWidth="1.8" strokeLinecap="round" opacity=".5"/>
-        {/* center ridge */}
-        <path d="M19,8 Q22,5 26,2" stroke="#e8f0f8" strokeWidth="1" fill="none" strokeLinecap="round" opacity=".5"/>
-        <path d="M21,8 Q23,11 21.5,15" stroke="#8aaabb" strokeWidth="1" fill="none" strokeLinecap="round" opacity=".45"/>
-        {/* cross-guard lugs */}
-        <line x1="20" y1="13" x2="15" y2="17" stroke={c||"#7a8e9e"} strokeWidth="3" strokeLinecap="round"/>
-        <line x1="22" y1="10" x2="26" y2="7" stroke={c||"#7a8e9e"} strokeWidth="2.2" strokeLinecap="round" opacity=".6"/>
-        {/* butt spike */}
-        <polygon points="2,28 1,25 5,25" fill={c||"#9aaabb"}/>
-      </svg>
-    );
-    case"rpg":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* main tube */}
-        <rect x="1" y="10" width="19" height="7" rx="3.5" fill={c||"#2e3d4a"}/>
-        {/* tube highlight stripe */}
-        <rect x="2" y="10.5" width="18" height="2.8" rx="2" fill={c||"#4a5e6a"} opacity=".85"/>
-        {/* panel lines */}
-        <line x1="5" y1="10" x2="5" y2="17" stroke="#4a5e6a" strokeWidth="1.1" opacity=".55"/>
-        <line x1="10" y1="10" x2="10" y2="17" stroke="#4a5e6a" strokeWidth="1.1" opacity=".55"/>
-        <line x1="15" y1="10" x2="15" y2="17" stroke="#4a5e6a" strokeWidth="1.1" opacity=".55"/>
-        {/* exhaust bell */}
-        <path d="M1,10.5 L1,16.5 L-1,19 L-1,8 Z" fill={c||"#1e2d38"} opacity=".95"/>
-        {/* warhead — bold cone */}
-        <polygon points="20,10 28,13.5 20,17" fill={c||"#dd3311"}/>
-        <polygon points="20,10 28,13.5 24.5,13.5" fill="#ff6644" opacity=".55"/>
-        <line x1="27.5" y1="12.5" x2="28" y2="13.5" stroke="#ffbb55" strokeWidth="2" strokeLinecap="round" opacity=".85"/>
-        {/* pistol grip */}
-        <path d="M9,17 L9,25 Q9,26 10.5,26 L13.5,26 Q15,26 15,25 L15,17 Z" fill={c||"#243038"}/>
-        <line x1="10" y1="18.5" x2="14" y2="18.5" stroke="#3a4e58" strokeWidth="1.1" opacity=".5"/>
-        <line x1="10" y1="21" x2="14" y2="21" stroke="#3a4e58" strokeWidth="1.1" opacity=".5"/>
-        {/* red dot sight */}
-        <rect x="6" y="6" width="9" height="4" rx="1.5" fill={c||"#2a3840"}/>
-        <rect x="7" y="6.8" width="7" height="2.4" rx=".8" fill={c||"#3e5060"} opacity=".8"/>
-        <line x1="10.5" y1="6" x2="10.5" y2="4.5" stroke={c||"#2a3840"} strokeWidth="2" strokeLinecap="round"/>
-        <circle cx="10.5" cy="8" r="1" fill="#ff2200" opacity=".95"/>
-        <circle cx="10.5" cy="8" r="0.4" fill="#ff8866" opacity=".8"/>
-      </svg>
-    );
-    case"wand":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* handle */}
-        <line x1="4" y1="27" x2="17" y2="12" stroke={c||"#4411aa"} strokeWidth="5" strokeLinecap="round"/>
-        <line x1="5" y1="26" x2="16" y2="13" stroke="#8855dd" strokeWidth="1.5" strokeLinecap="round" opacity=".45"/>
-        {/* grip bands */}
-        <line x1="8" y1="23" x2="10" y2="21" stroke="#cc88ff" strokeWidth="2.2" strokeLinecap="round" opacity=".7"/>
-        <line x1="12" y1="18.5" x2="14" y2="16.5" stroke="#cc88ff" strokeWidth="2.2" strokeLinecap="round" opacity=".5"/>
-        {/* glow aura */}
-        <circle cx="20" cy="8" r="9" fill={c||"#cc22ff"} opacity=".12"/>
-        <circle cx="20" cy="8" r="7" fill={c||"#cc33ff"} opacity=".22"/>
-        {/* star burst — 8 rays */}
-        {[0,45,90,135,180,225,270,315].map((deg,i)=>{
-          const r=deg*Math.PI/180;
-          const len=i%2===0?6:4;
-          return <line key={i}
-            x1={20+Math.cos(r)*3} y1={8+Math.sin(r)*3}
-            x2={20+Math.cos(r)*(3+len)} y2={8+Math.sin(r)*(3+len)}
-            stroke={i%2===0?"#ff88ff":"#cc55ff"}
-            strokeWidth={i%2===0?2:1.5} strokeLinecap="round"
-            opacity={i%2===0?.9:.7}/>;
-        })}
-        {/* crystal core */}
-        <polygon points="20,4 23,8 20,12 17,8" fill={c||"#dd66ff"}/>
-        <polygon points="20,4 23,8 20,6" fill="#ffffff" opacity=".4"/>
-        <circle cx="20" cy="8" r="2.5" fill="#ffffff" opacity=".25"/>
-      </svg>
-    );
+    case"sword": return <img src="/icons/crossed-swords.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    case"hammer": return <img src="/icons/thor-hammer.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    case"daggers": return <img src="/icons/dagger-rose.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    case"staff": return <img src="/icons/crystal-wand.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    case"bow": return <img src="/icons/pocket-bow.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    case"boots": return <img src="/icons/sword-spade.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    case"axe": return <img src="/icons/battle-axe.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    case"spear": return <img src="/icons/flaming-trident.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    case"rpg": return <img src="/icons/nuclear-bomb.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    case"wand": return <img src="/icons/crystal-wand.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+
     /* ── MAP NODES ── */
     case"combat":return(
       <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
@@ -1412,100 +759,11 @@ function Icon({ type, size=28, color }) {
           fill="#ffffff" opacity=".38"/>
       </svg>
     );
-    case"sword_gun":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* sword blade diagonal */}
-        <polygon points="2,2 4,2 20,18 18,20" fill={c||"#dce8f2"}/>
-        <line x1="3" y1="2" x2="19" y2="19" stroke="#fff" strokeWidth=".9" opacity=".35"/>
-        {/* guard */}
-        <line x1="14" y1="14" x2="20" y2="20" stroke={c||"#ddaa22"} strokeWidth="3.5" strokeLinecap="round"/>
-        {/* pistol body */}
-        <rect x="14" y="14" width="12" height="7" rx="2.5" fill={c||"#3a4a5a"}/>
-        <rect x="15" y="14.5" width="11" height="2.5" rx="1.5" fill={c||"#556677"} opacity=".8"/>
-        {/* barrel */}
-        <rect x="24" y="16" width="4" height="3" rx="1.2" fill={c||"#2a3a4a"}/>
-        {/* grip */}
-        <path d="M17,21 L17,27 Q17,28 18.5,28 L20.5,28 Q22,28 22,27 L22,21 Z" fill={c||"#243038"}/>
-        {/* muzzle flash */}
-        <circle cx="28" cy="17.5" r="2.5" fill="#ffcc22" opacity=".85"/>
-        <line x1="28" y1="17.5" x2="30" y2="15.5" stroke="#ff8811" strokeWidth="1.5" strokeLinecap="round" opacity=".8"/>
-      </svg>
-    );
-    case"knife_shotgun":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* knife blade */}
-        <polygon points="2,3 4,1 18,15 15,17" fill={c||"#c8d8e4"}/>
-        <line x1="3" y1="2" x2="17" y2="16" stroke="#fff" strokeWidth=".9" opacity=".3"/>
-        <line x1="13" y1="13" x2="18" y2="18" stroke={c||"#ddaa22"} strokeWidth="3" strokeLinecap="round"/>
-        <line x1="15" y1="17" x2="11" y2="23" stroke="#1a0d02" strokeWidth="3.2" strokeLinecap="round"/>
-        {/* shotgun — wide double barrel */}
-        <rect x="11" y="14" width="16" height="5" rx="2" fill={c||"#4a3020"}/>
-        <rect x="11" y="14" width="16" height="2" rx="1.5" fill={c||"#7a5030"} opacity=".6"/>
-        <rect x="25" y="13.5" width="3" height="2.5" rx=".8" fill={c||"#2a1808"}/>
-        <rect x="25" y="16" width="3" height="2.5" rx=".8" fill={c||"#2a1808"}/>
-        {/* spread blast */}
-        {[0,1,2].map(i=><circle key={i} cx={28} cy={14+i*2} r="1.4" fill="#ffcc22" opacity={.7-i*.15}/>)}
-      </svg>
-    );
-    case"sniper_spear":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* spear shaft */}
-        <line x1="2" y1="26" x2="18" y2="8" stroke={c||"#6b3f16"} strokeWidth="3.5" strokeLinecap="round"/>
-        {/* spear head */}
-        <path d="M17,9 Q19,5 23,2 Q25,6 24,10 Q22,13 19,13 Q21,8 20,5 Z" fill={c||"#b0c4d0"}/>
-        <line x1="23" y1="3" x2="20" y2="11" stroke="#ddeeff" strokeWidth="1.5" strokeLinecap="round" opacity=".5"/>
-        {/* rifle body — long and thin */}
-        <rect x="8" y="15" width="19" height="4" rx="1.5" fill={c||"#2a1808"}/>
-        <rect x="8" y="15" width="19" height="1.8" rx="1.2" fill={c||"#4a3020"} opacity=".7"/>
-        {/* long barrel */}
-        <rect x="24" y="16" width="4" height="2" rx=".8" fill={c||"#1a1008"}/>
-        {/* scope */}
-        <rect x="13" y="12.5" width="7" height="3" rx="1.2" fill={c||"#334455"}/>
-        <circle cx="16.5" cy="14" r="1.3" fill="#88ccff" opacity=".7"/>
-        {/* stock */}
-        <path d="M8,19 L5,19 L4,22 L8,22 Z" fill={c||"#3a2010"}/>
-      </svg>
-    );
-    case"axe_pistol":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* axe haft */}
-        <line x1="2" y1="26" x2="13" y2="12" stroke={c||"#6b3f16"} strokeWidth="4" strokeLinecap="round"/>
-        {/* axe head */}
-        <path d="M11,10 Q14,4 20,5 Q22,12 19,17 Q15,19 11,17 Q16,12 15,7 Z" fill={c||"#6a7e8e"}/>
-        <path d="M20,5 Q22,12 19,17" stroke="#c8dce8" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity=".7"/>
-        {/* pistol body */}
-        <rect x="14" y="16" width="13" height="6" rx="2" fill={c||"#2e3d4a"}/>
-        <rect x="15" y="16.5" width="12" height="2.2" rx="1.5" fill={c||"#4a5e6a"} opacity=".8"/>
-        {/* barrel */}
-        <rect x="25" y="17.5" width="3" height="2.5" rx=".8" fill={c||"#1e2d38"}/>
-        {/* grip */}
-        <path d="M16,22 L16,27 Q16,28 17.5,28 L19.5,28 Q21,28 21,27 L21,22 Z" fill={c||"#243038"}/>
-        <circle cx="27" cy="18.5" r="1.8" fill="#ffcc22" opacity=".8"/>
-      </svg>
-    );
-    case"club_musket":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* club head */}
-        <circle cx="7" cy="6" r="6" fill={c||"#5a3a20"}/>
-        <circle cx="5" cy="4" r="2.2" fill={c||"#7a5030"} opacity=".6"/>
-        {[0,60,120,180,240,300].map((deg,i)=>{
-          const r=deg*Math.PI/180;
-          return <circle key={i} cx={7+Math.cos(r)*5.5} cy={6+Math.sin(r)*5.5} r="2" fill={c||"#8a6040"}/>;
-        })}
-        {/* handle */}
-        <line x1="9" y1="10" x2="18" y2="22" stroke={c||"#4a2808"} strokeWidth="4" strokeLinecap="round"/>
-        {/* musket — flintlock long barrel */}
-        <rect x="10" y="16" width="17" height="4" rx="1.5" fill={c||"#3a2010"}/>
-        <rect x="10" y="16" width="17" height="1.8" rx="1.2" fill={c||"#6a4020"} opacity=".6"/>
-        {/* flintlock mechanism */}
-        <rect x="13" y="13.5" width="4" height="3" rx="1" fill={c||"#556677"}/>
-        {/* long barrel tip */}
-        <rect x="25" y="17" width="3" height="2" rx=".8" fill={c||"#1a0c04"}/>
-        {/* smoke puff */}
-        <circle cx="28" cy="18" r="2.2" fill="#aaaaaa" opacity=".4"/>
-        <circle cx="30" cy="16.5" r="1.5" fill="#aaaaaa" opacity=".28"/>
-      </svg>
-    );
+    case"sword_gun": return <img src="/icons/saber-and-pistol.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    case"knife_shotgun": return <img src="/icons/bayonet.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    case"sniper_spear": return <img src="/icons/high-shot.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    case"axe_pistol": return <img src="/icons/gun-rose.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    case"club_musket": return <img src="/icons/all-for-one.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
     case"heart":return(
       <svg width={s} height={s} viewBox="0 0 16 16" style={{display:"block"}}>
         <path d="M8 13 Q2 9 2 5 Q2 2 5 2 Q6.5 2 8 4 Q9.5 2 11 2 Q14 2 14 5 Q14 9 8 13Z" fill={c||"#ff4455"}/>
@@ -1908,6 +1166,7 @@ function App() {
   const [iWonRace,   setIWonRace]  = useState(false);
   const [bookOpen,   setBookOpen]  = useState(false);
   const [bookHoverPotion, setBookHoverPotion] = useState(null);
+  const [hoverWeaponId, setHoverWeaponId] = useState(null);
   const [pvpLog,     setPvpLog]    = useState([]);
   const mpRef = useRef({ peer:null, conn:null, isHost:false, syncIv:null, lastAtkTs:null, pvpIncomingDmg:0 });
   // PvP routing refs — redirect QTE results to pvp handlers when pvpMode=true
@@ -1996,12 +1255,24 @@ function App() {
 
   // ── Watch opponent pvpAtk in PvP → start defend QTE ──
   useEffect(()=>{
-    if(screen!=="pvp"||pvpTurn!=="theirs"||!oppSnap?.pvpAtk) return;
+    if(pvpWinner) return;
+    if(screen!=="combat"||!cs?.pvpMode||!oppSnap?.pvpAtk) return;
     const atk = oppSnap.pvpAtk;
     if(!atk||atk.ts===mpRef.current.lastAtkTs) return;
     mpRef.current.lastAtkTs = atk.ts;
-    setTimeout(()=>pvpStartIncoming(atk), 500);
-  },[oppSnap?.pvpAtk?.ts, screen, pvpTurn]);
+    // Small delay to ensure cs/pvpTurn state has settled before triggering defend
+    setTimeout(()=>{ if(!pvpModeRef.current) return; pvpStartIncoming(atk); }, 500);
+  },[oppSnap?.pvpAtk?.ts, screen, cs?.pvpMode]);
+
+  // ── Watch pvpTurnDone → attacker's turn flips back to "mine" ──
+  useEffect(()=>{
+    if(pvpWinner) return;
+    if(screen!=="combat"||!cs?.pvpMode||pvpTurn!=="mine"||!oppSnap?.pvpTurnDone) return;
+    if(oppSnap.pvpTurnDone===mpRef.current.lastTurnDoneTs) return;
+    mpRef.current.lastTurnDoneTs = oppSnap.pvpTurnDone;
+    // Defender has resolved — re-enable attacker's action phase
+    setCs(prev=>prev?{...prev,phase:"action"}:prev);
+  },[oppSnap?.pvpTurnDone, screen, pvpTurn, cs?.pvpMode, pvpWinner]);
 
   // ── PvP winner check — sync final HP to opponent ──
   useEffect(()=>{
@@ -2100,6 +1371,7 @@ function App() {
       if (data.name         !== undefined) next.name         = data.name;
       if (data.pvpMyHp      !== undefined) next.pvpHp        = data.pvpMyHp;
       if (data.pvpAtk       !== undefined) next.pvpAtk       = data.pvpAtk;
+      if (data.pvpTurnDone  !== undefined) next.pvpTurnDone  = data.pvpTurnDone;
       return next;
     });
   };
@@ -2156,6 +1428,8 @@ function App() {
   const enterPvp = (iWon) => {
     const oppW = iWon ? (ALL_WEAPONS[oppSnap?.weapon] ?? ALL_WEAPONS.sword) : ALL_WEAPONS.rpg;
     const startHp = 80;
+    // Restore player to full health for PvP
+    setPlayer(p => p ? {...p, hp: p.maxHp} : p);
     setPvpMyHp(startHp);
     setPvpOppHp(startHp);
     setPvpMaxHp(startHp);
@@ -2220,7 +1494,7 @@ function App() {
       else showHit(q==="good"?`BLOCKED −${finalDmg}`:`HIT −${finalDmg}`, q==="good"?"#4488ff":"#ff4444");
       setPvpMyHp(h => {
         const nh = Math.max(0, h - finalDmg);
-        mpSend({ type:"state", pvpMyHp: nh });
+        mpSend({ type:"state", pvpMyHp: nh, pvpTurnDone: Date.now() });
         if (nh <= 0) { setPvpWinner("them"); pvpModeRef.current = false; }
         return nh;
       });
@@ -2437,7 +1711,7 @@ function App() {
   /* ── Game flow ────────────────────────────────────────────── */
   const startGame = (wid) => {
     const w = ALL_WEAPONS[wid];
-    setPlayer({hp:60,maxHp:60,str:0,level:1,xp:0,weapons:[wid],potions:[],floor:0,visited:[],class:w.className,classEmoji:w.classEmoji});
+    setPlayer({hp:60,maxHp:60,str:0,level:1,xp:0,weapons:[wid],potions:[],floor:0,visited:[],class:w.className,classEmoji:w.classEmoji,heroLooks:randomHeroLooks()});
     setRunStartTime(Date.now());
     setScreen("map");
   };
@@ -2449,9 +1723,11 @@ function App() {
     const atk = elite ? Math.round(e.atk * 1.3) : e.atk;
     const xp  = elite ? Math.round(e.xp  * 1.8) : e.xp;
     sfx.combatStart();
-    setCs({ enemy:{...e,id:node.enemy,maxHp:hp,hp,atk,xp}, elite,
-            log:[`${elite?"⚠️ ELITE — ":""}A ${e.name} materialises before you!`],
-            phase:"action", nodeId:node.id, nodeFloor:node.fl });
+    const eSprite = node.enemy!=="dragon" ? ENEMY_SPRITE_POOL[Math.floor(Math.random()*ENEMY_SPRITE_POOL.length)] : null;
+    const eName = eSprite ? eSprite.name : e.name;
+    setCs({ enemy:{...e,id:node.enemy,name:eName,maxHp:hp,hp,atk,xp}, elite,
+            log:[`${elite?"⚠️ ELITE — ":""}A ${eName} materialises before you!`],
+            phase:"action", nodeId:node.id, nodeFloor:node.fl, enemySprite:eSprite });
     setEnemyFlash(false);
     setQteAnim(null);
     setScreen("combat");
@@ -2503,6 +1779,8 @@ function App() {
               setMpStatus("pvp_wait");
               setScreen("pvp_wait");
             } else {
+              // Solo mode: always drop the RPG on dragon kill
+              setPlayer(p => p ? {...p, weapons: [...new Set([...p.weapons, "rpg"])]} : p);
               setScreen("victory");
             }
             return;
@@ -2573,7 +1851,7 @@ function App() {
           setTimeout(()=>{
             setPlayer(p=>p?({...p,xp:p.xp+prev.enemy.xp,floor:p.floor+1,visited:[...p.visited,prev.nodeId]}):p);
             if(prev.enemy.name==="Ancient Dragon"){
-              if(gameMode==="race"){const won=!oppSnap?.dragonKilled;setIWonRace(won);setPlayer(p=>{if(!p)return p;const nw=won?p.weapons:[...new Set([...p.weapons,"rpg"])];mpSend({type:"state",dragonKilled:true,weapon:nw[0]??"sword"});return{...p,weapons:nw};});setMpStatus("pvp_wait");setScreen("pvp_wait");}else{setScreen("victory");}return;
+              if(gameMode==="race"){const won=!oppSnap?.dragonKilled;setIWonRace(won);setPlayer(p=>{if(!p)return p;const nw=won?p.weapons:[...new Set([...p.weapons,"rpg"])];mpSend({type:"state",dragonKilled:true,weapon:nw[0]??"sword"});return{...p,weapons:nw};});setMpStatus("pvp_wait");setScreen("pvp_wait");}else{setPlayer(p=>p?{...p,weapons:[...new Set([...p.weapons,"rpg"])]}:p);setScreen("victory");}return;
             }
             setPlayer(p=>{setRewards(pickRewards(p?.weapons||[], prev.elite));return p;});
             setScreen("reward");
@@ -3362,14 +2640,36 @@ function App() {
     dragon:   { dur:1400, launch:0.28, arrive:0.90, projPath:"loop"    }, // fireball loops before impact
     pvp_opp:  { dur:1100, launch:0.20, arrive:0.82, projPath:"straight" }, // pvp opponent attack
   };
+  // Per-QTE-type defend timing (for PvP projectile variety)
+  const PVP_PROJ_PROFILES = {
+    swing_beat:      { dur: 700, launch:0.18, arrive:0.80 },
+    hold_release:    { dur:1800, launch:0.30, arrive:0.82 },
+    rapid_tap:       { dur: 800, launch:0.20, arrive:0.82 },
+    sequence:        { dur:1200, launch:0.24, arrive:0.82 },
+    stomp:           { dur:1300, launch:0.26, arrive:0.80 },
+    poke:            { dur: 650, launch:0.18, arrive:0.80 },
+    archery:         { dur:1000, launch:0.22, arrive:0.80 },
+    sequence_reveal: { dur:1500, launch:0.28, arrive:0.82 },
+    dual_action:     { dur: 500, launch:0.16, arrive:0.80 },
+  };
   const startDefendQTE = () => {
     const ref = qteRef.current;
-    const prof = DEFEND_PROFILES[cs?.enemy?.id] || { dur:1200, launch:0.28, arrive:0.82 };
+    const isPvp = cs?.pvpMode && cs?.enemy?.id === "pvp_opp";
+    let prof, projType;
+    if (isPvp) {
+      const oppWepId = cs?.enemy?.pvpWeapons?.[0] ?? "sword";
+      const oppWep = ALL_WEAPONS[oppWepId] ?? ALL_WEAPONS.sword;
+      projType = oppWep.qteType || "swing_beat";
+      prof = PVP_PROJ_PROFILES[projType] || { dur:1100, launch:0.20, arrive:0.82 };
+    } else {
+      prof = DEFEND_PROFILES[cs?.enemy?.id] || { dur:1200, launch:0.28, arrive:0.82 };
+      projType = null; // use legacy enemy-id sprite
+    }
     const { dur, launch, arrive } = prof;
     ref.startMs = performance.now(); ref.pressT = null;
     ref.defendArrive = arrive; // store so showDefendCue can use it
     setCs(prev=>prev?{...prev,phase:"defending"}:prev);
-    setQteAnim({ type:"defend", t:0, projFrac:0, arrive, projPath: prof.projPath||"straight" });
+    setQteAnim({ type:"defend", t:0, projFrac:0, arrive, projPath: prof.projPath||"straight", projType });
     triggerEnemyWindUp();
 
     const onKey = (e) => {
@@ -3489,7 +2789,136 @@ function App() {
   const _defArrive    = qteAnim?.arrive ?? 0.82;
   const showDefendCue = qteAnim?.type==="defend"&&qteAnim.t>=(_defArrive-.07)&&qteAnim.t<=(_defArrive+.04);
 
-  const QTE_LABEL = { swing_beat:"BEAT", rapid_tap:"FLURRY", hold_release:"CHARGE", sequence:"CAST", stomp:"STOMP", poke:"POKE", archery:"AIM", sequence_reveal:"LAUNCH" };
+  const QTE_LABEL = { swing_beat:"BEAT", rapid_tap:"FLURRY", hold_release:"CHARGE", sequence:"CAST", stomp:"STOMP", poke:"POKE", archery:"AIM", sequence_reveal:"LAUNCH", dual_action:"DUAL" };
+
+  // ── PvP per-QTE projectile path function ──
+  // Returns {x,y} in battlefield coords for projType at fraction t (0→1)
+  const pvpProjPos = (projType, t, srcX, srcY, dstX, dstY) => {
+    const lerp = (a,b,f) => a+(b-a)*f;
+    const x = lerp(srcX, dstX, t);
+    let y;
+    switch(projType) {
+      case "swing_beat":
+        y = lerp(srcY, dstY, t);
+        break;
+      case "hold_release":
+        y = GNDY - 10 + Math.sin(t*Math.PI)*(-5);
+        break;
+      case "rapid_tap":
+        y = lerp(srcY, dstY, t) + Math.sin(t * Math.PI * 8) * 22;
+        break;
+      case "sequence":
+        y = lerp(srcY, dstY, t) + Math.sin(t * Math.PI * 2) * 35;
+        break;
+      case "stomp":
+        y = GNDY - 8 + Math.abs(Math.sin(t*Math.PI)) * (-20);
+        break;
+      case "poke":
+        y = lerp(srcY, dstY, t);
+        break;
+      case "archery":
+        y = lerp(srcY, dstY, t) - Math.sin(t * Math.PI) * 30;
+        break;
+      case "sequence_reveal":
+        y = lerp(srcY, dstY, t) + Math.sin(t * Math.PI * 1.5) * 15;
+        break;
+      case "dual_action":
+        y = lerp(srcY, dstY, t);
+        break;
+      default:
+        y = lerp(srcY, dstY, t);
+    }
+    return { x, y };
+  };
+
+  // ── PvP per-QTE projectile SVG sprite ──
+  const PvpProjectileSVG = ({ projType, cx, cy }) => {
+    switch(projType) {
+      case "swing_beat": return (
+        <g transform={`translate(${cx},${cy})`}>
+          <path d="M-14,0 Q-4,-14 10,-6 Q0,0 10,6 Q-4,14 -14,0 Z" fill="#ff8800" opacity=".92"
+            style={{filter:"drop-shadow(0 0 6px #ff6600)"}}/>
+          <path d="M-10,0 Q0,-8 8,-3" stroke="#ffcc44" strokeWidth="2" fill="none" strokeLinecap="round" opacity=".8"/>
+          <path d="M-10,0 Q0,8 8,3" stroke="#ff4400" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity=".6"/>
+        </g>
+      );
+      case "hold_release": return (
+        <g transform={`translate(${cx},${cy})`}>
+          <circle r="11" fill="#8B5E3C" stroke="#5a3a18" strokeWidth="2"/>
+          <circle r="8" fill="#a07040"/>
+          <line x1="-5" y1="-5" x2="2" y2="3" stroke="#5a3010" strokeWidth="1.8"/>
+          <line x1="3" y1="-4" x2="-2" y2="4" stroke="#5a3010" strokeWidth="1.8"/>
+          <line x1="-6" y1="2" x2="5" y2="0" stroke="#5a3010" strokeWidth="1.2"/>
+          <ellipse cx="0" cy="11" rx="9" ry="2.5" fill="#00000022"/>
+        </g>
+      );
+      case "rapid_tap": return (
+        <g transform={`translate(${cx},${cy})`}>
+          <polygon points="0,-10 8,8 -8,8" fill="#ccccdd" stroke="#aaaacc" strokeWidth="1.5"
+            style={{filter:"drop-shadow(0 0 5px #8888ff)"}}/>
+          <line x1="0" y1="-6" x2="0" y2="4" stroke="#ffffff" strokeWidth="1" opacity=".6"/>
+        </g>
+      );
+      case "sequence": return (
+        <g transform={`translate(${cx},${cy})`}>
+          <circle r="10" fill="#7700cc" style={{filter:"drop-shadow(0 0 10px #cc44ff)"}}/>
+          <circle r="7" fill="#9922ee"/>
+          <circle r="4" fill="#cc66ff"/>
+          <circle r="2" fill="#ffffff" opacity=".9"/>
+          <circle r="1" cx="-1" cy="-1" fill="#ffffff" opacity=".7"/>
+        </g>
+      );
+      case "stomp": return (
+        <g transform={`translate(${cx},${cy})`}>
+          <path d="M-14,2 Q-8,-4 0,-2 Q8,-4 14,2" stroke="#ffcc00" strokeWidth="3" fill="none" strokeLinecap="round"
+            style={{filter:"drop-shadow(0 0 6px #ffaa00)"}}/>
+          <path d="M-10,5 Q-4,0 4,0 Q10,0 12,5" stroke="#ff8800" strokeWidth="2" fill="none" strokeLinecap="round" opacity=".7"/>
+          <line x1="-6" y1="-6" x2="-4" y2="-1" stroke="#ffdd44" strokeWidth="1.5" opacity=".8"/>
+          <line x1="0" y1="-8" x2="0" y2="-3" stroke="#ffdd44" strokeWidth="1.5" opacity=".8"/>
+          <line x1="6" y1="-6" x2="4" y2="-1" stroke="#ffdd44" strokeWidth="1.5" opacity=".8"/>
+        </g>
+      );
+      case "poke": return (
+        <g transform={`translate(${cx},${cy})`}>
+          <ellipse rx="14" ry="5" fill="#00ccee" stroke="#0099bb" strokeWidth="1.5"
+            style={{filter:"drop-shadow(0 0 5px #00aadd)"}}/>
+          <ellipse rx="10" ry="3.5" fill="#44ddff" opacity=".7"/>
+          <ellipse rx="5" ry="2" fill="#aaf0ff" opacity=".8"/>
+          <polygon points="14,-4 22,0 14,4" fill="#00aacc"/>
+        </g>
+      );
+      case "archery": return (
+        <g transform={`translate(${cx},${cy})`}>
+          <line x1="-14" y1="0" x2="12" y2="0" stroke="#33aa44" strokeWidth="2.5" strokeLinecap="round"
+            style={{filter:"drop-shadow(0 0 4px #44cc55)"}}/>
+          <polygon points="12,-4 20,0 12,4" fill="#44cc55"/>
+          <line x1="-14" y1="0" x2="-10" y2="-3" stroke="#33aa44" strokeWidth="1.5" opacity=".8"/>
+          <line x1="-14" y1="0" x2="-10" y2="3" stroke="#33aa44" strokeWidth="1.5" opacity=".8"/>
+        </g>
+      );
+      case "sequence_reveal": return (
+        <g transform={`translate(${cx},${cy})`}>
+          <rect x="-10" y="-5" width="20" height="14" rx="3" fill="#cc4411"/>
+          <rect x="-10" y="-5" width="20" height="7" rx="3" fill="#ee6622" opacity=".7"/>
+          <polygon points="10,-5 18,0 10,8" fill="#ff6600"/>
+          <polygon points="-10,-5 -18,2 -10,8" fill="#ff4400" opacity=".8"/>
+          <ellipse cx="-4" cy="2" rx="3" ry="3" fill="#334455"/>
+          <ellipse cx="4" cy="2" rx="2" ry="2" fill="#ff2200" opacity=".9"/>
+        </g>
+      );
+      case "dual_action": return (
+        <g transform={`translate(${cx},${cy})`}>
+          <circle r="6" fill="#888899" stroke="#aaaacc" strokeWidth="1.5"
+            style={{filter:"drop-shadow(0 0 4px #aaaaee)"}}/>
+          <circle r="4" fill="#aaaacc"/>
+          <circle r="2" fill="#ffffff" opacity=".7"/>
+        </g>
+      );
+      default: return (
+        <circle cx={cx} cy={cy} r="7" fill="#ff4444" style={{filter:"drop-shadow(0 0 6px #ff2222)"}}/>
+      );
+    }
+  };
 
   /* ─────────────────────────────────────────────────────────── */
   return (
@@ -3976,14 +3405,38 @@ function App() {
           <div style={{display:"flex",flexDirection:"row",gap:12,marginBottom:28,flexWrap:"nowrap",zoom:1.35}}>
             {Object.values(STARTER_WEAPONS).map(w=>{
               const sel=selectedWeapon===w.id;
+              const hov=hoverWeaponId===w.id;
               const qteLabel=QTE_LABEL[w.qteType]||"?";
               return (
-                <div key={w.id} onClick={()=>setSelectedWeapon(w.id)} style={{width:200,padding:"28px 18px",textAlign:"center",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",border:`2px solid ${sel?"#e8d5a3":"#2a2a3a"}`,background:sel?"#14142a":"#09090f",boxShadow:sel?"0 0 32px rgba(232,213,163,.2)":"none",transition:"all .2s"}}>
-                  <div style={{width:80,height:80,marginBottom:16,display:"flex",alignItems:"center",justifyContent:"center",filter:sel?"drop-shadow(0 0 14px #e8d5a388)":"none",transition:"filter .2s"}}>
-                    <Icon type={w.id} size={74} color={sel?"#e8d5a3":"#8a7a66"}/>
+                <div key={w.id}
+                  onClick={()=>setSelectedWeapon(w.id)}
+                  onMouseEnter={()=>setHoverWeaponId(w.id)}
+                  onMouseLeave={()=>setHoverWeaponId(null)}
+                  style={{width:200,padding:"28px 18px",textAlign:"center",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",border:`2px solid ${sel?"#e8d5a3":hov?"#6677aa":"#2a2a3a"}`,background:sel?"#14142a":hov?"#0c0c1e":"#09090f",boxShadow:sel?"0 0 32px rgba(232,213,163,.2)":hov?"0 0 16px rgba(100,120,200,.15)":"none",transition:"all .2s",position:"relative"}}>
+                  <div style={{width:80,height:80,marginBottom:16,display:"flex",alignItems:"center",justifyContent:"center",filter:sel?"drop-shadow(0 0 14px #e8d5a388)":hov?"drop-shadow(0 0 10px #6677aaaa)":"none",transition:"filter .2s"}}>
+                    <Icon type={w.id} size={74} color={sel?"#e8d5a3":hov?"#9aabcc":"#8a7a66"}/>
                   </div>
-                  <div style={{fontFamily:"Cinzel",fontSize:11,letterSpacing:2,opacity:.5,marginBottom:8}}>{w.classEmoji} {w.className}</div>
+                  <div style={{fontFamily:"Cinzel",fontSize:11,letterSpacing:2,opacity:.5,marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}><Icon type={w.id} size={14} color={sel?"#c8b888":"#666"}/> {w.className}</div>
                   <div style={{fontFamily:"Cinzel",fontSize:16,marginBottom:12,color:sel?"#e8d5a3":"#9a8a73",lineHeight:1.3}}>{w.name}</div>
+                  {/* Hover tooltip overlay — shows QTE label + desc in larger font */}
+                  {hov&&(
+                    <div style={{position:"absolute",top:"100%",left:"50%",transform:"translateX(-50%)",marginTop:8,zIndex:200,
+                      background:"rgba(8,8,22,.97)",border:"1px solid #4466aa88",borderRadius:8,
+                      padding:"14px 16px",width:220,textAlign:"center",
+                      boxShadow:"0 8px 32px rgba(0,0,0,.8), 0 0 20px rgba(68,102,170,.2)",
+                      pointerEvents:"none"}}>
+                      <div style={{fontFamily:"Cinzel",fontSize:13,fontWeight:700,letterSpacing:3,
+                        color:"#ffcc44",marginBottom:8,textShadow:"0 0 12px #ffcc4444"}}>
+                        {qteLabel}
+                      </div>
+                      <div style={{fontSize:11,lineHeight:1.7,color:"#c8b888",opacity:.85}}>
+                        {w.desc}
+                      </div>
+                      <div style={{marginTop:8,fontSize:10,fontFamily:"Cinzel",color:"#6688aa",letterSpacing:1}}>
+                        ATK {w.baseDmg}
+                      </div>
+                    </div>
+                  )}
                   <div style={{fontSize:12,opacity:.55,lineHeight:1.7,marginBottom:"auto",paddingBottom:14}}>{w.desc}</div>
                   <div style={{fontSize:11,fontFamily:"Cinzel",padding:"5px 10px",border:`1px solid ${sel?"#ffcc4455":"#222"}`,color:sel?"#ffcc44":"#555",marginBottom:10}}>{qteLabel}</div>
                   <div style={{fontSize:12,opacity:.45,fontFamily:"Cinzel"}}>ATK {w.baseDmg}</div>
@@ -4001,7 +3454,7 @@ function App() {
         <div style={{height:"100vh",display:"flex",flexDirection:"column",background:"radial-gradient(ellipse at 50% 0%, #1e1240 0%, #0e0e24 45%, #080c18 100%)"}}>
           {/* Header */}
           <div style={{padding:"14px 24px",background:"rgba(0,0,0,.35)",backdropFilter:"blur(4px)",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid #2a2a44",fontFamily:"Cinzel",fontSize:12,letterSpacing:1,flexShrink:0}}>
-            <span style={{color:"#c8b888"}}>{player.classEmoji} {player.class} · LVL {player.level} · STR +{player.str}</span>
+            <span style={{color:"#c8b888",display:"inline-flex",alignItems:"center",gap:6}}><Icon type={player.weapons?.[0]||"sword"} size={16} color="#c8b888"/>{player.class} · LVL {player.level} · STR +{player.str}</span>
             <span style={{color:"#7a6aaa",letterSpacing:3}}>FLOOR {player.floor} / {FLOOR_CONFIGS.length}</span>
             <span style={{color:player.hp<player.maxHp*.3?"#ff6666":player.hp<player.maxHp*.6?"#ffcc44":"#55dd77"}}>{player.hp}/{player.maxHp}</span>
           </div>
@@ -4122,7 +3575,7 @@ function App() {
             <div style={{flexShrink:0,padding:"7px 20px",background:"rgba(0,0,0,.55)",backdropFilter:"blur(4px)",
               borderBottom:"1px solid #1e1e30",display:"flex",justifyContent:"space-between",alignItems:"center",
               fontFamily:"Cinzel",fontSize:14,letterSpacing:1}}>
-              <span style={{color:"#c8b888",fontWeight:600}}>{player.classEmoji} {player.class} · Lv{player.level} · {player.hp}/{player.maxHp}</span>
+              <span style={{color:"#c8b888",fontWeight:600,display:"inline-flex",alignItems:"center",gap:6}}><Icon type={player.weapons?.[0]||"sword"} size={16} color="#c8b888"/>{player.class} · Lv{player.level} · {player.hp}/{player.maxHp}</span>
               <span style={{color:cs.pvpMode?"#ff8844":cs.elite?"#aa66ff":enemyData.color,letterSpacing:2,fontWeight:600}}>
                 {cs.pvpMode?"⚔ ":cs.elite?"⚡ ELITE — ":""}{cs.enemy.name} · {cs.pvpMode?pvpOppHp:cs.enemy.hp}/{cs.pvpMode?pvpMaxHp:cs.enemy.maxHp}hp
               </span>
@@ -4899,11 +4352,11 @@ function App() {
                 filter:cs.enemy.id==="pvp_opp"
                   ?(enemyFlash?"brightness(3) drop-shadow(0 0 18px #ff4400)":"drop-shadow(0 0 14px #4466ffaa)")
                   :`drop-shadow(0 0 22px ${enemyData.color}bb) drop-shadow(0 8px 4px #00000088)`,
-                animation:enemyFlash?`hitFlash .35s ease-out, squish .3s ease-out`:`float ${2.8+eDims.h*.01}s ease-in-out infinite`,
+                animation:enemyFlash?`hitFlash .35s ease-out, squish .3s ease-out`:"none",
                 transformOrigin:"bottom center"}}>
                 {cs.enemy.id==="pvp_opp"
                   ? <HeroSprite className={cs.enemy.pvpClass??'Knight'} scale={eScale} weapons={cs.enemy.pvpWeapons??['sword']}/>
-                  : <EnemySpriteSmall id={cs.enemy.id} scale={eScale}/>
+                  : <EnemySpriteSmall id={cs.enemy.id} scale={eScale} sprite={cs?.enemySprite}/>
                 }
               </div>
 
@@ -4912,9 +4365,29 @@ function App() {
                 const pf       = qteAnim.projFrac||0;
                 const id       = cs.enemy.id;
                 const projPath = qteAnim.projPath||"straight";
+                const projType = qteAnim.projType||null; // set for PvP, null for regular enemies
                 const heroMidX = (heroPos?heroPos.left:HR_L) + HSW/2;
                 const heroMidY = (heroPos?heroPos.top:HR_T)  + HSH/2;
                 const srcX = ENX, srcY = eTop + eH*0.35;
+
+                // ── PvP: use per-QTE-type path and sprite ──
+                if (projType) {
+                  const { x: pvpX, y: pvpY } = pvpProjPos(projType, pf, srcX, srcY, heroMidX, heroMidY);
+                  // Trail dots
+                  const trailSteps = 6;
+                  const trailDots = Array.from({length:trailSteps},(_,i)=>{
+                    const tf = Math.max(0, pf - (i+1)*0.05);
+                    return pvpProjPos(projType, tf, srcX, srcY, heroMidX, heroMidY);
+                  });
+                  return (
+                    <svg style={{position:"absolute",left:0,top:0,zIndex:11,pointerEvents:"none",overflow:"visible"}} width={BFW} height={BFH}>
+                      {trailDots.map((p,i)=>(
+                        <circle key={i} cx={p.x} cy={p.y} r={4-i*0.5} fill="#4488ff" opacity={(1-i*0.15)*0.35}/>
+                      ))}
+                      {PvpProjectileSVG({ projType, cx:pvpX, cy:pvpY })}
+                    </svg>
+                  );
+                }
 
                 // Path offset helper — 0 at pf=0, 0 at pf=1, varies between
                 const pathOff = (f) => {
@@ -5106,10 +4579,10 @@ function App() {
                 top:heroPos?heroPos.top:HR_T,
                 zIndex:6,
                 transform:"scaleX(-1)",
-                animation:!heroPos?"float 2.4s ease-in-out infinite":"none",
+                animation:"none",
                 filter:qteAnim?.type==="defend"?"drop-shadow(0 0 10px #4488ff)":
                        chargeActive&&cIsPerfect?"drop-shadow(0 0 14px #44ff88)":"none"}}>
-                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]}/>
+                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={cs?.phase==="attacking"}/>
               </div>
 
               {/* Battlefield status line */}
@@ -5121,47 +4594,7 @@ function App() {
                 :null}
               </div>
 
-              {/* HP bars — slim, label+value below */}
-              <div style={{position:"absolute",left:8,bottom:6,width:220,zIndex:9}}>
-                {/* bar */}
-                <div style={{height:7,background:"#050508",border:`1px solid ${cs.pvpMode?"#ff8844aa":enemyData.color+"88"}`,
-                  borderRadius:4,overflow:"hidden",
-                  boxShadow:`0 0 8px ${cs.pvpMode?"#ff884444":enemyData.color+"33"}`}}>
-                  <div style={{height:"100%",
-                    background:`linear-gradient(to right,${cs.pvpMode?"#ff884488":""+enemyData.color+"88"},${cs.pvpMode?"#ff8844":enemyData.color})`,
-                    width:`${Math.max(0,((cs.pvpMode?pvpOppHp:cs.enemy.hp)/(cs.pvpMode?pvpMaxHp:cs.enemy.maxHp))*100)}%`,
-                    transition:"width .4s"}}/>
-                </div>
-                {/* name + value */}
-                <div style={{display:"flex",justifyContent:"space-between",marginTop:3,
-                  fontFamily:"Cinzel",fontSize:8,letterSpacing:1}}>
-                  <span style={{color:cs.pvpMode?"#ff8844":enemyData.color,fontWeight:700}}>
-                    {cs.elite&&"⚡ "}{cs.enemy.name}
-                    {cs.enemyAtkMult&&cs.enemyAtkMult<1&&<span style={{fontSize:7,color:"#88ccff",marginLeft:4}}>WK</span>}
-                  </span>
-                  <span style={{opacity:.55,color:"#a8a8b8"}}>
-                    {cs.pvpMode?pvpOppHp:cs.enemy.hp}/{cs.pvpMode?pvpMaxHp:cs.enemy.maxHp}
-                  </span>
-                </div>
-              </div>
-              <div style={{position:"absolute",right:8,bottom:6,width:220,zIndex:9}}>
-                {/* bar */}
-                {(()=>{const myHp=cs.pvpMode?pvpMyHp:player.hp,myMax=cs.pvpMode?pvpMaxHp:player.maxHp,
-                  hCol=myHp<myMax*.3?"#ff4444":myHp<myMax*.6?"#ffcc44":"#22cc55";
-                  return <>
-                    <div style={{height:7,background:"#050508",border:`1px solid ${hCol}88`,
-                      borderRadius:4,overflow:"hidden",boxShadow:`0 0 8px ${hCol}33`}}>
-                      <div style={{height:"100%",background:`linear-gradient(to right,${hCol}88,${hCol})`,
-                        width:`${Math.max(0,(myHp/myMax)*100)}%`,transition:"width .4s"}}/>
-                    </div>
-                    <div style={{display:"flex",justifyContent:"space-between",marginTop:3,
-                      fontFamily:"Cinzel",fontSize:8,letterSpacing:1}}>
-                      <span style={{opacity:.55,color:"#a8a8b8"}}>{myHp}/{myMax}</span>
-                      <span style={{color:"#c8b888",fontWeight:700}}>{player.class}</span>
-                    </div>
-                  </>;
-                })()}
-              </div>
+              {/* HP bars removed — now shown only in slim HUD above battlefield */}
               {/* ── Action log — top-left corner, one line only ── */}
               {cs.log.length>0&&(
                 <div style={{position:"absolute",top:4,left:4,maxWidth:140,zIndex:20,pointerEvents:"none"}}>
@@ -5502,8 +4935,8 @@ function App() {
               <div style={{position:"absolute",
                 left:heroPos?heroPos.left:HR_L, top:heroPos?heroPos.top:HR_T,
                 zIndex:6,transform:"scaleX(-1)",
-                animation:!heroPos?"float 2.4s ease-in-out infinite":"none"}}>
-                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]}/>
+                animation:"none"}}>
+                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={cs?.phase==="attacking"}/>
               </div>
 
               {/* All existing QTE overlays render here via existing render code — they check qteAnim type */}
