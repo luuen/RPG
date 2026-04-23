@@ -1222,10 +1222,10 @@ function App() {
     el.style.cssText = "position:fixed;right:16px;top:50%;transform:translateY(-50%);z-index:9999;pointer-events:none;background:rgba(4,4,12,.85);padding:10px 16px;border-radius:6px;border:1px solid #2a2a40;display:flex;flex-direction:column;gap:6px;font-family:Cinzel,serif;font-size:11px;letter-spacing:2px;backdrop-filter:blur(4px);";
     el.innerHTML = `
       <div style="font-size:8px;letter-spacing:3px;color:#4a4a6a;margin-bottom:4px;">LEGEND</div>
-      <div style="display:flex;align-items:center;gap:7px;color:#c8b888;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#c8b888;flex-shrink:0"></span>COMBAT</div>
-      <div style="display:flex;align-items:center;gap:7px;color:#aa66ff;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#aa66ff;flex-shrink:0"></span>ELITE</div>
-      <div style="display:flex;align-items:center;gap:7px;color:#44cc66;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#44cc66;flex-shrink:0"></span>REST</div>
-      <div style="display:flex;align-items:center;gap:7px;color:#ff4422;"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#ff4422;flex-shrink:0"></span>BOSS</div>
+      <div style="display:flex;align-items:center;gap:7px;color:#c8b888;"><img src="/icons/sprites/map/COMBAT.png" width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>COMBAT</div>
+      <div style="display:flex;align-items:center;gap:7px;color:#aa66ff;"><img src="/icons/sprites/map/ELITE.png"  width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>ELITE</div>
+      <div style="display:flex;align-items:center;gap:7px;color:#44cc66;"><img src="/icons/sprites/map/REST.png"   width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>REST</div>
+      <div style="display:flex;align-items:center;gap:7px;color:#ff4422;"><img src="/icons/sprites/map/BOSS.png"   width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>BOSS</div>
     `;
     document.body.appendChild(el);
     return ()=>{ const x=document.getElementById("map-legend"); if(x) x.remove(); };
