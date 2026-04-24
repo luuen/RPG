@@ -317,9 +317,7 @@ function LayeredHeroSprite({ looks, displayW=48, isAttacking=false }) {
     const iv = setInterval(()=>setAnimFrame(f=>(f+1)%cols), 1000/fps);
     return ()=>clearInterval(iv);
   },[cols, fps]);
-  const src = looks.skin;
-  if (!src) return null;
-  const url = src.replace(/\\/g,"/").replace(/ /g,"%20");
+  if (!looks.skin) return null;
   // Scale so frame height fills container exactly — wider frames get center-cropped
   const scale    = displayW / frameH;
   const scaledFW = Math.round(frameW * scale);
@@ -327,16 +325,27 @@ function LayeredHeroSprite({ looks, displayW=48, isAttacking=false }) {
   const bgH      = totalRows * displayW;
   const bpX      = -(animFrame * scaledFW + Math.round((scaledFW - displayW) / 2));
   const bpY      = -(idleRow * displayW);
+  const bgStyle  = {
+    backgroundRepeat:"no-repeat",
+    backgroundSize:`${bgW}px ${bgH}px`,
+    backgroundPosition:`${bpX}px ${bpY}px`,
+    imageRendering:"pixelated",
+  };
+  const toUrl = s => `url("${s.replace(/\\/g,"/").replace(/ /g,"%20")}")`;
+  // Layers: skin base, then clothing, then hair — all same spritesheet layout
+  const layers = [looks.skin, looks.clothing, looks.hair].filter(Boolean);
   return (
-    <div style={{
-      width: displayW, height: displayW,
-      backgroundImage: `url("${url}")`,
-      backgroundRepeat: "no-repeat",
-      backgroundSize: `${bgW}px ${bgH}px`,
-      backgroundPosition: `${bpX}px ${bpY}px`,
-      imageRendering: "pixelated",
-      overflow: "hidden",
-    }}/>
+    <div style={{width:displayW, height:displayW, position:"relative", overflow:"hidden", imageRendering:"pixelated"}}>
+      {layers.map((src, i) => (
+        <div key={i} style={{
+          position: i===0 ? "relative" : "absolute",
+          inset: 0,
+          width: displayW, height: displayW,
+          backgroundImage: toUrl(src),
+          ...bgStyle,
+        }}/>
+      ))}
+    </div>
   );
 }
 
@@ -413,9 +422,9 @@ function EnemySpriteSmall({ id, scale=1, sprite=null, attacking=false, enemyFlas
   if (id==="dragon") return <DemonSlimeSprite scale={scale} enemyFlash={enemyFlash} phase={phase} bossAttackPattern={bossAttackPattern}/>;
 
   if (sprite) {
-    const dims = ENEMY_DIMS[id]||{w:80,h:96};
-    const displayW = Math.round(dims.w*scale);
-    const displayH = Math.round(dims.h*scale);
+    // Use sprite's own frame dimensions — pool sprites are 128×128, not ENEMY_DIMS
+    const displayW = Math.round(sprite.frameW*scale);
+    const displayH = Math.round(sprite.frameH*scale);
     const base = `${ASSET_BASE}/icons/sprites/${sprite.dir}/${sprite.variant}`;
     const src = attacking
       ? `${base}/${sprite.atkFile}`
@@ -826,7 +835,7 @@ const sfx = (() => {
         const o=O(ctx,'sawtooth',55),lp=LP(ctx,500),g=G(ctx,0);
         o.connect(lp); lp.connect(g); g.connect(D(ctx)); o.start();
         const t=ctx.currentTime;
-        g.gain.linearRampToValueAtTime(.15,t+.7); lp.frequency.linearRampToValueAtTime(1600,t+.7);
+        g.gain.linearRampToValueAtTime(.04,t+.7); lp.frequency.linearRampToValueAtTime(1600,t+.7);
         return ()=>{ try{ const t2=ctx.currentTime; g.gain.setValueAtTime(g.gain.value,t2);
           g.gain.exponentialRampToValueAtTime(.0001,t2+.07); o.stop(t2+.08); }catch(_e){} };
       } catch(_e){ return ()=>{}; }
@@ -1507,7 +1516,7 @@ function App() {
     const hp  = elite ? Math.round(e.hp  * 1.6) : e.hp;
     const atk = elite ? Math.round(e.atk * 1.3) : e.atk;
     const xp  = elite ? Math.round(e.xp  * 1.8) : e.xp;
-    if (node.enemy==="dragon") sfx.bossStart(); else sfx.combatStart();
+    if (node.enemy==="dragon") sfx.bossStart();
     const eSprite = node.enemy!=="dragon" ? ENEMY_SPRITE_POOL[Math.floor(Math.random()*ENEMY_SPRITE_POOL.length)] : null;
     const eName = eSprite ? eSprite.name : e.name;
     setCs({ enemy:{...e,id:node.enemy,name:eName,maxHp:hp,hp,atk,xp}, elite,
