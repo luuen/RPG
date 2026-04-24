@@ -2824,7 +2824,7 @@ function App() {
               <div style={{width:1,height:32,background:"#ff442233"}}/>
               <div style={{fontFamily:"Cinzel",fontSize:12,letterSpacing:2,color:"#ff4422",
                 textShadow:"0 0 8px #ff4422",animation:"pulse .5s ease-in-out infinite"}}>
-                🐉 DRAGON SLAIN!
+                🟢 SLIME SLAIN!
               </div>
             </>
           )}
@@ -3083,7 +3083,7 @@ function App() {
 
             {/* Tagline steps */}
             <div style={{margin:"20px 0 8px",display:"flex",alignItems:"center",justifyContent:"center",gap:12,flexWrap:"wrap"}}>
-              {["KILL DRAGON","USE RPG","SHOOT DUMBASS ON THE OTHER END"].map((t,i,arr)=>(
+              {["SLAY THE SLIME","USE RPG","SHOOT DUMBASS ON THE OTHER END"].map((t,i,arr)=>(
                 <React.Fragment key={i}>
                   <span style={{fontFamily:"Cinzel",fontSize:12,letterSpacing:3,color:i===2?"#ff4422":i===1?"#ffcc44":"#aabbcc",textShadow:i===2?"0 0 12px #ff4422":i===1?"0 0 10px #ffcc44":"none",fontWeight:700}}>
                     {t}
@@ -3093,7 +3093,7 @@ function App() {
               ))}
             </div>
 
-            <p style={{fontFamily:"IM Fell English",fontStyle:"italic",fontSize:13,opacity:.35,marginBottom:44,letterSpacing:3}}>a dungeon. a dragon. a rocket launcher.</p>
+            <p style={{fontFamily:"IM Fell English",fontStyle:"italic",fontSize:13,opacity:.35,marginBottom:44,letterSpacing:3}}>a dungeon. a demon. a rocket launcher.</p>
 
             {/* Solo button */}
             {!mpMode&&(
@@ -4633,7 +4633,7 @@ function App() {
             <Icon type="boss" size={80} color="#ff6600"/>
           </div>
           <h1 style={{fontFamily:"Cinzel",fontWeight:900,fontSize:"clamp(28px,5vw,52px)",letterSpacing:8,color:"#ff6600",textShadow:"0 0 40px #ff4400",animation:"glow 2s infinite",marginBottom:10}}>
-            {iWonRace?"🏆 DRAGON SLAIN FIRST!":"💀 DRAGON DEFEATED"}
+            {iWonRace?"🏆 SLIME SLAIN FIRST!":"💀 DEMON DEFEATED"}
           </h1>
           <p style={{fontFamily:"IM Fell English",fontStyle:"italic",opacity:.5,fontSize:16,marginBottom:30,letterSpacing:3}}>
             {iWonRace
@@ -4647,7 +4647,7 @@ function App() {
                 ⚔ RIVAL: {(oppSnap.name||"?").toUpperCase()}
               </div>
               {oppSnap.dragonKilled
-                ? <div style={{fontFamily:"Cinzel",fontSize:14,color:"#ff4422",textShadow:"0 0 12px #ff4422",textAlign:"center",animation:"pulse .6s infinite"}}>🐉 DRAGON KILLED — HEADING TO FIGHT!</div>
+                ? <div style={{fontFamily:"Cinzel",fontSize:14,color:"#ff4422",textShadow:"0 0 12px #ff4422",textAlign:"center",animation:"pulse .6s infinite"}}>🟢 SLIME SLAIN — HEADING TO FIGHT!</div>
                 : <>
                     <div style={{fontFamily:"Cinzel",fontSize:9,color:"#555577",letterSpacing:2,marginBottom:4}}>FLOOR {oppSnap.floor}/{FLOOR_CONFIGS.length}</div>
                     <div style={{height:6,background:"#111122",borderRadius:3,marginBottom:10}}>
