@@ -765,9 +765,11 @@ const sfx = (() => {
   const enc = s => s.replace(/ /g, "%20");
   // Build path: HY folder + base name + variant suffix
   const hy = (name, v) => HY + enc(name) + `-00${v}.wav`;
-  // Play a one-shot audio file
+  // Master volume multiplier — scale all sounds down uniformly
+  const MV = 0.68;
+  // Play a one-shot audio file — MV scales all volumes globally
   const pf = (url, vol=0.75) => {
-    try { const a=new Audio(url); a.volume=Math.min(1,vol); a.play().catch(()=>{}); } catch(_e){}
+    try { const a=new Audio(url); a.volume=Math.min(1,vol*MV); a.play().catch(()=>{}); } catch(_e){}
   };
   // Play random variant (1-n) of a Helton Yan sound
   const rf = (name, n=6, vol=0.75) => pf(hy(name, 1+Math.floor(Math.random()*n)), vol);
@@ -792,6 +794,7 @@ const sfx = (() => {
   return {
     // ── UI / navigation ──────────────────────────────────────────
     click:        ()=>rf("UIClick_INTERFACE-Metallic Click_HY_PC",   6, 0.50),
+    bookOpen:     ()=>rf("SWSH_MOVEMENT-Reso Swish_HY_PC",           6, 0.60),
     select:       ()=>rf("UIClick_INTERFACE-Positive Click_HY_PC",   6, 0.60),
     mapNode:      ()=>rf("UIClick_INTERFACE-Rattling Click_HY_PC",   6, 0.40),
     levelUp:      ()=>rf("DSGNSynth_BUFF-Mecha Level Up_HY_PC",      6, 0.80),
@@ -807,7 +810,7 @@ const sfx = (() => {
     // ── Combat ───────────────────────────────────────────────────
     combatStart:  ()=>rf("DSGNTonl_MELEE-Sword Critical_HY_PC",      6, 0.62),
     bossStart:    ()=>{ rf("DSGNImpt_EXPLOSION-Mana Bomb_HY_PC",6,0.90); setTimeout(()=>rf("DSGNImpt_EXPLOSION-Eruption_HY_PC",6,0.65),250); },
-    enemyDie:     ()=>rf("DSGNImpt_EXPLOSION-Eruption_HY_PC",        6, 0.80),
+    enemyDie:     ()=>rf("DSGNMisc_SKILL IMPACT-Energy Dissipate_HY_PC", 6, 0.82),
     slimeDeath:   ()=>rf("DSGNMisc_CAST-Slime Ball_HY_PC",           6, 0.82),
     // ── Sword / Beat ─────────────────────────────────────────────
     swordWalk:    ()=>_swordWalkPlay(),
@@ -2337,7 +2340,8 @@ function App() {
       if (ref.done) return;
       ref.done = true;
       cleanup();
-      sfx.dualGunshot();
+      // Delay gunshot ~110ms so it fires as the projectile visually travels, not on click
+      setTimeout(()=>sfx.dualGunshot(), 110);
       const dist = Math.abs(clickPos - 0.5);
       const half = centerW / 2;
       const q = dist < half*0.32 ? "perfect" : dist < half ? "good" : "miss";
@@ -2880,7 +2884,7 @@ function App() {
           <div style={{position:"fixed",bottom:18,left:"50%",transform:"translateX(-50%)",zIndex:3100,userSelect:"none"}}>
             {!bookOpen?(
               /* ── CLOSED BOOK ── */
-              <div onClick={()=>{sfx.click();setBookOpen(true);}}
+              <div onClick={()=>{sfx.bookOpen();setBookOpen(true);}}
                 style={{cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",
                   animation:"bookBounce 2.2s ease-in-out infinite"}}>
                 {/* Spine + cover */}
