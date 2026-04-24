@@ -300,10 +300,10 @@ function AnimatedSprite({ src, numFrames, fps=8, displayW, displayH, flip=false 
   );
 }
 
-// Hero sprite — single skin layer, idle row only.
-// Pixel-precise bg positioning: scale so frameH === displayW, center within each frame.
-// Rows isolated via exact px Y offset — no bleed from other animation rows.
-function LayeredHeroSprite({ looks, displayW=48, isAttacking=false }) {
+// Hero sprite — layered skin + clothing + hair, all same spritesheet layout.
+// Scale by HEIGHT so bottom of frame = bottom of container → feet on ground.
+// Width is center-cropped to displayW.
+function LayeredHeroSprite({ looks, displayW=41, displayH=65, isAttacking=false }) {
   if (!looks) return null;
   const cols      = looks.cols      || 8;
   const totalRows = looks.totalRows || 8;
@@ -318,13 +318,13 @@ function LayeredHeroSprite({ looks, displayW=48, isAttacking=false }) {
     return ()=>clearInterval(iv);
   },[cols, fps]);
   if (!looks.skin) return null;
-  // Scale so frame height fills container exactly — wider frames get center-cropped
-  const scale    = displayW / frameH;
-  const scaledFW = Math.round(frameW * scale);
+  // Scale so frame HEIGHT fills displayH exactly — frame width > displayW so we center-crop
+  const vScale   = displayH / frameH;
+  const scaledFW = Math.round(frameW * vScale);
   const bgW      = cols      * scaledFW;
-  const bgH      = totalRows * displayW;
+  const bgH      = totalRows * displayH;
   const bpX      = -(animFrame * scaledFW + Math.round((scaledFW - displayW) / 2));
-  const bpY      = -(idleRow * displayW);
+  const bpY      = -(idleRow * displayH);
   const bgStyle  = {
     backgroundRepeat:"no-repeat",
     backgroundSize:`${bgW}px ${bgH}px`,
@@ -335,12 +335,12 @@ function LayeredHeroSprite({ looks, displayW=48, isAttacking=false }) {
   // Layers: skin base, then clothing, then hair — all same spritesheet layout
   const layers = [looks.skin, looks.clothing, looks.hair].filter(Boolean);
   return (
-    <div style={{width:displayW, height:displayW, position:"relative", overflow:"hidden", imageRendering:"pixelated"}}>
+    <div style={{width:displayW, height:displayH, position:"relative", overflow:"hidden", imageRendering:"pixelated"}}>
       {layers.map((src, i) => (
         <div key={i} style={{
           position: i===0 ? "relative" : "absolute",
           inset: 0,
-          width: displayW, height: displayW,
+          width: displayW, height: displayH,
           backgroundImage: toUrl(src),
           ...bgStyle,
         }}/>
@@ -360,9 +360,9 @@ const SKIN = "#e8c47a";
 
 function HeroSprite({ className="Knight", scale=1, weapons=[], heroLooks=null, isAttacking=false }) {
   const displayW = Math.round(48 * scale);
-  const displayH = Math.round(72 * scale);
+  const displayH = Math.round(76 * scale);  // 76 base matches HSH = Math.round(76*0.85)=65
   if (heroLooks) {
-    return <LayeredHeroSprite looks={heroLooks} displayW={displayW} isAttacking={isAttacking}/>;
+    return <LayeredHeroSprite looks={heroLooks} displayW={displayW} displayH={displayH} isAttacking={isAttacking}/>;
   }
   // Fallback SVG hero (when no heroLooks — e.g. opponent in PvP)
   const c = CLASS_COLORS[className] || CLASS_COLORS.Knight;
@@ -2153,7 +2153,8 @@ function App() {
   // Contact 1: hero bounces UP from enemy head and lands back on it.
   //   After landing → return home, then resolve.
   const startStompQTE = (weapon) => {
-    const dims = ENEMY_DIMS[cs?.enemy?.id]||{w:55,h:70};
+    // Use pool sprite frame height if available — pool sprites are 128×128, not ENEMY_DIMS
+    const dims = cs?.enemySprite ? {w:cs.enemySprite.frameW, h:cs.enemySprite.frameH} : (ENEMY_DIMS[cs?.enemy?.id]||{w:55,h:70});
     const eScaledH = dims.h*1.1;
     const landTop  = GNDY - eScaledH - HSH;
     const landLeft = ENX - HSW/2;
