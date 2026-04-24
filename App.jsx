@@ -3056,24 +3056,17 @@ function App() {
       {/* ══ TITLE ══ */}
       {screen==="title"&&(
         <div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
-          {particles.map((p,i)=><div key={i} style={{position:"absolute",left:p.left,top:p.top,width:p.size,height:p.size,background:"#e8d5a3",borderRadius:"50%",opacity:p.opacity,animation:`pulse ${p.dur} ${p.delay} infinite`}}/>)}
-          <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 50% 40%, #0c0518 0%, #020205 65%)"}}/>
+          {/* Title background image */}
+          <img src={`${ASSET_BASE}/icons/title/title.png`} alt=""
+            style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center",zIndex:0,pointerEvents:"none"}}/>
+          {/* Dark vignette overlay — lets image show through at center, darkens edges */}
+          <div style={{position:"absolute",inset:0,zIndex:0,
+            background:"radial-gradient(ellipse at 50% 45%, rgba(2,2,8,.15) 0%, rgba(2,2,8,.72) 100%)"}}/>
+          {/* Bottom fade so buttons sit cleanly */}
+          <div style={{position:"absolute",bottom:0,left:0,right:0,height:"38%",zIndex:0,
+            background:"linear-gradient(to top,rgba(2,2,8,.92) 0%,transparent 100%)"}}/>
           <div style={{position:"relative",textAlign:"center",zIndex:1,animation:"fadeIn .8s ease-out"}}>
-            {/* Cover art — two knights with RPGs */}
-            <div style={{marginBottom:20,display:"inline-flex",alignItems:"center",gap:18,animation:"float 3.5s ease-in-out infinite"}}>
-              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                <div style={{fontSize:52,filter:"drop-shadow(0 0 16px #ff8800) drop-shadow(0 0 40px #ff4400)"}}>🪖</div>
-                <div style={{fontSize:38,filter:"drop-shadow(0 0 12px #ff6600)",transform:"scaleX(-1)"}}>🚀</div>
-              </div>
-              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
-                <div style={{fontSize:14,fontFamily:"Cinzel",letterSpacing:4,color:"#ff6600",textShadow:"0 0 16px #ff4400",opacity:.8}}>VS</div>
-                <div style={{width:2,height:40,background:"linear-gradient(to bottom,#ff6600,transparent)",opacity:.6}}/>
-              </div>
-              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                <div style={{fontSize:52,filter:"drop-shadow(0 0 16px #0088ff) drop-shadow(0 0 40px #0044ff)"}}>⛑️</div>
-                <div style={{fontSize:38,filter:"drop-shadow(0 0 12px #4466ff)"}}>🚀</div>
-              </div>
-            </div>
+
 
             <h1 style={{fontFamily:"Cinzel",fontWeight:900,fontSize:"clamp(48px,9vw,88px)",letterSpacing:14,lineHeight:1.1,background:"linear-gradient(to bottom,#fff 0%,#ff9933 40%,#ff4400 100%)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"glow 4s infinite"}}>R.P.G.</h1>
 
