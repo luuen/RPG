@@ -300,39 +300,34 @@ function AnimatedSprite({ src, numFrames, fps=8, displayW, displayH, flip=false 
   );
 }
 
-// Layered hero sprite from Gandalf asset pack — stacked PNGs share same frame grid
-// Frames are 96×96 (square); displayW drives rendered frame size to avoid row bleed.
+// Hero sprite — single skin layer, idle row only.
+// backgroundSize: cols*100% 100% → exactly one row fills container height, zero row-bleed.
 function LayeredHeroSprite({ looks, displayW=48, isAttacking=false }) {
   if (!looks) return null;
-  const cols     = looks.cols   || 8;
-  const idleRow  = looks.idleRow ?? 0;
-  const atkRow   = looks.atkRow  ?? 4;
-  const row      = isAttacking ? atkRow : idleRow;
-  const fps      = isAttacking ? 12 : 8;
+  const cols = looks.cols || 8;
+  const fps  = 8; // always idle
   const [animFrame, setAnimFrame] = React.useState(0);
   React.useEffect(()=>{
     setAnimFrame(0);
     const iv = setInterval(()=>setAnimFrame(f=>(f+1)%cols), 1000/fps);
     return ()=>clearInterval(iv);
-  },[isAttacking, cols, fps]);
-  const frameSize = displayW; // frames are square — use width for both axes
+  },[cols, fps]);
+  const src = looks.skin;
+  if (!src) return null;
+  const url  = src.replace(/\\/g,"/").replace(/ /g,"%20");
+  // xPct: percentage-based background-position; maps frame 0→0%, frame cols-1→100%
   const xPct = cols>1 ? animFrame/(cols-1)*100 : 0;
-  const yPx  = -(row * frameSize);              // negative scrolls image up to correct row
-  const layers = [looks.skin, looks.clothing, looks.hair, looks.hand].filter(Boolean);
-  const frameStyle = {
-    position:"absolute",left:0,top:0,
-    width:"100%",height:"100%",
-    backgroundRepeat:"no-repeat",
-    backgroundSize:`${cols*100}% auto`,
-    backgroundPosition:`${xPct}% ${yPx}px`,
-    imageRendering:"pixelated",
-  };
   return (
-    <div style={{position:"relative",width:frameSize,height:frameSize,overflow:"hidden"}}>
-      {layers.map((src,i)=>(
-        <div key={i} style={{...frameStyle, backgroundImage:`url("${src.replace(/\\/g,"/").replace(/ /g,"%20")}")`}}/>
-      ))}
-    </div>
+    <div style={{
+      width:displayW, height:displayW,
+      backgroundImage:`url("${url}")`,
+      backgroundRepeat:"no-repeat",
+      // 100% height = scale image so one row exactly fills container — no other rows visible
+      backgroundSize:`${cols*100}% 100%`,
+      backgroundPosition:`${xPct}% 0%`,
+      imageRendering:"pixelated",
+      overflow:"hidden",
+    }}/>
   );
 }
 
@@ -3342,7 +3337,10 @@ function App() {
       {/* ══ COMBAT ══ */}
       {screen==="combat"&&cs&&player&&(()=>{
         const enemyData = ENEMIES[cs.enemy.id]||ENEMIES.goblin;
-        const eDims     = ENEMY_DIMS[cs.enemy.id]||{w:55,h:70};
+        // Use sprite pool frame dims if available — pool sprites are all 128×128, not ENEMY_DIMS
+        const eDims     = cs?.enemySprite
+          ? {w:cs.enemySprite.frameW, h:cs.enemySprite.frameH}
+          : (ENEMY_DIMS[cs.enemy.id]||{w:55,h:70});
         const eScale    = 1.1;
         const eW        = eDims.w*eScale, eH = eDims.h*eScale;
         const eLeft     = ENX - eW/2 + enemyWindUp;
