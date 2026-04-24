@@ -767,9 +767,9 @@ const sfx = (() => {
     const pool = [1,2,3,4].map(v=>{ const a=new Audio(hy(name,v)); a.volume=vol; return a; });
     let i=0; return ()=>{ const a=pool[i++%4]; a.currentTime=0; a.play().catch(()=>{}); };
   };
-  // Rune pool: 6 variants cycled in sequence for satisfying key feedback
-  const _runeUrls = [1,2,3,4,5,6].map(v=>hy("MAGSpel_CAST-Zap Up_HY_PC",v));
-  let _ri=0;
+  // Rune: pitch-escalating crystal tings — each correct key steps up a musical semi-tone
+  // Ratios follow a pentatonic-ish ladder so keys 0→9 sound increasingly powerful
+  const RUNE_RATES = [1.00,1.12,1.26,1.41,1.59,1.78,2.00,2.24,2.52,2.83];
   // Rapid-fire pools (pre-created at init)
   const _daggerPlay = mkPool("FGHTImpt_MELEE-Swish Hit_HY_PC", 0.5);
   const _pokePlay   = mkPool("WHSH_MOVEMENT-Simple Whoosh_HY_PC", 0.38);
@@ -825,9 +825,28 @@ const sfx = (() => {
     daggerTap:    ()=>_daggerPlay(),
     daggerFlurry: ()=>rf("DSGNMisc_SKILL RELEASE-Flying Blades_HY_PC",      6, 0.72),
     // ── Sequence / Staff ─────────────────────────────────────────
-    runeCorrect:  ()=>pf(_runeUrls[_ri++%_runeUrls.length], 0.60),
-    runeWrong:    ()=>rf("UIMisc_INTERFACE-Denied_HY_PC",                    6, 0.55),
-    magicBolt:    (q)=>{
+    // Each correct rune key plays a crystal ting pitched higher per position in sequence
+    runeCorrect: (pos=0) => {
+      const rate = RUNE_RATES[Math.min(pos, RUNE_RATES.length-1)];
+      // Layer 1 — crisp crystal ting, pitched up
+      try {
+        const a = new Audio(hy("DSGNTonl_SKILL IMPACT-Energy Crystal_HY_PC", 1+Math.floor(Math.random()*6)));
+        a.volume = 0.78; a.playbackRate = rate; a.play().catch(()=>{});
+      } catch(_e){}
+      // Layer 2 — sparkle shimmer slightly offset, adds magic shimmer
+      setTimeout(()=>{
+        try {
+          const b = new Audio(hy("DSGNTonl_SKILL IMPACT-Magic Sparkles_HY_PC", 1+Math.floor(Math.random()*6)));
+          b.volume = 0.42; b.playbackRate = rate * 1.08; b.play().catch(()=>{});
+        } catch(_e){}
+      }, 22);
+    },
+    runeWrong: () => {
+      // Punchy two-layer failure: synth thud then UI deny
+      rf("DSGNSynth_BUFF-Failed Buff_HY_PC", 6, 0.72);
+      setTimeout(()=>rf("UIMisc_INTERFACE-Denied_HY_PC", 6, 0.50), 55);
+    },
+    magicBolt: (q) => {
       rf("MAGSpel_CAST-Panic Energy_HY_PC", 6, 0.72);
       if(q==="perfect") setTimeout(()=>rf("DSGNMisc_SKILL IMPACT-Critical Strike_HY_PC",6,0.60),260);
     },
