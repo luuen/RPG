@@ -5,7 +5,7 @@ const ASSET_BASE = window.location.hostname.includes("github.io") ? "/RPG" : "";
 
 /* ─── GLOBAL STYLES ──────────────────────────────────────────── */
 const GS = `
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=IM+Fell+English:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=IM+Fell+English:ital@0;1&family=MedievalSharp&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{background:#020205;overflow:hidden;user-select:none;color:#e8d5a3;font-family:'IM Fell English',serif}
 .btn{background:#1a1a2a;border:1px solid #444;color:#e8d5a3;padding:12px 20px;cursor:pointer;font-family:'Cinzel';transition:.2s;text-transform:uppercase;font-size:13px;letter-spacing:1px}
@@ -3112,7 +3112,7 @@ function App() {
               boxShadow:"0 8px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,120,30,0.08)",
             }}>
 
-            <h1 style={{fontFamily:"Cinzel",fontWeight:900,fontSize:"clamp(48px,9vw,88px)",letterSpacing:14,lineHeight:1.1,background:"linear-gradient(to bottom,#fff 0%,#ff9933 40%,#ff4400 100%)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"glow 4s infinite"}}>R.P.G.</h1>
+            <h1 style={{fontFamily:"'MedievalSharp',serif",fontWeight:400,fontSize:"clamp(52px,10vw,96px)",letterSpacing:10,lineHeight:1.1,background:"linear-gradient(to bottom,#fff 0%,#ff9933 40%,#ff4400 100%)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"glow 4s infinite"}}>R.P.G.</h1>
 
             {/* Tagline steps */}
             <div style={{margin:"20px 0 8px",display:"flex",alignItems:"center",justifyContent:"center",gap:12,flexWrap:"wrap"}}>
