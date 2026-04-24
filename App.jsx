@@ -742,151 +742,67 @@ const APP_FALLBACK_GAMES = [
 const _AC = window.AudioContext || window.webkitAudioContext;
 let _actx = null;
 const _ac = () => { if (!_actx) _actx = new _AC(); if (_actx.state==='suspended') _actx.resume(); return _actx; };
+
 const sfx = (() => {
-  const p = fn => { try { fn(_ac()); } catch(_e){} };
-  const D = ctx => ctx.destination;
-  const O = (ctx,t,f) => { const o=ctx.createOscillator(); o.type=t; o.frequency.setValueAtTime(f,ctx.currentTime); return o; };
-  const G = (ctx,v)   => { const g=ctx.createGain(); g.gain.setValueAtTime(v,ctx.currentTime); return g; };
-  const LP= (ctx,f)   => { const n=ctx.createBiquadFilter(); n.type='lowpass';  n.frequency.value=f; return n; };
-  const BP= (ctx,f,q) => { const n=ctx.createBiquadFilter(); n.type='bandpass'; n.frequency.value=f; n.Q.value=q||1; return n; };
-  const NB= ctx => {
-    const buf=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*.35),ctx.sampleRate);
-    const d=buf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
-    const s=ctx.createBufferSource(); s.buffer=buf; return s;
+  // ── File-based playback helpers ──────────────────────────────
+  const HY = "/sfx/Helton%20Yan's%20Pixel%20Combat%20-%20Single%20Files/";
+  const GN = "/sfx/Snake's%20Authentic%20Gun%20Sounds%20And%20More/Snake's%20Authentic%20Gun%20Sounds/Isolated/";
+  // Encode spaces in filenames
+  const enc = s => s.replace(/ /g, "%20");
+  // Build path: HY folder + base name + variant suffix
+  const hy = (name, v) => HY + enc(name) + `-00${v}.wav`;
+  // Play a one-shot audio file
+  const pf = (url, vol=0.75) => {
+    try { const a=new Audio(url); a.volume=Math.min(1,vol); a.play().catch(()=>{}); } catch(_e){}
   };
+  // Play random variant (1-n) of a Helton Yan sound
+  const rf = (name, n=6, vol=0.75) => pf(hy(name, 1+Math.floor(Math.random()*n)), vol);
+  // Preloaded 4-element pool for rapid-fire sounds — each slot a different variant
+  const mkPool = (name, vol=0.65) => {
+    const pool = [1,2,3,4].map(v=>{ const a=new Audio(hy(name,v)); a.volume=vol; return a; });
+    let i=0; return ()=>{ const a=pool[i++%4]; a.currentTime=0; a.play().catch(()=>{}); };
+  };
+  // Rune pool: 6 variants cycled in sequence for satisfying key feedback
+  const _runeUrls = [1,2,3,4,5,6].map(v=>hy("MAGSpel_CAST-Zap Up_HY_PC",v));
+  let _ri=0;
+  // Rapid-fire pools (pre-created at init)
+  const _daggerPlay = mkPool("FGHTImpt_MELEE-Swish Hit_HY_PC", 0.5);
+  const _pokePlay   = mkPool("WHSH_MOVEMENT-Simple Whoosh_HY_PC", 0.38);
+  const _swordWalkPlay = mkPool("SWSH_MOVEMENT-Bamboo Whip_HY_PC", 0.28);
+  // ── Web Audio (kept for sustained/dynamic-only effects) ──────
+  const D  = ctx => ctx.destination;
+  const O  = (ctx,t,f) => { const o=ctx.createOscillator(); o.type=t; o.frequency.setValueAtTime(f,ctx.currentTime); return o; };
+  const G  = (ctx,v)   => { const g=ctx.createGain(); g.gain.setValueAtTime(v,ctx.currentTime); return g; };
+  const LP = (ctx,f)   => { const n=ctx.createBiquadFilter(); n.type='lowpass';  n.frequency.value=f; return n; };
+  const wa = fn => { try { fn(_ac()); } catch(_e){} };
   return {
     // ── UI / navigation ──────────────────────────────────────────
-    click:()=>p(ctx=>{
-      const o=O(ctx,'sine',700),g=G(ctx,.12); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(200,t+.07);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.08); o.start(t); o.stop(t+.09);
-    }),
-    select:()=>p(ctx=>{
-      [[0,.12,440],[.07,.1,550],[.14,.12,660]].forEach(([d,v,f])=>{
-        const o=O(ctx,'sine',f),g=G(ctx,0),t=ctx.currentTime+d;
-        o.connect(g); g.connect(D(ctx));
-        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(v,t+.02);
-        g.gain.exponentialRampToValueAtTime(.0001,t+.15); o.start(t); o.stop(t+.16);
-      });
-    }),
-    levelUp:()=>p(ctx=>{
-      [523,659,784,1047,1319].forEach((f,i)=>{
-        const o=O(ctx,'sine',f),g=G(ctx,0),t=ctx.currentTime+i*.1;
-        o.connect(g); g.connect(D(ctx));
-        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.18,t+.02);
-        g.gain.exponentialRampToValueAtTime(.0001,t+.22); o.start(t); o.stop(t+.23);
-      });
-    }),
-    mapNode:()=>p(ctx=>{
-      const o=O(ctx,'sine',380),g=G(ctx,.1); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(620,t+.06);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.09); o.start(t); o.stop(t+.1);
-    }),
-    rest:()=>p(ctx=>{
-      [330,440,550].forEach((f,i)=>{
-        const o=O(ctx,'sine',f),g=G(ctx,0),t=ctx.currentTime+i*.14;
-        o.connect(g); g.connect(D(ctx));
-        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.1,t+.03);
-        g.gain.exponentialRampToValueAtTime(.0001,t+.3); o.start(t); o.stop(t+.31);
-      });
-    }),
-    combatStart:()=>p(ctx=>{
-      [220,277,330,415].forEach((f,i)=>{
-        const o=O(ctx,'sawtooth',f),lp=LP(ctx,2000),g=G(ctx,0),t=ctx.currentTime+i*.09;
-        o.connect(lp); lp.connect(g); g.connect(D(ctx));
-        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.15,t+.04);
-        g.gain.exponentialRampToValueAtTime(.0001,t+.25); o.start(t); o.stop(t+.26);
-      });
-    }),
-    reward:()=>p(ctx=>{
-      [660,784,990].forEach((f,i)=>{
-        const o=O(ctx,'sine',f),g=G(ctx,0),t=ctx.currentTime+i*.07;
-        o.connect(g); g.connect(D(ctx));
-        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.14,t+.02);
-        g.gain.exponentialRampToValueAtTime(.0001,t+.15); o.start(t); o.stop(t+.16);
-      });
-    }),
-    rewardWeapon:()=>p(ctx=>{
-      [392,523,659,784,1047].forEach((f,i)=>{
-        const o=O(ctx,'triangle',f),g=G(ctx,0),t=ctx.currentTime+i*.08;
-        o.connect(g); g.connect(D(ctx));
-        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.17,t+.02);
-        g.gain.exponentialRampToValueAtTime(.0001,t+.22); o.start(t); o.stop(t+.23);
-      });
-    }),
-    rewardHeal:()=>p(ctx=>{
-      const o=O(ctx,'sine',440),g=G(ctx,.16); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.linearRampToValueAtTime(880,t+.18);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.25); o.start(t); o.stop(t+.26);
-      const o2=O(ctx,'sine',660),g2=G(ctx,.1); o2.connect(g2); g2.connect(D(ctx));
-      o2.start(t+.1); g2.gain.exponentialRampToValueAtTime(.0001,t+.28); o2.stop(t+.29);
-    }),
-    rewardStat:()=>p(ctx=>{
-      [[0,330],[.09,440],[.18,550],[.27,660]].forEach(([d,f])=>{
-        const o=O(ctx,'sine',f),g=G(ctx,.12),t=ctx.currentTime+d;
-        o.connect(g); g.connect(D(ctx));
-        g.gain.setValueAtTime(.12,t); g.gain.exponentialRampToValueAtTime(.0001,t+.18);
-        o.start(t); o.stop(t+.19);
-      });
-    }),
-    victory:()=>p(ctx=>{
-      [392,494,587,740,880,1174].forEach((f,i)=>{
-        const o=O(ctx,'sine',f),g=G(ctx,0),t=ctx.currentTime+i*.1;
-        o.connect(g); g.connect(D(ctx));
-        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.2,t+.02);
-        g.gain.exponentialRampToValueAtTime(.0001,t+.22); o.start(t); o.stop(t+.23);
-      });
-    }),
-    gameOver:()=>p(ctx=>{
-      [330,277,220,165].forEach((f,i)=>{
-        const o=O(ctx,'sawtooth',f),lp=LP(ctx,1200),g=G(ctx,0),t=ctx.currentTime+i*.18;
-        o.connect(lp); lp.connect(g); g.connect(D(ctx));
-        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.22,t+.05);
-        g.gain.exponentialRampToValueAtTime(.0001,t+.28); o.start(t); o.stop(t+.29);
-      });
-    }),
-    portal:()=>p(ctx=>{
-      const o=O(ctx,'sine',180),g=G(ctx,.24); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(2400,t+.55);
-      g.gain.setValueAtTime(.24,t); g.gain.exponentialRampToValueAtTime(.0001,t+.58);
-      o.start(t); o.stop(t+.6);
-    }),
-    enemyDie:()=>p(ctx=>{
-      [440,330,220,110].forEach((f,i)=>{
-        const o=O(ctx,'sawtooth',f),lp=LP(ctx,1500),g=G(ctx,.18),t=ctx.currentTime+i*.07;
-        o.connect(lp); lp.connect(g); g.connect(D(ctx));
-        g.gain.setValueAtTime(.18,t); g.gain.exponentialRampToValueAtTime(.0001,t+.13);
-        o.start(t); o.stop(t+.14);
-      });
-      const n=NB(_ac()),b=BP(_ac(),800,3),g2=G(_ac(),.2); n.connect(b); b.connect(g2); g2.connect(D(_ac()));
-      const t=_ac().currentTime; g2.gain.exponentialRampToValueAtTime(.0001,t+.18); n.start(t); n.stop(t+.2);
-    }),
-    // ── SWORD / BEAT ─────────────────────────────────────────────
-    swordWalk:()=>p(ctx=>{
-      const n=NB(ctx),b=BP(ctx,300,6),g=G(ctx,.06); n.connect(b); b.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; g.gain.exponentialRampToValueAtTime(.0001,t+.07); n.start(t); n.stop(t+.08);
-    }),
-    swordKey:(step)=>p(ctx=>{
-      const fs=[200,320,520]; const f=fs[Math.min(step,2)];
-      const o=O(ctx,'sawtooth',f),lp=LP(ctx,3500),g=G(ctx,.15); o.connect(lp); lp.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(f*1.6,t+.08);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.11); o.start(t); o.stop(t+.12);
-    }),
-    swordBadKey:()=>p(ctx=>{
-      const o=O(ctx,'square',180),g=G(ctx,.12); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(75,t+.11);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.13); o.start(t); o.stop(t+.14);
-    }),
-    swordPerfect:()=>p(ctx=>{
-      [220,440,880].forEach((f,i)=>{
-        const o=O(ctx,'sine',f),g=G(ctx,0),t=ctx.currentTime+i*.04;
-        o.connect(g); g.connect(D(ctx));
-        g.gain.setValueAtTime(.18,t); g.gain.exponentialRampToValueAtTime(.0001,t+.18);
-        o.start(t); o.stop(t+.19);
-      });
-    }),
-    // ── HAMMER / CHARGE ──────────────────────────────────────────
-    hammerHold:()=>{
+    click:        ()=>rf("UIClick_INTERFACE-Metallic Click_HY_PC",   6, 0.50),
+    select:       ()=>rf("UIClick_INTERFACE-Positive Click_HY_PC",   6, 0.60),
+    mapNode:      ()=>rf("UIClick_INTERFACE-Rattling Click_HY_PC",   6, 0.40),
+    levelUp:      ()=>rf("DSGNSynth_BUFF-Mecha Level Up_HY_PC",      6, 0.80),
+    rest:         ()=>rf("MAGAngl_BUFF-Simple Heal_HY_PC",           6, 0.70),
+    reward:       ()=>rf("DSGNTonl_USABLE-Generic Item_HY_PC",       6, 0.60),
+    rewardWeapon: ()=>rf("DSGNMisc_USABLE-Mecha Weapon Equip_HY_PC", 6, 0.72),
+    rewardHeal:   ()=>rf("MAGAngl_BUFF-Simple Heal_HY_PC",           6, 0.70),
+    rewardStat:   ()=>rf("DSGNSynth_BUFF-Stats Up_HY_PC",            6, 0.65),
+    potionUse:    ()=>rf("MAGAngl_BUFF-Buff Pickup_HY_PC",           6, 0.65),
+    victory:      ()=>rf("DSGNMisc_SKILL IMPACT-Dramatic Finish_HY_PC",6,0.85),
+    gameOver:     ()=>rf("DSGNSynth_BUFF-Mecha Failing_HY_PC",       6, 0.75),
+    portal:       ()=>rf("MAGSpel_CAST-Sphere Up_HY_PC",             6, 0.70),
+    // ── Combat ───────────────────────────────────────────────────
+    combatStart:  ()=>rf("DSGNImpt_EXPLOSION-Bass Hit_HY_PC",        6, 0.70),
+    bossStart:    ()=>{ rf("DSGNImpt_EXPLOSION-Mana Bomb_HY_PC",6,0.90); setTimeout(()=>rf("DSGNImpt_EXPLOSION-Eruption_HY_PC",6,0.65),250); },
+    enemyDie:     ()=>rf("DSGNImpt_EXPLOSION-Eruption_HY_PC",        6, 0.80),
+    slimeDeath:   ()=>rf("DSGNMisc_CAST-Slime Ball_HY_PC",           6, 0.82),
+    // ── Sword / Beat ─────────────────────────────────────────────
+    swordWalk:    ()=>_swordWalkPlay(),
+    swordKey:     ()=>rf("DSGNMisc_MELEE-Sword Slash_HY_PC",         6, 0.65),
+    swordBadKey:  ()=>rf("UIMisc_INTERFACE-Denied_HY_PC",            6, 0.50),
+    swordPerfect: ()=>rf("DSGNMisc_SKILL IMPACT-Critical Strike_HY_PC",6,0.80),
+    // ── Hammer / Charge ──────────────────────────────────────────
+    // hammerHold stays synthetic — it's a sustained ramping rumble impossible to replicate with a short file
+    hammerHold: ()=>{
       try {
         const ctx=_ac();
         const o=O(ctx,'sawtooth',55),lp=LP(ctx,500),g=G(ctx,0);
@@ -897,168 +813,45 @@ const sfx = (() => {
           g.gain.exponentialRampToValueAtTime(.0001,t2+.07); o.stop(t2+.08); }catch(_e){} };
       } catch(_e){ return ()=>{}; }
     },
-    hammerPerfect:()=>p(ctx=>{
-      const o=O(ctx,'sine',100),g=G(ctx,.5); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(26,t+.32);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.36); o.start(t); o.stop(t+.37);
-      const n=NB(ctx),b=BP(ctx,2200,3),g2=G(ctx,.3); n.connect(b); b.connect(g2); g2.connect(D(ctx));
-      g2.gain.exponentialRampToValueAtTime(.0001,t+.16); n.start(t); n.stop(t+.17);
-    }),
-    hammerGood:()=>p(ctx=>{
-      const o=O(ctx,'sine',70),g=G(ctx,.36); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(22,t+.24);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.28); o.start(t); o.stop(t+.29);
-    }),
-    hammerOvercharge:()=>p(ctx=>{
-      const o=O(ctx,'square',220),g=G(ctx,.2); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(55,t+.24);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.27); o.start(t); o.stop(t+.28);
-    }),
-    // ── DAGGERS / RAPID ──────────────────────────────────────────
-    daggerTap:()=>p(ctx=>{
-      const n=NB(ctx),b=BP(ctx,3800,5),g=G(ctx,.1); n.connect(b); b.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; g.gain.exponentialRampToValueAtTime(.0001,t+.04); n.start(t); n.stop(t+.05);
-    }),
-    daggerFlurry:()=>p(ctx=>{
-      for(let i=0;i<6;i++){
-        const t=ctx.currentTime+i*.03;
-        const n=NB(ctx),b=BP(ctx,3000+i*340,5),g=G(ctx,.12);
-        n.connect(b); b.connect(g); g.connect(D(ctx));
-        g.gain.setValueAtTime(.12,t); g.gain.exponentialRampToValueAtTime(.0001,t+.04); n.start(t); n.stop(t+.05);
-      }
-    }),
-    // ── SEQUENCE / STAFF ─────────────────────────────────────────
-    runeCorrect:(idx)=>p(ctx=>{
-      const baseFs=[523,659,784,880,1047,1175,1319,1047];
-      const f=baseFs[idx%baseFs.length]*.5;
-      const o=O(ctx,'sine',f),g=G(ctx,.12); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(f*2,t+.05);
-      g.gain.setValueAtTime(.12,t); g.gain.exponentialRampToValueAtTime(.0001,t+.19); o.start(t); o.stop(t+.2);
-    }),
-    runeWrong:()=>p(ctx=>{
-      const o=O(ctx,'square',200),g=G(ctx,.14); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.linearRampToValueAtTime(100,t+.13);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.15); o.start(t); o.stop(t+.16);
-    }),
-    magicBolt:(q)=>p(ctx=>{
-      const o=O(ctx,'sine',280),g=G(ctx,.19); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(q==='perfect'?1900:950,t+.32);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.36); o.start(t); o.stop(t+.37);
-      if(q==='perfect'){
-        const o2=O(ctx,'sine',1400),g2=G(ctx,.13); o2.connect(g2); g2.connect(D(ctx));
-        const t2=t+.28; g2.gain.setValueAtTime(.13,t2); g2.gain.exponentialRampToValueAtTime(.0001,t2+.14);
-        o2.frequency.exponentialRampToValueAtTime(2800,t2+.12); o2.start(t2); o2.stop(t2+.15);
-      }
-    }),
-    // ── STOMP / BOOTS ─────────────────────────────────────────────
-    stompApproach:()=>p(ctx=>{
-      const n=NB(ctx),lp=LP(ctx,900),g=G(ctx,.1); n.connect(lp); lp.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; lp.frequency.exponentialRampToValueAtTime(150,t+.4);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.44); n.start(t); n.stop(t+.45);
-    }),
-    stompLand:(q)=>p(ctx=>{
-      const f=q==='perfect'?60:q==='good'?44:30;
-      const v=q==='perfect'?.52:q==='good'?.38:.22;
-      const o=O(ctx,'sine',f*2),g=G(ctx,v); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(f*.28,t+.26);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.32); o.start(t); o.stop(t+.33);
-      const n=NB(ctx),b=BP(ctx,400,4),g2=G(ctx,v*.75); n.connect(b); b.connect(g2); g2.connect(D(ctx));
-      g2.gain.exponentialRampToValueAtTime(.0001,t+.11); n.start(t); n.stop(t+.12);
-    }),
-    stompBounce:()=>p(ctx=>{
-      const o=O(ctx,'sine',220),g=G(ctx,.12); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(440,t+.11);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.14); o.start(t); o.stop(t+.15);
-    }),
-    // ── POKE / SPEAR ─────────────────────────────────────────────
-    pokeTap:(n)=>p(ctx=>{
-      const f=370+(n%4)*120;
-      const o=O(ctx,'sawtooth',f),lp=LP(ctx,3500),g=G(ctx,.09); o.connect(lp); lp.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(f*1.35,t+.05);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.07); o.start(t); o.stop(t+.08);
-    }),
-    // ── ARCHERY / BOW ─────────────────────────────────────────────
-    bowDraw:()=>{ return ()=>{}; }, // silent — no ambient hiss during aiming
-    bowRelease:()=>p(ctx=>{
-      const o=O(ctx,'sawtooth',900),g=G(ctx,.2); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(90,t+.18);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.21); o.start(t); o.stop(t+.22);
-    }),
-    arrowFlight:()=>p(ctx=>{
-      const n=NB(ctx),b=BP(ctx,2200,7),g=G(ctx,.08); n.connect(b); b.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; b.frequency.exponentialRampToValueAtTime(380,t+.29);
-      g.gain.setValueAtTime(.08,t); g.gain.exponentialRampToValueAtTime(.0001,t+.31); n.start(t); n.stop(t+.32);
-    }),
-    arrowHit:(q)=>p(ctx=>{
-      const v=q==='perfect'?.4:q==='good'?.27:.12;
-      const f=q==='perfect'?130:q==='good'?90:50;
-      const o=O(ctx,'sine',f*2),g=G(ctx,v); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(f*.3,t+.22);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.26); o.start(t); o.stop(t+.27);
-      if(q==='perfect'){
-        const o2=O(ctx,'sine',2400),g2=G(ctx,.12); o2.connect(g2); g2.connect(D(ctx));
-        g2.gain.setValueAtTime(.12,t); g2.gain.exponentialRampToValueAtTime(.0001,t+.26); o2.start(t); o2.stop(t+.27);
-      }
-    }),
-    // ── DEFEND ────────────────────────────────────────────────────
-    projLaunch:()=>p(ctx=>{
-      const o=O(ctx,'sine',320),g=G(ctx,.15); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(80,t+.35);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.38); o.start(t); o.stop(t+.39);
-    }),
-    parry:()=>p(ctx=>{
-      const t=ctx.currentTime;
-      // metallic clang harmonics
-      [[1047,.06,.12],[1568,.05,.22],[2093,.04,.34],[2637,.03,.48],[3136,.02,.65],[523,.06,.28],[4186,.01,.18],[784,.04,.20]].forEach(([f,v,dec])=>{
-        const o=O(ctx,'sine',f),g=G(ctx,0); o.connect(g); g.connect(D(ctx));
-        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(v,t+.002);
-        g.gain.exponentialRampToValueAtTime(.0001,t+dec); o.start(t); o.stop(t+dec+.01);
-      });
-      // sub-bass thud
-      const sub=O(ctx,'sine',120),gs=G(ctx,0); sub.connect(gs); gs.connect(D(ctx));
-      sub.frequency.setValueAtTime(120,t); sub.frequency.exponentialRampToValueAtTime(30,t+.35);
-      gs.gain.setValueAtTime(0,t); gs.gain.linearRampToValueAtTime(.08,t+.003);
-      gs.gain.exponentialRampToValueAtTime(.0001,t+.40); sub.start(t); sub.stop(t+.41);
-      // noise burst
-      const n=NB(ctx),lp=LP(ctx,8000),gn=G(ctx,0); n.connect(lp); lp.connect(gn); gn.connect(D(ctx));
-      gn.gain.setValueAtTime(0,t); gn.gain.linearRampToValueAtTime(.06,t+.002);
-      gn.gain.exponentialRampToValueAtTime(.0001,t+.18); n.start(t); n.stop(t+.19);
-      const n2=NB(ctx),bp=BP(ctx,3000,0.8),gn2=G(ctx,0); n2.connect(bp); bp.connect(gn2); gn2.connect(D(ctx));
-      gn2.gain.setValueAtTime(0,t+.01); gn2.gain.linearRampToValueAtTime(.03,t+.015);
-      gn2.gain.exponentialRampToValueAtTime(.0001,t+.22); n2.start(t+.01); n2.stop(t+.23);
-      // rising power chord
-      [[440,.04,2.0],[550,.03,1.8],[660,.02,1.6]].forEach(([f,v,dec],i)=>{
-        const o=O(ctx,'sine',f),g=G(ctx,0); o.connect(g); g.connect(D(ctx));
-        g.gain.setValueAtTime(0,t+i*.04); g.gain.linearRampToValueAtTime(v,t+i*.04+.06);
-        g.gain.exponentialRampToValueAtTime(.0001,t+dec); o.start(t+i*.04); o.stop(t+dec+.01);
-      });
-      // crystalline bell
-      const bell=O(ctx,'sine',2093),gb=G(ctx,0); bell.connect(gb); gb.connect(D(ctx));
-      gb.gain.setValueAtTime(0,t); gb.gain.linearRampToValueAtTime(.04,t+.003);
-      gb.gain.exponentialRampToValueAtTime(.0001,t+2.0); bell.start(t); bell.stop(t+2.01);
-      // second bell
-      const bell2=O(ctx,'sine',3136),gb2=G(ctx,0); bell2.connect(gb2); gb2.connect(D(ctx));
-      gb2.gain.setValueAtTime(0,t+.01); gb2.gain.linearRampToValueAtTime(.03,t+.015);
-      gb2.gain.exponentialRampToValueAtTime(.0001,t+1.7); bell2.start(t+.01); bell2.stop(t+1.71);
-      // shimmer tails
-      [[5200,.03,1.2],[2640,.04,.95],[6800,.02,.80]].forEach(([f,v,dec],i)=>{
-        const o=O(ctx,'sine',f),g=G(ctx,0); o.connect(g); g.connect(D(ctx));
-        const d=i*.025; g.gain.setValueAtTime(0,t+d); g.gain.linearRampToValueAtTime(v,t+d+.005);
-        g.gain.exponentialRampToValueAtTime(.0001,t+dec); o.start(t+d); o.stop(t+dec+.01);
-      });
-    }),
-    blockHit:()=>p(ctx=>{
-      const n=NB(ctx),b=BP(ctx,550,3),g=G(ctx,.19); n.connect(b); b.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; g.gain.exponentialRampToValueAtTime(.0001,t+.14); n.start(t); n.stop(t+.15);
-      const o=O(ctx,'sine',120),g2=G(ctx,.22); o.connect(g2); g2.connect(D(ctx));
-      o.frequency.exponentialRampToValueAtTime(45,t+.2); g2.gain.exponentialRampToValueAtTime(.0001,t+.24);
-      o.start(t); o.stop(t+.25);
-    }),
-    takeDmg:()=>p(ctx=>{
-      const o=O(ctx,'square',190),g=G(ctx,.2); o.connect(g); g.connect(D(ctx));
-      const t=ctx.currentTime; o.frequency.exponentialRampToValueAtTime(55,t+.2);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.23); o.start(t); o.stop(t+.24);
-    }),
+    hammerPerfect:    ()=>rf("DSGNImpt_EXPLOSION-Thud_HY_PC",               6, 0.92),
+    hammerGood:       ()=>rf("FGHTImpt_HIT-Strong Smack_HY_PC",             6, 0.72),
+    hammerOvercharge: ()=>rf("DSGNImpt_EXPLOSION-Forced Interruption_HY_PC",6, 0.70),
+    // ── Daggers / Rapid ──────────────────────────────────────────
+    daggerTap:    ()=>_daggerPlay(),
+    daggerFlurry: ()=>rf("DSGNMisc_SKILL RELEASE-Flying Blades_HY_PC",      6, 0.72),
+    // ── Sequence / Staff ─────────────────────────────────────────
+    runeCorrect:  ()=>pf(_runeUrls[_ri++%_runeUrls.length], 0.60),
+    runeWrong:    ()=>rf("UIMisc_INTERFACE-Denied_HY_PC",                    6, 0.55),
+    magicBolt:    (q)=>{
+      rf("MAGSpel_CAST-Panic Energy_HY_PC", 6, 0.72);
+      if(q==="perfect") setTimeout(()=>rf("DSGNMisc_SKILL IMPACT-Critical Strike_HY_PC",6,0.60),260);
+    },
+    // ── Stomp / Boots ────────────────────────────────────────────
+    stompApproach:()=>rf("FEETMisc_STEP-Hard Step_HY_PC",                   6, 0.50),
+    stompLand:    (q)=>rf(q==="perfect"?"DSGNImpt_EXPLOSION-Thud_HY_PC":"DSGNImpt_EXPLOSION-Sand Impact_HY_PC",6, q==="perfect"?0.92:0.72),
+    stompBounce:  ()=>rf("DSGNMisc_MOVEMENT-Pierce Jump_HY_PC",             6, 0.48),
+    // ── Poke / Spear ─────────────────────────────────────────────
+    pokeTap:      ()=>_pokePlay(),
+    // ── Archery / Bow ────────────────────────────────────────────
+    bowDraw:      ()=>(()=>{}),
+    bowRelease:   ()=>rf("SWSH_MOVEMENT-Bamboo Whip_HY_PC",                 6, 0.62),
+    arrowFlight:  ()=>rf("WHSH_MOVEMENT-Wind Shaker_HY_PC",                 6, 0.50),
+    arrowHit:     (q)=>{
+      rf("DSGNMisc_HIT-Gore Pierce_HY_PC", 6, q==="perfect"?0.85:0.65);
+      if(q==="perfect") setTimeout(()=>rf("DSGNMisc_SKILL IMPACT-Critical Strike_HY_PC",6,0.50),110);
+    },
+    // ── RPG / Sequence Reveal ─────────────────────────────────────
+    rpgLaunch:      ()=>rf("DSGNMisc_SKILL RELEASE-Flare Gun_HY_PC",        6, 0.88),
+    rpgImpact:      ()=>{ rf("DSGNImpt_EXPLOSION-Mana Bomb_HY_PC",6,0.95); setTimeout(()=>rf("DSGNImpt_EXPLOSION-Eruption_HY_PC",6,0.80),180); },
+    rpgSequenceKey: ()=>rf("MAGSpel_CAST-Energy Riser_HY_PC",               6, 0.48),
+    // ── Dual Action ──────────────────────────────────────────────
+    dualClick:    ()=>rf("UIClick_INTERFACE-Strong Click 1_HY_PC",          6, 0.70),
+    dualGunshot:  ()=>pf(GN + ".22LR/WAV/22LR%20Single%20Isolated%20WAV.wav", 0.55),
+    // ── Defend ───────────────────────────────────────────────────
+    projLaunch:   ()=>rf("DSGNMisc_PROJECTILE-Laser Shot_HY_PC",            6, 0.60),
+    parry:        ()=>rf("DSGNMisc_MELEE-Sword Parry_HY_PC",                6, 0.88),
+    blockHit:     ()=>rf("DSGNMisc_MELEE-Sword Deflect_HY_PC",              6, 0.72),
+    takeDmg:      ()=>rf("FGHTImpt_HIT-Strong Punch_HY_PC",                 6, 0.72),
   };
 })();
 
@@ -1659,7 +1452,7 @@ function App() {
     const hp  = elite ? Math.round(e.hp  * 1.6) : e.hp;
     const atk = elite ? Math.round(e.atk * 1.3) : e.atk;
     const xp  = elite ? Math.round(e.xp  * 1.8) : e.xp;
-    sfx.combatStart();
+    if (node.enemy==="dragon") sfx.bossStart(); else sfx.combatStart();
     const eSprite = node.enemy!=="dragon" ? ENEMY_SPRITE_POOL[Math.floor(Math.random()*ENEMY_SPRITE_POOL.length)] : null;
     const eName = eSprite ? eSprite.name : e.name;
     setCs({ enemy:{...e,id:node.enemy,name:eName,maxHp:hp,hp,atk,xp}, elite,
@@ -1700,6 +1493,7 @@ function App() {
                                    `${weapon.emoji} Glancing blow — ${dmg}.`;
       if (newHp <= 0) {
         sfx.enemyDie();
+        if (prev.enemy.id === "dragon") sfx.slimeDeath();
         setTimeout(()=>{
           setPlayer(p=>p?({...p,xp:p.xp+prev.enemy.xp,floor:p.floor+1,visited:[...p.visited,prev.nodeId]}):p);
           if (prev.enemy.id === "dragon") {
@@ -1774,6 +1568,7 @@ function App() {
   const usePotion = (idx) => {
     const potion = player?.potions?.[idx];
     if (!potion) return;
+    sfx.potionUse();
     setPlayer(p=>p?({...p,potions:p.potions.filter((_,i)=>i!==idx)}):p);
     if (potion.effect==="damage") {
       const dmg = potion.value;
@@ -1785,6 +1580,7 @@ function App() {
         const log=[...prev.log,`💣 Bomb deals ${dmg} damage!`];
         if(newHp<=0){
           sfx.enemyDie();
+          if(prev.enemy.id==="dragon") sfx.slimeDeath();
           setTimeout(()=>{
             setPlayer(p=>p?({...p,xp:p.xp+prev.enemy.xp,floor:p.floor+1,visited:[...p.visited,prev.nodeId]}):p);
             if(prev.enemy.id==="dragon"){
@@ -2368,6 +2164,7 @@ function App() {
 
   // ── RPG ROCKET: fires massive rocket after sequence_reveal QTE ──
   const fireRPGRocket = (q, dmg, weapon) => {
+    sfx.rpgLaunch();
     const start = performance.now();
     const ROCKET_DUR = 480;
     setQteAnim({ type:"rpg_rocket", weapon, t:0, q });
@@ -2376,6 +2173,7 @@ function App() {
       setQteAnim(prev=>prev?{...prev,t}:null);
       if (t<1) { requestAnimationFrame(tick); return; }
       // Massive multi-wave explosion
+      sfx.rpgImpact();
       triggerImpact(2);
       triggerParticles(ENX, GNDY-50, "#ff4400", 52);
       setTimeout(()=>triggerParticles(ENX, GNDY-35, "#ffcc00", 36),90);
@@ -2415,7 +2213,7 @@ function App() {
       e.preventDefault();
       const currentKey = ref.seq[ref.targetIdx];
       if (k === currentKey) {
-        sfx.runeCorrect(ref.doneSet.size);
+        sfx.rpgSequenceKey();
         ref.doneSet.add(ref.targetIdx);
         if (ref.doneSet.size >= len) {
           // All done — perfect
@@ -2486,6 +2284,7 @@ function App() {
       if (ref.done) return;
       ref.done = true;
       cleanup();
+      sfx.dualGunshot();
       const dist = Math.abs(clickPos - 0.5);
       const half = centerW / 2;
       const q = dist < half*0.32 ? "perfect" : dist < half ? "good" : "miss";
@@ -2521,6 +2320,7 @@ function App() {
     const onClick = (e) => {
       if (e.button !== 0 || ref.done) return;
       e.preventDefault();
+      sfx.dualClick();
       resolve(ref.dotPos);
     };
 
