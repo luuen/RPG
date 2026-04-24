@@ -375,29 +375,34 @@ function HeroSprite({ className="Knight", scale=1, weapons=[], heroLooks=null, i
 }
 
 const BOSS_GIF_BASE = "/icons/sprites/boss/boss_demon_slime_FREE_v1.0/gifs";
-function DemonSlimeSprite({ scale=1, enemyFlash=false, phase="action" }) {
+function DemonSlimeSprite({ scale=1, enemyFlash=false, phase="action", bossAttackPattern=null }) {
   const sz = Math.round(128 * scale);
-  // Priority: dying > hit > attacking > idle
-  const src = phase==="won"       ? `${BOSS_GIF_BASE}/05_d_death.gif`
-            : enemyFlash          ? `${BOSS_GIF_BASE}/04_d_take_hit.gif`
-            : phase==="enemy_turn"? `${BOSS_GIF_BASE}/03_d_cleave.gif`
+  // Priority: dying > hit > charge-attack > cleave-attack > idle
+  const src = phase==="won"                                   ? `${BOSS_GIF_BASE}/05_d_death.gif`
+            : enemyFlash                                      ? `${BOSS_GIF_BASE}/04_d_take_hit.gif`
+            : phase==="enemy_turn"&&bossAttackPattern==="charge" ? `${BOSS_GIF_BASE}/02_d_walk.gif`
+            : phase==="enemy_turn"                            ? `${BOSS_GIF_BASE}/03_d_cleave.gif`
             : `${BOSS_GIF_BASE}/01_d_idle.gif`;
   // Key on src so browser reloads/restarts gif when animation changes
+  const isCharge = phase==="enemy_turn" && bossAttackPattern==="charge";
   return (
     <div style={{position:"relative",width:sz,height:sz}}>
       <img key={src} src={src} width={sz} height={sz}
         style={{display:"block",imageRendering:"pixelated",objectFit:"contain"}}/>
-      {/* Green glow under boss */}
+      {/* Glow under boss — red tint during charge, green normally */}
       <div style={{position:"absolute",bottom:-6,left:"50%",transform:"translateX(-50%)",
         width:sz*0.7,height:10,borderRadius:"50%",
-        background:"radial-gradient(ellipse,#22dd4466 0%,transparent 70%)",
+        background:isCharge
+          ? "radial-gradient(ellipse,#dd222266 0%,transparent 70%)"
+          : "radial-gradient(ellipse,#22dd4466 0%,transparent 70%)",
+        transition:"background .3s",
         pointerEvents:"none"}}/>
     </div>
   );
 }
 
-function EnemySpriteSmall({ id, scale=1, sprite=null, attacking=false, enemyFlash=false, phase="action" }) {
-  if (id==="dragon") return <DemonSlimeSprite scale={scale} enemyFlash={enemyFlash} phase={phase}/>;
+function EnemySpriteSmall({ id, scale=1, sprite=null, attacking=false, enemyFlash=false, phase="action", bossAttackPattern=null }) {
+  if (id==="dragon") return <DemonSlimeSprite scale={scale} enemyFlash={enemyFlash} phase={phase} bossAttackPattern={bossAttackPattern}/>;
 
   if (sprite) {
     const dims = ENEMY_DIMS[id]||{w:80,h:96};
@@ -1485,6 +1490,8 @@ function App() {
     setEnemyFlash(true);
     setTimeout(()=>setEnemyFlash(false), 450);
 
+    // Pick boss attack pattern now so we can close over it in setCs + setTimeout
+    const bossAtk = cs?.enemy?.id === "dragon" ? (Math.random() < 0.5 ? "cleave" : "charge") : null;
     setCs(prev=>{
       if(!prev) return prev;
       const newHp  = Math.max(0, prev.enemy.hp - dmg);
@@ -1521,8 +1528,8 @@ function App() {
         }, 1100);
         return {...prev, enemy:{...prev.enemy,hp:0}, phase:"won", log:[...prev.log,logMsg]};
       }
-      setTimeout(()=>startDefendQTE(), 880);
-      return {...prev, enemy:{...prev.enemy,hp:newHp}, phase:"enemy_turn", log:[...prev.log,logMsg]};
+      setTimeout(()=>startDefendQTE(bossAtk), 880);
+      return {...prev, enemy:{...prev.enemy,hp:newHp}, phase:"enemy_turn", bossAttackPattern:bossAtk, log:[...prev.log,logMsg]};
     });
   };
 
@@ -2369,13 +2376,14 @@ function App() {
   // Per-enemy defend timing — each feels distinctly different
   // dur=total ms, launch=windup fraction, arrive=target fraction (where to press SPACE)
   const DEFEND_PROFILES = {
-    goblin:   { dur:1000, launch:0.20, arrive:0.78, projPath:"bounce"  }, // rock bounces back and forth
-    skeleton: { dur:1300, launch:0.32, arrive:0.80, projPath:"zigzag"  }, // bone tumbles up-down
-    eye:      { dur:1100, launch:0.14, arrive:0.88, projPath:"loop"    }, // orb spirals in a loop
-    golem:    { dur:1600, launch:0.38, arrive:0.76, projPath:"straight" }, // heavy boulder, direct
-    wraith:   { dur: 950, launch:0.22, arrive:0.84, projPath:"zigzag"  }, // ghost energy zips erratically
-    dragon:   { dur:1400, launch:0.28, arrive:0.90, projPath:"loop"    }, // fireball loops before impact
-    pvp_opp:  { dur:1100, launch:0.20, arrive:0.82, projPath:"straight" }, // pvp opponent attack
+    goblin:        { dur:1000, launch:0.20, arrive:0.78, projPath:"bounce"      }, // rock bounces back and forth
+    skeleton:      { dur:1300, launch:0.32, arrive:0.80, projPath:"zigzag"      }, // bone tumbles up-down
+    eye:           { dur:1100, launch:0.14, arrive:0.88, projPath:"loop"        }, // orb spirals in a loop
+    golem:         { dur:1600, launch:0.38, arrive:0.76, projPath:"straight"    }, // heavy boulder, direct
+    wraith:        { dur: 950, launch:0.22, arrive:0.84, projPath:"zigzag"      }, // ghost energy zips erratically
+    dragon:        { dur:1400, launch:0.28, arrive:0.90, projPath:"loop"        }, // fireball arcs in a wide loop
+    dragon_charge: { dur: 900, launch:0.12, arrive:0.87, projPath:"ground_rush" }, // fast ground-hugging surge
+    pvp_opp:       { dur:1100, launch:0.20, arrive:0.82, projPath:"straight"    }, // pvp opponent attack
   };
   // Per-QTE-type defend timing (for PvP projectile variety)
   const PVP_PROJ_PROFILES = {
@@ -2389,7 +2397,7 @@ function App() {
     sequence_reveal: { dur:1500, launch:0.28, arrive:0.82 },
     dual_action:     { dur: 500, launch:0.16, arrive:0.80 },
   };
-  const startDefendQTE = () => {
+  const startDefendQTE = (bossAtkPattern = null) => {
     const ref = qteRef.current;
     const isPvp = cs?.pvpMode && cs?.enemy?.id === "pvp_opp";
     let prof, projType;
@@ -2399,14 +2407,16 @@ function App() {
       projType = oppWep.qteType || "swing_beat";
       prof = PVP_PROJ_PROFILES[projType] || { dur:1100, launch:0.20, arrive:0.82 };
     } else {
-      prof = DEFEND_PROFILES[cs?.enemy?.id] || { dur:1200, launch:0.28, arrive:0.82 };
+      const profKey = cs?.enemy?.id==="dragon" && bossAtkPattern==="charge"
+        ? "dragon_charge" : cs?.enemy?.id;
+      prof = DEFEND_PROFILES[profKey] || { dur:1200, launch:0.28, arrive:0.82 };
       projType = null; // use legacy enemy-id sprite
     }
     const { dur, launch, arrive } = prof;
     ref.startMs = performance.now(); ref.pressT = null;
     ref.defendArrive = arrive; // store so showDefendCue can use it
     setCs(prev=>prev?{...prev,phase:"defending"}:prev);
-    setQteAnim({ type:"defend", t:0, projFrac:0, arrive, projPath: prof.projPath||"straight", projType });
+    setQteAnim({ type:"defend", t:0, projFrac:0, arrive, projPath: prof.projPath||"straight", projType, bossAttackPattern: bossAtkPattern });
     triggerEnemyWindUp();
 
     const onKey = (e) => {
@@ -4093,7 +4103,7 @@ function App() {
                 transformOrigin:"bottom center"}}>
                 {cs.enemy.id==="pvp_opp"
                   ? <HeroSprite className={cs.enemy.pvpClass??'Knight'} scale={eScale} weapons={cs.enemy.pvpWeapons??['sword']}/>
-                  : <EnemySpriteSmall id={cs.enemy.id} scale={eScale} sprite={cs?.enemySprite} enemyFlash={enemyFlash} phase={cs.phase}/>
+                  : <EnemySpriteSmall id={cs.enemy.id} scale={eScale} sprite={cs?.enemySprite} enemyFlash={enemyFlash} phase={cs.phase} bossAttackPattern={cs?.bossAttackPattern}/>
                 }
               </div>
 
@@ -4144,6 +4154,25 @@ function App() {
                     // Snappy vertical zig-zag that calms near impact
                     return { ox: 0, oy: Math.sin(f * Math.PI * 7) * env * 36 };
                   }
+                  if (projPath === "ground_rush") {
+                    // Phase 1 (0–0.18): drop fast to ground level
+                    // Phase 2 (0.18–0.75): roll along ground with small bounce + lateral wobble
+                    // Phase 3 (0.75–1.0): surge sharply upward to hit hero
+                    const lineY = srcY + (heroMidY - srcY) * f;
+                    let targetY;
+                    if (f < 0.18) {
+                      targetY = srcY + (GNDY - srcY) * (f / 0.18);
+                    } else if (f < 0.75) {
+                      const t2 = (f - 0.18) / 0.57;
+                      targetY = GNDY + Math.sin(t2 * Math.PI * 7) * 7; // small ground bounce
+                    } else {
+                      const t3 = (f - 0.75) / 0.25;
+                      targetY = GNDY + (heroMidY - GNDY) * (t3 * t3); // ease-in surge
+                    }
+                    const wobble = f > 0.15 && f < 0.78
+                      ? Math.sin(f * Math.PI * 14) * (1 - f * 0.9) * 12 : 0;
+                    return { ox: wobble, oy: targetY - lineY };
+                  }
                   return { ox: 0, oy: 0 }; // straight
                 };
 
@@ -4161,13 +4190,16 @@ function App() {
 
                 return (
                   <svg style={{position:"absolute",left:0,top:0,zIndex:11,pointerEvents:"none",overflow:"visible"}} width={BFW} height={BFH}>
-                    {/* Path trail for loop/zigzag so player can read the trajectory */}
+                    {/* Path trail for loop/zigzag/ground_rush so player can read the trajectory */}
                     {projPath !== "straight" && projPath !== "bounce" && (()=>{
                       const steps = 18;
                       const pts = Array.from({length:steps+1},(_,i)=>posAt(pf*(i/steps)));
+                      const trailCol = id==="dragon"
+                        ? (qteAnim?.bossAttackPattern==="charge" ? "#22dd4444" : "#ff660033")
+                        : id==="eye" ? "#9900cc33" : "#4488ff22";
                       return <polyline points={pts.map(p=>`${p.x},${p.y}`).join(" ")}
-                        fill="none" stroke={id==="dragon"?"#ff660033":id==="eye"?"#9900cc33":"#4488ff22"}
-                        strokeWidth="2" strokeDasharray="4 5" opacity=".5"/>;
+                        fill="none" stroke={trailCol}
+                        strokeWidth={projPath==="ground_rush"?3:2} strokeDasharray="4 5" opacity=".6"/>;
                     })()}
 
                     {id==="goblin"&&(
@@ -4232,7 +4264,8 @@ function App() {
                         <circle cx={projX-2} cy={projY-2} r="1.5" fill="#fff" opacity=".8"/>
                       </>
                     )}
-                    {id==="dragon"&&(
+                    {/* Dragon — CLEAVE: looping fireball orb */}
+                    {id==="dragon"&&qteAnim?.bossAttackPattern!=="charge"&&(
                       <>
                         {[0.1,0.06,0.02].map((lag,i)=>{
                           const {x,y}=posAt(Math.max(0,pf-lag));
@@ -4245,28 +4278,56 @@ function App() {
                         <circle cx={projX} cy={projY} r="6" fill="#fff" opacity=".8"/>
                       </>
                     )}
+                    {/* Dragon — CHARGE: fast flat rolling slime blob */}
+                    {id==="dragon"&&qteAnim?.bossAttackPattern==="charge"&&(
+                      <>
+                        {/* Slime smear trail */}
+                        {[0.13,0.08,0.04].map((lag,i)=>{
+                          const {x,y}=posAt(Math.max(0,pf-lag));
+                          return <ellipse key={i} cx={x} cy={y} rx={11-i*2.5} ry={5-i}
+                            fill={i===0?"#33ee55":i===1?"#22cc44":"#11aa33"}
+                            opacity={0.55-i*0.15}/>;
+                        })}
+                        {/* Main blob — squished ellipse */}
+                        <ellipse cx={projX} cy={projY} rx={16} ry={9}
+                          fill="#33ee55" stroke="#66ff88" strokeWidth="1.5"
+                          style={{filter:"drop-shadow(0 0 14px #00ff5577)"}}/>
+                        {/* Angry eyes */}
+                        <circle cx={projX+5} cy={projY-2} r={2.2} fill="#004411"/>
+                        <circle cx={projX-3} cy={projY-2} r={2.2} fill="#004411"/>
+                        {/* Slime splash drops trailing behind during ground phase */}
+                        {pf>0.18&&pf<0.78&&[-13,-8,-18].map((dx,i)=>(
+                          <ellipse key={i} cx={projX+dx} cy={projY+5} rx={3-i*0.4} ry={2}
+                            fill="#22bb44" opacity={0.45-i*0.1}/>
+                        ))}
+                      </>
+                    )}
                   </svg>
                 );
               })()}
 
               {/* ── DEFEND: block hint pill ── */}
               {qteAnim?.type==="defend"&&(()=>{
-                const pf = qteAnim.projFrac||0;
-                const t  = qteAnim.t||0;
+                const pf     = qteAnim.projFrac||0;
+                const t      = qteAnim.t||0;
                 const arrive = qteAnim.arrive||0.82;
                 if (pf<=0 || t>arrive+0.06) return null;
-                const near = pf>0.82;
+                const near    = pf>0.82;
+                const isCharge = qteAnim.bossAttackPattern==="charge";
+                const nearCol  = isCharge ? "#44ff88" : "#44ccff";
+                const nearGlow = isCharge ? "0 0 12px #22ff66" : "0 0 12px #44aaff";
+                const nearBdr  = isCharge ? "#22ff6655" : "#44aaff55";
                 return (
                   <div style={{position:"absolute",left:"50%",bottom:36,transform:"translateX(-50%)",
                     zIndex:30,pointerEvents:"none",
                     fontFamily:"Cinzel",fontSize:10,fontWeight:700,letterSpacing:3,
-                    color:near?"#44ccff":"#e8d5a3aa",
+                    color:near?nearCol:"#e8d5a3aa",
                     background:"rgba(0,0,0,.55)",borderRadius:20,padding:"4px 14px",
-                    border:`1px solid ${near?"#44aaff55":"#ffffff12"}`,
-                    textShadow:near?"0 0 12px #44aaff":"none",
+                    border:`1px solid ${near?nearBdr:"#ffffff12"}`,
+                    textShadow:near?nearGlow:"none",
                     animation:near?"pulse .2s ease-in-out infinite":"none",
                     whiteSpace:"nowrap"}}>
-                    TIME THE BLOCK!
+                    {isCharge ? "DODGE THE RUSH!" : "TIME THE BLOCK!"}
                   </div>
                 );
               })()}
