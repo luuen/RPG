@@ -100,7 +100,9 @@ const ENEMIES = {
 };
 const ENEMY_DIMS = {
   goblin:{w:64,h:78}, skeleton:{w:56,h:88}, eye:{w:80,h:80},
-  golem:{w:84,h:88},  wraith:{w:64,h:96},   dragon:{w:128,h:128},
+  golem:{w:84,h:88},  wraith:{w:64,h:96},
+  // Boss GIF natural frame size is 288×160 — scale to ~75% to fit battlefield
+  dragon:{w:216,h:120},
 };
 
 // Enemy sprite pool — 9 variants randomized per encounter (dragon excluded)
@@ -111,9 +113,9 @@ const ENEMY_SPRITE_POOL = [
   {variant:"Minotaur_1",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
   {variant:"Minotaur_2",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
   {variant:"Minotaur_3",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
-  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6 },
-  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6 },
-  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6 },
+  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:14},
+  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:14},
+  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:14},
 ];
 
 // Gandalf layered hero sprites — randomized per run
@@ -314,9 +316,10 @@ function LayeredHeroSprite({ looks, displayW=41, displayH=65, isAttacking=false 
   const [animFrame, setAnimFrame] = React.useState(0);
   React.useEffect(()=>{
     setAnimFrame(0);
+    if (!isAttacking) return; // freeze on frame 0 during idle — no positional drift
     const iv = setInterval(()=>setAnimFrame(f=>(f+1)%cols), 1000/fps);
     return ()=>clearInterval(iv);
-  },[cols, fps]);
+  },[cols, fps, isAttacking]);
   if (!looks.skin) return null;
   // Scale so frame HEIGHT fills displayH exactly — frame width > displayW so we center-crop
   const vScale   = displayH / frameH;
@@ -391,24 +394,24 @@ function HeroSprite({ className="Knight", scale=1, weapons=[], heroLooks=null, i
 }
 
 const BOSS_GIF_BASE = ASSET_BASE+"/icons/sprites/boss/boss_demon_slime_FREE_v1.0/gifs";
-function DemonSlimeSprite({ scale=1, enemyFlash=false, phase="action", bossAttackPattern=null }) {
-  const sz = Math.round(128 * scale);
+// Boss GIF natural frame size is 288×160. renderW/renderH come from ENEMY_DIMS.dragon × eScale.
+function DemonSlimeSprite({ renderW=238, renderH=132, enemyFlash=false, phase="action", bossAttackPattern=null }) {
   // Priority: dying > hit > charge-attack > cleave-attack > idle
-  const src = phase==="won"                                   ? `${BOSS_GIF_BASE}/05_d_death.gif`
-            : enemyFlash                                      ? `${BOSS_GIF_BASE}/04_d_take_hit.gif`
+  const src = phase==="won"                                      ? `${BOSS_GIF_BASE}/05_d_death.gif`
+            : enemyFlash                                         ? `${BOSS_GIF_BASE}/04_d_take_hit.gif`
             : phase==="enemy_turn"&&bossAttackPattern==="charge" ? `${BOSS_GIF_BASE}/02_d_walk.gif`
-            : phase==="enemy_turn"                            ? `${BOSS_GIF_BASE}/03_d_cleave.gif`
+            : phase==="enemy_turn"                               ? `${BOSS_GIF_BASE}/03_d_cleave.gif`
             : `${BOSS_GIF_BASE}/01_d_idle.gif`;
   // Key on src so browser reloads/restarts gif when animation changes
   const isCharge = phase==="enemy_turn" && bossAttackPattern==="charge";
   return (
-    <div style={{position:"relative",width:sz,height:sz}}>
-      <img key={src} src={src} width={sz} height={sz}
-        style={{display:"block",imageRendering:"pixelated",objectFit:"contain",
+    <div style={{position:"relative",width:renderW,height:renderH}}>
+      <img key={src} src={src} width={renderW} height={renderH}
+        style={{display:"block",imageRendering:"pixelated",objectFit:"fill",
           mixBlendMode:"screen"}}/>
       {/* Glow under boss — red tint during charge, green normally */}
       <div style={{position:"absolute",bottom:-6,left:"50%",transform:"translateX(-50%)",
-        width:sz*0.7,height:10,borderRadius:"50%",
+        width:renderW*0.7,height:10,borderRadius:"50%",
         background:isCharge
           ? "radial-gradient(ellipse,#dd222266 0%,transparent 70%)"
           : "radial-gradient(ellipse,#22dd4466 0%,transparent 70%)",
@@ -419,7 +422,10 @@ function DemonSlimeSprite({ scale=1, enemyFlash=false, phase="action", bossAttac
 }
 
 function EnemySpriteSmall({ id, scale=1, sprite=null, attacking=false, enemyFlash=false, phase="action", bossAttackPattern=null }) {
-  if (id==="dragon") return <DemonSlimeSprite scale={scale} enemyFlash={enemyFlash} phase={phase} bossAttackPattern={bossAttackPattern}/>;
+  if (id==="dragon") {
+    const bd = ENEMY_DIMS.dragon;
+    return <DemonSlimeSprite renderW={Math.round(bd.w*scale)} renderH={Math.round(bd.h*scale)} enemyFlash={enemyFlash} phase={phase} bossAttackPattern={bossAttackPattern}/>;
+  };
 
   if (sprite) {
     // Use sprite's own frame dimensions — pool sprites are 128×128, not ENEMY_DIMS
@@ -775,7 +781,7 @@ const sfx = (() => {
   // Build path: HY folder + base name + variant suffix
   const hy = (name, v) => HY + enc(name) + `-00${v}.wav`;
   // Master volume multiplier — scale all sounds down uniformly
-  const MV = 0.68;
+  const MV = 0.42;
   // Play a one-shot audio file — MV scales all volumes globally
   const pf = (url, vol=0.75) => {
     try { const a=new Audio(url); a.volume=Math.min(1,vol*MV); a.play().catch(()=>{}); } catch(_e){}
@@ -820,13 +826,13 @@ const sfx = (() => {
     // ── Combat ───────────────────────────────────────────────────
     combatStart:  ()=>rf("DSGNTonl_MELEE-Sword Critical_HY_PC",      6, 0.62),
     bossStart:    ()=>{ rf("DSGNImpt_EXPLOSION-Mana Bomb_HY_PC",6,0.90); setTimeout(()=>rf("DSGNImpt_EXPLOSION-Eruption_HY_PC",6,0.65),250); },
-    enemyDie:     ()=>rf("DSGNMisc_SKILL IMPACT-Energy Dissipate_HY_PC", 6, 0.82),
+    enemyDie:     ()=>rf("DSGNMisc_SKILL IMPACT-Energy Dissipate_HY_PC", 6, 0.55),
     slimeDeath:   ()=>rf("DSGNMisc_CAST-Slime Ball_HY_PC",           6, 0.82),
     // ── Sword / Beat ─────────────────────────────────────────────
     swordWalk:    ()=>_swordWalkPlay(),
-    swordKey:     ()=>rf("DSGNMisc_MELEE-Sword Slash_HY_PC",         6, 0.65),
-    swordBadKey:  ()=>rf("UIMisc_INTERFACE-Denied_HY_PC",            6, 0.50),
-    swordPerfect: ()=>rf("DSGNMisc_SKILL IMPACT-Critical Strike_HY_PC",6,0.80),
+    swordKey:     ()=>rf("DSGNMisc_MELEE-Sword Slash_HY_PC",         6, 0.48),
+    swordBadKey:  ()=>rf("UIMisc_INTERFACE-Denied_HY_PC",            6, 0.40),
+    swordPerfect: ()=>rf("DSGNMisc_SKILL IMPACT-Critical Strike_HY_PC",6,0.52),
     // ── Hammer / Charge ──────────────────────────────────────────
     // hammerHold stays synthetic — it's a sustained ramping rumble impossible to replicate with a short file
     hammerHold: ()=>{
@@ -840,12 +846,12 @@ const sfx = (() => {
           g.gain.exponentialRampToValueAtTime(.0001,t2+.07); o.stop(t2+.08); }catch(_e){} };
       } catch(_e){ return ()=>{}; }
     },
-    hammerPerfect:    ()=>rf("DSGNImpt_EXPLOSION-Thud_HY_PC",               6, 0.92),
-    hammerGood:       ()=>rf("FGHTImpt_HIT-Strong Smack_HY_PC",             6, 0.72),
-    hammerOvercharge: ()=>rf("DSGNImpt_EXPLOSION-Forced Interruption_HY_PC",6, 0.70),
+    hammerPerfect:    ()=>rf("DSGNImpt_EXPLOSION-Thud_HY_PC",               6, 0.52),
+    hammerGood:       ()=>rf("FGHTImpt_HIT-Strong Smack_HY_PC",             6, 0.48),
+    hammerOvercharge: ()=>rf("DSGNImpt_EXPLOSION-Forced Interruption_HY_PC",6, 0.48),
     // ── Daggers / Rapid ──────────────────────────────────────────
     daggerTap:    ()=>_daggerPlay(),
-    daggerFlurry: ()=>rf("DSGNMisc_SKILL RELEASE-Flying Blades_HY_PC",      6, 0.72),
+    daggerFlurry: ()=>rf("DSGNMisc_SKILL RELEASE-Flying Blades_HY_PC",      6, 0.50),
     // ── Sequence / Staff ─────────────────────────────────────────
     // Each correct rune key plays a crystal ting pitched higher per position in sequence
     runeCorrect: (pos=0) => {
@@ -874,7 +880,7 @@ const sfx = (() => {
     },
     // ── Stomp / Boots ────────────────────────────────────────────
     stompApproach:()=>rf("FEETMisc_STEP-Hard Step_HY_PC",                   6, 0.50),
-    stompLand:    (q)=>rf(q==="perfect"?"DSGNImpt_EXPLOSION-Thud_HY_PC":"DSGNImpt_EXPLOSION-Sand Impact_HY_PC",6, q==="perfect"?0.92:0.72),
+    stompLand:    (q)=>rf(q==="perfect"?"DSGNImpt_EXPLOSION-Thud_HY_PC":"DSGNImpt_EXPLOSION-Sand Impact_HY_PC",6, q==="perfect"?0.52:0.45),
     stompBounce:  ()=>rf("DSGNMisc_MOVEMENT-Pierce Jump_HY_PC",             6, 0.48),
     // ── Poke / Spear ─────────────────────────────────────────────
     pokeTap:      ()=>_pokePlay(),
@@ -895,9 +901,9 @@ const sfx = (() => {
     dualGunshot:  ()=>pf(GN + ".22LR/WAV/22LR%20Single%20Isolated%20WAV.wav", 0.55),
     // ── Defend ───────────────────────────────────────────────────
     projLaunch:   ()=>rf("DSGNMisc_PROJECTILE-Laser Shot_HY_PC",            6, 0.60),
-    parry:        ()=>rf("DSGNMisc_MELEE-Sword Parry_HY_PC",                6, 0.88),
-    blockHit:     ()=>rf("DSGNMisc_MELEE-Sword Deflect_HY_PC",              6, 0.72),
-    takeDmg:      ()=>rf("FGHTImpt_HIT-Strong Punch_HY_PC",                 6, 0.72),
+    parry:        ()=>rf("DSGNMisc_MELEE-Sword Parry_HY_PC",                6, 0.52),
+    blockHit:     ()=>rf("DSGNMisc_MELEE-Sword Deflect_HY_PC",              6, 0.48),
+    takeDmg:      ()=>rf("FGHTImpt_HIT-Strong Punch_HY_PC",                 6, 0.48),
   };
 })();
 
@@ -2156,7 +2162,8 @@ function App() {
     // Use pool sprite frame height if available — pool sprites are 128×128, not ENEMY_DIMS
     const dims = cs?.enemySprite ? {w:cs.enemySprite.frameW, h:cs.enemySprite.frameH} : (ENEMY_DIMS[cs?.enemy?.id]||{w:55,h:70});
     const eScaledH = dims.h*1.1;
-    const landTop  = GNDY - eScaledH - HSH;
+    const stompGroundPad = cs?.enemySprite?.groundPad || 0;
+    const landTop  = GNDY - eScaledH - HSH + stompGroundPad;
     const landLeft = ENX - HSW/2;
     const ref = qteRef.current;
     ref.landLeft = landLeft; ref.landTop = landTop;
@@ -3400,7 +3407,8 @@ function App() {
         const eScale    = 1.1;
         const eW        = eDims.w*eScale, eH = eDims.h*eScale;
         const eLeft     = ENX - eW/2 + enemyWindUp;
-        const eTop      = GNDY - eH;
+        const groundPad = cs.enemySprite?.groundPad || 0; // per-sprite vertical offset
+        const eTop      = GNDY - eH + groundPad;
 
         const charge = qteAnim?.type==="hold_release"&&!qteAnim.released ? (qteAnim.charge||0) : 0;
         const chargeActive = qteAnim?.type==="hold_release"&&!qteAnim.released;
@@ -3423,9 +3431,9 @@ function App() {
             <div style={{flexShrink:0,padding:"7px 20px",background:"rgba(0,0,0,.55)",backdropFilter:"blur(4px)",
               borderBottom:"1px solid #1e1e30",display:"flex",justifyContent:"space-between",alignItems:"center",
               fontFamily:"Cinzel",fontSize:14,letterSpacing:1}}>
-              <span style={{color:"#c8b888",fontWeight:600,display:"inline-flex",alignItems:"center",gap:6}}><Icon type={player.weapons?.[0]||"sword"} size={16} color="#c8b888"/>{player.class} · Lv{player.level} · {player.hp}/{player.maxHp}</span>
+              <span style={{color:"#c8b888",fontWeight:600,display:"inline-flex",alignItems:"center",gap:6}}><Icon type={player.weapons?.[0]||"sword"} size={16} color="#c8b888"/>{player.class} · Lv{player.level}</span>
               <span style={{color:cs.pvpMode?"#ff8844":cs.elite?"#aa66ff":enemyData.color,letterSpacing:2,fontWeight:600}}>
-                {cs.pvpMode?"⚔ ":cs.elite?"⚡ ELITE — ":""}{cs.enemy.name} · {cs.pvpMode?pvpOppHp:cs.enemy.hp}/{cs.pvpMode?pvpMaxHp:cs.enemy.maxHp}hp
+                {cs.pvpMode?"⚔ ":cs.elite?"⚡ ELITE — ":""}{cs.enemy.name}
               </span>
             </div>
 
@@ -4705,7 +4713,9 @@ function App() {
       {/* ══ VICTORY ══ */}
       {screen==="victory"&&(
         <div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",animation:"fadeIn .6s"}}>
-          <div style={{marginBottom:20,animation:"float 2s infinite",filter:"drop-shadow(0 0 30px gold)"}}><Icon type="boss" size={80} color="#ffcc44"/></div>
+          <div style={{marginBottom:20,animation:"float 2s infinite",filter:"drop-shadow(0 0 30px gold) drop-shadow(0 0 60px #44ff88)"}}>
+            <img src={`${ASSET_BASE}/icons/sprites/map/BOSS.png`} width={80} height={80} style={{imageRendering:"pixelated",display:"block"}}/>
+          </div>
           <h1 style={{fontFamily:"Cinzel",fontSize:"clamp(32px,7vw,60px)",color:"#ffcc44",letterSpacing:6,animation:"glow 2s infinite",marginBottom:10}}>VICTORIOUS!</h1>
           <p style={{opacity:.5,marginBottom:10,fontStyle:"italic",letterSpacing:2}}>The Demon Slime is vanquished. The Spire is yours.</p>
           {player&&<p style={{fontFamily:"Cinzel",fontSize:12,opacity:.35,marginBottom:10,letterSpacing:2}}>Lv.{player.level} {player.class} · {player.xp} XP</p>}
