@@ -386,7 +386,8 @@ function DemonSlimeSprite({ scale=1, enemyFlash=false, phase="action", bossAttac
   return (
     <div style={{position:"relative",width:sz,height:sz}}>
       <img key={src} src={src} width={sz} height={sz}
-        style={{display:"block",imageRendering:"pixelated",objectFit:"contain"}}/>
+        style={{display:"block",imageRendering:"pixelated",objectFit:"contain",
+          mixBlendMode:"screen"}}/>
       {/* Glow under boss — red tint during charge, green normally */}
       <div style={{position:"absolute",bottom:-6,left:"50%",transform:"translateX(-50%)",
         width:sz*0.7,height:10,borderRadius:"50%",
@@ -1545,7 +1546,7 @@ function App() {
         }, 1100);
         return {...prev, enemy:{...prev.enemy,hp:0}, phase:"won", log:[...prev.log,logMsg]};
       }
-      setTimeout(()=>startDefendQTE(bossAtk), 880);
+      setTimeout(()=>startDefendQTE(bossAtk), cs?.enemy?.id==="dragon" ? 300 : 880);
       return {...prev, enemy:{...prev.enemy,hp:newHp}, phase:"enemy_turn", bossAttackPattern:bossAtk, log:[...prev.log,logMsg]};
     });
   };
@@ -2398,8 +2399,8 @@ function App() {
     eye:           { dur:1100, launch:0.14, arrive:0.88, projPath:"loop"        }, // orb spirals in a loop
     golem:         { dur:1600, launch:0.38, arrive:0.76, projPath:"straight"    }, // heavy boulder, direct
     wraith:        { dur: 950, launch:0.22, arrive:0.84, projPath:"zigzag"      }, // ghost energy zips erratically
-    dragon:        { dur:1400, launch:0.28, arrive:0.90, projPath:"loop"        }, // fireball arcs in a wide loop
-    dragon_charge: { dur: 900, launch:0.12, arrive:0.87, projPath:"ground_rush" }, // fast ground-hugging surge
+    dragon:        { dur:1800, launch:0.72, arrive:0.95, projPath:"loop"        }, // fireball released after cleave animation peaks
+    dragon_charge: { dur:1300, launch:0.68, arrive:0.94, projPath:"ground_rush" }, // surge released after charge winds up
     pvp_opp:       { dur:1100, launch:0.20, arrive:0.82, projPath:"straight"    }, // pvp opponent attack
   };
   // Per-QTE-type defend timing (for PvP projectile variety)
@@ -4145,7 +4146,8 @@ function App() {
                   ?(enemyFlash?"brightness(3) drop-shadow(0 0 18px #ff4400)":"drop-shadow(0 0 14px #4466ffaa)")
                   :`drop-shadow(0 0 22px ${enemyData.color}bb) drop-shadow(0 8px 4px #00000088)`,
                 animation:enemyFlash?`hitFlash .35s ease-out, squish .3s ease-out`:"none",
-                transformOrigin:"bottom center"}}>
+                transformOrigin:"bottom center",
+                transform:cs.enemy.id==="dragon"?"scaleX(-1)":"none"}}>
                 {cs.enemy.id==="pvp_opp"
                   ? <HeroSprite className={cs.enemy.pvpClass??'Knight'} scale={eScale} weapons={cs.enemy.pvpWeapons??['sword']}/>
                   : <EnemySpriteSmall id={cs.enemy.id} scale={eScale} sprite={cs?.enemySprite} enemyFlash={enemyFlash} phase={cs.phase} bossAttackPattern={cs?.bossAttackPattern}/>
@@ -4437,7 +4439,51 @@ function App() {
                 :null}
               </div>
 
-              {/* HP bars removed — now shown only in slim HUD above battlefield */}
+              {/* ── HP BARS — overlaid on battlefield above each combatant ── */}
+              {(()=>{
+                const eHp    = cs.pvpMode ? pvpOppHp : cs.enemy.hp;
+                const eMaxHp = cs.pvpMode ? pvpMaxHp : cs.enemy.maxHp;
+                const ePct   = Math.max(0, Math.min(100, eHp / Math.max(1,eMaxHp) * 100));
+                const eCol   = ePct<30?"#ff4444":ePct<60?"#ffcc44":enemyData.color||"#cc4444";
+                const pPct   = Math.max(0, Math.min(100, player.hp / Math.max(1,player.maxHp) * 100));
+                const pCol   = pPct<30?"#ff4444":pPct<60?"#ffcc44":"#44dd88";
+                const barH   = 7;
+                const barW   = 130;
+                return (
+                  <>
+                    {/* Enemy HP bar — above enemy sprite */}
+                    <div style={{position:"absolute",left:ENX-barW/2,top:Math.max(4,eTop-28),
+                      width:barW,zIndex:10,pointerEvents:"none"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",
+                        fontFamily:"Cinzel",fontSize:7,letterSpacing:.5,marginBottom:2,color:eCol,
+                        textShadow:`0 0 6px ${eCol}88`}}>
+                        <span style={{opacity:.8}}>{cs.enemy.name}</span>
+                        <span>{eHp}/{eMaxHp}</span>
+                      </div>
+                      <div style={{height:barH,background:"#0a0a14",border:"1px solid #2a2a3a",borderRadius:3,overflow:"hidden"}}>
+                        <div style={{height:"100%",width:`${ePct}%`,borderRadius:3,
+                          background:`linear-gradient(to right,${eCol}99,${eCol})`,
+                          boxShadow:`0 0 6px ${eCol}66`,transition:"width .35s"}}/>
+                      </div>
+                    </div>
+                    {/* Player HP bar — above hero sprite */}
+                    <div style={{position:"absolute",left:HRX-barW/2,top:Math.max(4,HR_T-28),
+                      width:barW,zIndex:10,pointerEvents:"none"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",
+                        fontFamily:"Cinzel",fontSize:7,letterSpacing:.5,marginBottom:2,color:pCol,
+                        textShadow:`0 0 6px ${pCol}88`}}>
+                        <span style={{opacity:.8}}>{player.class}</span>
+                        <span>{player.hp}/{player.maxHp}</span>
+                      </div>
+                      <div style={{height:barH,background:"#0a0a14",border:"1px solid #2a2a3a",borderRadius:3,overflow:"hidden"}}>
+                        <div style={{height:"100%",width:`${pPct}%`,borderRadius:3,
+                          background:`linear-gradient(to right,${pCol}99,${pCol})`,
+                          boxShadow:`0 0 6px ${pCol}66`,transition:"width .35s"}}/>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
               {/* ── Action log — top-left corner, one line only ── */}
               {cs.log.length>0&&(
                 <div style={{position:"absolute",top:4,left:4,maxWidth:140,zIndex:20,pointerEvents:"none"}}>
