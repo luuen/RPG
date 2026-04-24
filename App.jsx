@@ -955,13 +955,13 @@ function App() {
     if(screen!=="map") return;
     const el = document.createElement("div");
     el.id = "map-legend";
-    el.style.cssText = "position:fixed;right:16px;top:50%;transform:translateY(-50%);z-index:9999;pointer-events:none;background:rgba(4,4,12,.85);padding:10px 16px;border-radius:6px;border:1px solid #2a2a40;display:flex;flex-direction:column;gap:6px;font-family:Cinzel,serif;font-size:11px;letter-spacing:2px;backdrop-filter:blur(4px);";
+    el.style.cssText = "position:fixed;right:16px;top:50%;transform:translateY(-50%);z-index:9999;pointer-events:none;background:rgba(4,4,12,.88);padding:14px 20px;border-radius:8px;border:1px solid #2a2a40;display:flex;flex-direction:column;gap:10px;font-family:Cinzel,serif;font-size:13px;letter-spacing:2px;backdrop-filter:blur(4px);";
     el.innerHTML = `
-      <div style="font-size:8px;letter-spacing:3px;color:#4a4a6a;margin-bottom:4px;">LEGEND</div>
-      <div style="display:flex;align-items:center;gap:7px;color:#c8b888;"><img src="${ASSET_BASE}/icons/sprites/map/COMBAT.png" width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>COMBAT</div>
-      <div style="display:flex;align-items:center;gap:7px;color:#aa66ff;"><img src="${ASSET_BASE}/icons/sprites/map/ELITE.png"  width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>ELITE</div>
-      <div style="display:flex;align-items:center;gap:7px;color:#44cc66;"><img src="${ASSET_BASE}/icons/sprites/map/REST.png"   width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>REST</div>
-      <div style="display:flex;align-items:center;gap:7px;color:#ff4422;"><img src="${ASSET_BASE}/icons/sprites/map/BOSS.png"   width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>BOSS</div>
+      <div style="font-size:9px;letter-spacing:3px;color:#4a4a6a;margin-bottom:2px;">LEGEND</div>
+      <div style="display:flex;align-items:center;gap:10px;color:#c8b888;"><img src="${ASSET_BASE}/icons/sprites/map/COMBAT.png" width="32" height="32" style="image-rendering:pixelated;flex-shrink:0"/>COMBAT</div>
+      <div style="display:flex;align-items:center;gap:10px;color:#aa66ff;"><img src="${ASSET_BASE}/icons/sprites/map/ELITE.png"  width="32" height="32" style="image-rendering:pixelated;flex-shrink:0"/>ELITE</div>
+      <div style="display:flex;align-items:center;gap:10px;color:#44cc66;"><img src="${ASSET_BASE}/icons/sprites/map/REST.png"   width="32" height="32" style="image-rendering:pixelated;flex-shrink:0"/>REST</div>
+      <div style="display:flex;align-items:center;gap:10px;color:#ff4422;"><img src="${ASSET_BASE}/icons/sprites/map/BOSS.png"   width="32" height="32" style="image-rendering:pixelated;flex-shrink:0"/>BOSS</div>
     `;
     document.body.appendChild(el);
     return ()=>{ const x=document.getElementById("map-legend"); if(x) x.remove(); };
@@ -3291,7 +3291,10 @@ function App() {
                       color:isV?"#2a2a44":isA?nodeColor:"#2a2a44",
                       fontSize:isB?24:isE?18:17,boxShadow:nodeGlow,opacity:isF?.3:1,transition:"all .2s",
                       display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <Icon type={isR?"rest":isB?"boss":isE?"elite":"combat"} size={isB?26:isE?22:20} color={nodeColor}/>
+                    <img src={`${ASSET_BASE}/icons/sprites/map/${isR?"REST":isB?"BOSS":isE?"ELITE":"COMBAT"}.png`}
+                      width={isB?32:isE?26:24} height={isB?32:isE?26:24}
+                      style={{imageRendering:"pixelated",display:"block",
+                        filter:isV?"brightness(0.35) saturate(0.2)":isA?`drop-shadow(0 0 6px ${nodeColor}bb)`:"brightness(0.5) saturate(0.5)"}}/>
                   </button>
                 );
               })}
