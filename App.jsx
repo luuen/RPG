@@ -3075,17 +3075,28 @@ function App() {
       {/* ══ TITLE ══ */}
       {screen==="title"&&(
         <div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
-          {/* Title background image */}
+          {/* Title background image — anchored toward top so knights' heads stay in frame */}
           <img src={`${ASSET_BASE}/icons/title/title.png`} alt=""
-            style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center",zIndex:0,pointerEvents:"none"}}/>
-          {/* Dark vignette overlay — lets image show through at center, darkens edges */}
+            style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"50% 10%",zIndex:0,pointerEvents:"none"}}/>
+          {/* Dark vignette overlay */}
           <div style={{position:"absolute",inset:0,zIndex:0,
-            background:"radial-gradient(ellipse at 50% 45%, rgba(2,2,8,.15) 0%, rgba(2,2,8,.72) 100%)"}}/>
-          {/* Bottom fade so buttons sit cleanly */}
-          <div style={{position:"absolute",bottom:0,left:0,right:0,height:"38%",zIndex:0,
-            background:"linear-gradient(to top,rgba(2,2,8,.92) 0%,transparent 100%)"}}/>
+            background:"radial-gradient(ellipse at 50% 45%, rgba(2,2,8,.10) 0%, rgba(2,2,8,.68) 100%)"}}/>
+          {/* Bottom fade */}
+          <div style={{position:"absolute",bottom:0,left:0,right:0,height:"40%",zIndex:0,
+            background:"linear-gradient(to top,rgba(2,2,8,.95) 0%,transparent 100%)"}}/>
           <div style={{position:"relative",textAlign:"center",zIndex:1,animation:"fadeIn .8s ease-out"}}>
 
+            {/* Text backdrop panel */}
+            <div style={{
+              display:"inline-block",
+              background:"rgba(2,2,10,0.72)",
+              border:"1px solid rgba(255,100,20,0.18)",
+              borderRadius:14,
+              padding:"28px 52px 36px",
+              backdropFilter:"blur(10px)",
+              WebkitBackdropFilter:"blur(10px)",
+              boxShadow:"0 8px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,120,30,0.08)",
+            }}>
 
             <h1 style={{fontFamily:"Cinzel",fontWeight:900,fontSize:"clamp(48px,9vw,88px)",letterSpacing:14,lineHeight:1.1,background:"linear-gradient(to bottom,#fff 0%,#ff9933 40%,#ff4400 100%)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"glow 4s infinite"}}>R.P.G.</h1>
 
@@ -3187,6 +3198,7 @@ function App() {
                 CONNECTING TO HOST…
               </div>
             )}
+            </div>{/* end text backdrop panel */}
           </div>
         </div>
       )}
