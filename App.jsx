@@ -794,6 +794,7 @@ const sfx = (() => {
   return {
     // ── UI / navigation ──────────────────────────────────────────
     click:        ()=>rf("UIClick_INTERFACE-Metallic Click_HY_PC",   6, 0.50),
+    hover:        ()=>rf("SWSH_MOVEMENT-Tiny Chime_HY_PC",           6, 0.35),
     bookOpen:     ()=>rf("SWSH_MOVEMENT-Reso Swish_HY_PC",           6, 0.60),
     select:       ()=>rf("UIClick_INTERFACE-Positive Click_HY_PC",   6, 0.60),
     mapNode:      ()=>rf("UIClick_INTERFACE-Rattling Click_HY_PC",   6, 0.40),
@@ -3130,15 +3131,19 @@ function App() {
             {/* Solo button */}
             {!mpMode&&(
               <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
-                <button className="btn" style={{fontSize:17,padding:"18px 60px",letterSpacing:6,borderColor:"#ff6600",color:"#ff9933",boxShadow:"0 0 24px #ff440033"}} onClick={()=>setScreen("weapon_select")}>
+                <button className="btn" style={{fontSize:17,padding:"18px 60px",letterSpacing:6,borderColor:"#ff6600",color:"#ff9933",boxShadow:"0 0 24px #ff440033"}}
+                  onMouseEnter={()=>sfx.hover()}
+                  onClick={()=>setScreen("weapon_select")}>
                   SOLO
                 </button>
                 <div style={{display:"flex",gap:12}}>
                   <button className="btn" style={{fontSize:13,padding:"10px 24px",letterSpacing:3,borderColor:"#4466ff",color:"#88aaff"}}
+                    onMouseEnter={()=>sfx.hover()}
                     onClick={hostGame}>
                     🖥 HOST GAME
                   </button>
                   <button className="btn" style={{fontSize:13,padding:"10px 24px",letterSpacing:3,borderColor:"#44aaff",color:"#88ccff"}}
+                    onMouseEnter={()=>sfx.hover()}
                     onClick={()=>setMpMode("join_input")}>
                     🎮 JOIN GAME
                   </button>
