@@ -1785,7 +1785,7 @@ function App() {
   // ── HOLD-RELEASE: charge up the weapon, release in the green zone ──
   // Bar fills 0→100% over CHARGE_MAX_MS. At 100% = auto overcharge (miss).
   // Perfect zone: 78-95% of bar. Good zone: 60-78%.
-  const CHARGE_MAX_MS = 2500;
+  const CHARGE_MAX_MS = 1300;
   const CHARGE_PERFECT_LO = 0.72;
   const CHARGE_PERFECT_HI = 0.94; // 22% window = ~550ms
   const startChargeQTE = (weapon) => {
@@ -3493,94 +3493,83 @@ function App() {
 
               {/* ── CHARGE: vertical power meter ── */}
               {chargeActive&&(()=>{
-                // Meter dimensions — big vertical bar, right of center
-                const mH=230, mW=46, mL=BFW/2+70, mT=BFH/2-mH/2;
+                // Horizontal bar — centered in battlefield
+                const mW=300, mH=22, mL=BFW/2-mW/2, mT=BFH/2+30;
                 const pct = Math.min(charge*100, 100);
-                // Zone boundaries (bottom=0%, top=100%)
                 const goodLo=50, perfLo=CHARGE_PERFECT_LO*100, perfHi=CHARGE_PERFECT_HI*100;
                 const fillCol = pct>=100?"#ff3311":pct>=perfHi?"#ff2200":pct>=perfLo?"#00ff66":pct>=goodLo?"#ffaa22":"#3388ff";
                 const isPerfectZone = pct>=perfLo && pct<perfHi;
                 const isDanger      = pct>=perfHi;
-                // pixel position of zones from bottom of meter
-                const px = (v)=> mH*(1-v/100); // top offset for value v%
                 const borderCol = isDanger?"#ff2200":isPerfectZone?"#00ff66":pct>=goodLo?"#ffaa22":"#334466";
-                const outerGlow = isDanger?"0 0 40px #ff220099, 0 0 18px #ff220066":isPerfectZone?"0 0 40px #00ff6699, 0 0 18px #00ff6666":"0 0 8px #111";
+                const outerGlow = isDanger?"0 0 32px #ff220099":isPerfectZone?"0 0 28px #00ff6699":"0 0 6px #111";
                 return (
                   <>
-                    {/* HOLD instruction — above meter */}
-                    <div style={{position:"absolute",left:mL+mW/2,top:mT-32,
-                      transform:"translateX(-50%)",fontFamily:"Cinzel",fontSize:11,letterSpacing:2,
-                      color:"#6677aa",textShadow:"0 0 6px #334488",zIndex:9,whiteSpace:"nowrap"}}>
+                    {/* HOLD instruction — above bar */}
+                    <div style={{position:"absolute",left:mL+mW/2,top:mT-20,
+                      transform:"translateX(-50%)",fontFamily:"Cinzel",fontSize:10,letterSpacing:2,
+                      color:"#6677aa",zIndex:9,whiteSpace:"nowrap"}}>
                       HOLD SPACE
                     </div>
-                    {/* Meter track — outer shell */}
+
+                    {/* Track — overflow:hidden keeps ALL zone dividers inside */}
                     <div style={{position:"absolute",left:mL,top:mT,width:mW,height:mH,
-                      borderRadius:8,border:`3px solid ${borderCol}`,
-                      background:"#060610",zIndex:9,overflow:"hidden",
-                      boxShadow:outerGlow}}>
-                      {/* Zone bands */}
-                      <div style={{position:"absolute",left:0,bottom:0,width:"100%",height:`${goodLo}%`,background:"rgba(30,60,180,.30)"}}/>
-                      <div style={{position:"absolute",left:0,bottom:`${goodLo}%`,width:"100%",height:`${perfLo-goodLo}%`,background:"rgba(200,120,0,.28)"}}/>
-                      {/* Perfect zone — bright green band */}
-                      <div style={{position:"absolute",left:0,bottom:`${perfLo}%`,width:"100%",height:`${perfHi-perfLo}%`,
-                        background:"rgba(0,255,100,.55)",boxShadow:"inset 0 0 12px #00ff6699"}}/>
-                      {/* Danger: 90-100% */}
-                      <div style={{position:"absolute",left:0,bottom:`${perfHi}%`,width:"100%",height:`${100-perfHi}%`,background:"rgba(255,30,0,.40)"}}/>
-                      {/* Fill — grows from bottom */}
-                      <div style={{
-                        position:"absolute",left:0,bottom:0,width:"100%",height:`${pct}%`,
-                        background:`linear-gradient(to top, ${fillCol}cc, ${fillCol})`,
-                        boxShadow:`0 0 24px ${fillCol}, inset 0 0 10px rgba(255,255,255,.2)`,
-                        transition:"height .03s linear",
-                      }}/>
-                      {/* Sheen highlight */}
-                      <div style={{position:"absolute",left:"8%",bottom:0,width:"28%",height:`${pct}%`,
-                        background:"rgba(255,255,255,.22)",transition:"height .03s linear",
-                        borderRadius:"0 0 4px 4px",pointerEvents:"none"}}/>
+                      borderRadius:5,border:`2px solid ${borderCol}`,
+                      background:"#060610",zIndex:9,overflow:"hidden",boxShadow:outerGlow}}>
+
+                      {/* Zone bands — left to right */}
+                      <div style={{position:"absolute",left:0,top:0,width:`${goodLo}%`,height:"100%",background:"rgba(30,60,180,.30)"}}/>
+                      <div style={{position:"absolute",left:`${goodLo}%`,top:0,width:`${perfLo-goodLo}%`,height:"100%",background:"rgba(200,120,0,.28)"}}/>
+                      <div style={{position:"absolute",left:`${perfLo}%`,top:0,width:`${perfHi-perfLo}%`,height:"100%",
+                        background:"rgba(0,255,100,.55)",boxShadow:"inset 0 0 10px #00ff6699"}}/>
+                      <div style={{position:"absolute",left:`${perfHi}%`,top:0,width:`${100-perfHi}%`,height:"100%",background:"rgba(255,30,0,.40)"}}/>
+
+                      {/* Fill — grows left to right */}
+                      <div style={{position:"absolute",left:0,top:0,height:"100%",width:`${pct}%`,
+                        background:`linear-gradient(to right,${fillCol}bb,${fillCol})`,
+                        boxShadow:`0 0 18px ${fillCol},inset 0 0 8px rgba(255,255,255,.15)`,
+                        transition:"width .02s linear"}}/>
+
+                      {/* Zone dividers — vertical lines, fully inside via overflow:hidden */}
+                      {[{v:goodLo,col:"#ffcc44"},{v:perfLo,col:"#00ff66"},{v:perfHi,col:"#ff2200"}].map(({v,col},i)=>(
+                        <div key={i} style={{position:"absolute",left:`${v}%`,top:0,
+                          width:2,height:"100%",background:col,
+                          boxShadow:`0 0 5px ${col}`,transform:"translateX(-1px)",zIndex:10}}/>
+                      ))}
+
+                      {/* Needle — vertical bar at current charge */}
+                      <div style={{position:"absolute",left:`${pct}%`,top:0,
+                        width:3,height:"100%",background:"#fff",borderRadius:1,zIndex:11,
+                        boxShadow:`0 0 10px #fff,0 0 20px ${fillCol}`,
+                        transform:"translateX(-1px)",transition:"left .02s linear"}}/>
                     </div>
-                    {/* Zone tick lines + labels — outside track */}
-                    {[{v:goodLo,col:"#ffcc44",lbl:"GOOD"},{v:perfLo,col:"#00ff66",lbl:"★ RELEASE"},{v:perfHi,col:"#ff2200",lbl:"DANGER"}].map(({v,col,lbl},i)=>(
-                      <React.Fragment key={i}>
-                        <div style={{position:"absolute",left:mL-3,top:mT+px(v)-1.5,
-                          width:mW+6,height:3,background:col,zIndex:10,borderRadius:2,
-                          boxShadow:`0 0 8px ${col}`}}/>
-                        <div style={{position:"absolute",left:mL-6,top:mT+px(v)-8,
-                          transform:"translateX(-100%)",
-                          fontFamily:"Cinzel",fontSize:9,letterSpacing:1,color:col,
-                          textShadow:`0 0 8px ${col}`,zIndex:10,whiteSpace:"nowrap",fontWeight:700}}>
-                          {lbl}
-                        </div>
-                      </React.Fragment>
+
+                    {/* Zone labels — below bar, clamped inside mL→mL+mW */}
+                    {[{v:goodLo,col:"#ffcc44",lbl:"GOOD"},{v:perfLo,col:"#00ff66",lbl:"RELEASE"},{v:perfHi,col:"#ff2200",lbl:"!"}].map(({v,col,lbl},i)=>(
+                      <div key={i} style={{position:"absolute",
+                        left:Math.min(Math.max(mL+v/100*mW, mL+14), mL+mW-14),
+                        top:mT+mH+5,transform:"translateX(-50%)",
+                        fontFamily:"Cinzel",fontSize:8,letterSpacing:1,color:col,
+                        textShadow:`0 0 6px ${col}`,zIndex:10,whiteSpace:"nowrap",fontWeight:700}}>
+                        {lbl}
+                      </div>
                     ))}
-                    {/* Current value needle */}
-                    <div style={{position:"absolute",left:mL-6,top:mT+px(pct)-3,
-                      width:mW+12,height:6,background:"#ffffff",borderRadius:3,zIndex:11,
-                      boxShadow:`0 0 16px #fff, 0 0 32px ${fillCol}, 0 0 6px #fff`,
-                      transition:"top .03s linear"}}/>
-                    {/* BIG RELEASE flash label — appears only in perfect zone */}
+
+                    {/* NOW flash — above bar when in perfect zone */}
                     {isPerfectZone&&(
-                      <div style={{position:"absolute",left:mL+mW/2,top:mT+px(perfLo)-40,
-                        transform:"translateX(-50%)",
-                        fontFamily:"Cinzel",fontWeight:900,fontSize:18,letterSpacing:3,
-                        color:"#00ff66",textShadow:"0 0 20px #00ff66, 0 0 40px #00ff66",
-                        zIndex:12,whiteSpace:"nowrap",animation:"chargeRelease .25s ease-in-out infinite alternate"}}>
-                        ▼ NOW!
+                      <div style={{position:"absolute",left:mL+mW/2,top:mT-44,
+                        transform:"translateX(-50%)",fontFamily:"Cinzel",fontWeight:900,fontSize:16,
+                        letterSpacing:3,color:"#00ff66",
+                        textShadow:"0 0 16px #00ff66,0 0 32px #00ff66",
+                        zIndex:12,whiteSpace:"nowrap",
+                        animation:"chargeRelease .25s ease-in-out infinite alternate"}}>
+                        ★ RELEASE!
                       </div>
                     )}
-                    {/* Status label — below meter */}
-                    <div style={{position:"absolute",left:mL+mW/2,top:mT+mH+14,
-                      transform:"translateX(-50%)",
-                      background:"#08081a",border:`2px solid ${fillCol}`,
-                      borderRadius:6,padding:"5px 12px",fontFamily:"Cinzel",
-                      fontSize:isDanger||isPerfectZone?13:11,letterSpacing:2,fontWeight:700,
-                      color:fillCol,textShadow:`0 0 12px ${fillCol}`,
-                      boxShadow:`0 0 16px ${fillCol}66`,zIndex:9,whiteSpace:"nowrap"}}>
-                      {isDanger?"⚠ OVERCHARGE!":isPerfectZone?"★ RELEASE NOW!":pct>=goodLo?"ALMOST...":"HOLD [SPC]"}
-                    </div>
+
                     {/* Hammer icon above hero */}
                     <div style={{position:"absolute",left:(heroPos?.left||HR_L)+HSW/2-9,top:(heroPos?.top||HR_T)-30,
                       zIndex:9,animation:"float .4s ease-in-out infinite",
-                      filter:isPerfectZone?"drop-shadow(0 0 14px #00ff66)":isDanger?"drop-shadow(0 0 14px #ff2200)":"none"}}>
+                      filter:isPerfectZone?"drop-shadow(0 0 12px #00ff66)":isDanger?"drop-shadow(0 0 12px #ff2200)":"none"}}>
                       <Icon type={qteAnim?.weapon?.id||"hammer"} size={20}/>
                     </div>
                   </>
