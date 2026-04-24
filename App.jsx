@@ -108,12 +108,12 @@ const ENEMY_SPRITE_POOL = [
   {variant:"Gorgon_1",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16},
   {variant:"Gorgon_2",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16},
   {variant:"Gorgon_3",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16},
-  {variant:"Minotaur_1",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack.png",  atkFrames:8 },
-  {variant:"Minotaur_2",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack.png",  atkFrames:8 },
-  {variant:"Minotaur_3",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack.png",  atkFrames:8 },
-  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:8 },
-  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:8 },
-  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:8 },
+  {variant:"Minotaur_1",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
+  {variant:"Minotaur_2",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
+  {variant:"Minotaur_3",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
+  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6 },
+  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6 },
+  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6 },
 ];
 
 // Gandalf layered hero sprites — randomized per run
@@ -129,8 +129,8 @@ const HERO_LAYERS = {
     clothDir: `${BASE}/Male Clothing`,
     hairDir:  `${BASE}/Male Hair`,
     handDir:  `${BASE}/Male Hand`,
-    frameW:96, frameH:96,  // each frame in the sprite grid
-    cols:8, idleRow:0, atkRow:4,  // row 0 = idle, row 4 = attack
+    frameW:100, frameH:56, totalRows:8,  // measured: 800×448, 8 cols × 8 rows
+    cols:8, idleRow:0, atkRow:4,
   },
   female: {
     skins:    ["Female Skin1.png","Female Skin2.png","Female Skin3.png","Female Skin4.png","Female Skin5.png"],
@@ -142,7 +142,7 @@ const HERO_LAYERS = {
     clothDir: `${BASE}/Female Clothing`,
     hairDir:  `${BASE}/Female Hair`,
     handDir:  `${BASE}/Female Hand`,
-    frameW:96, frameH:96,
+    frameW:100, frameH:56, totalRows:8,
     cols:8, idleRow:0, atkRow:4,
   },
 };
@@ -301,11 +301,16 @@ function AnimatedSprite({ src, numFrames, fps=8, displayW, displayH, flip=false 
 }
 
 // Hero sprite — single skin layer, idle row only.
-// backgroundSize: cols*100% 100% → exactly one row fills container height, zero row-bleed.
+// Pixel-precise bg positioning: scale so frameH === displayW, center within each frame.
+// Rows isolated via exact px Y offset — no bleed from other animation rows.
 function LayeredHeroSprite({ looks, displayW=48, isAttacking=false }) {
   if (!looks) return null;
-  const cols = looks.cols || 8;
-  const fps  = 8; // always idle
+  const cols      = looks.cols      || 8;
+  const totalRows = looks.totalRows || 8;
+  const idleRow   = looks.idleRow   || 0;
+  const frameW    = looks.frameW    || 100;
+  const frameH    = looks.frameH    || 56;
+  const fps = 8;
   const [animFrame, setAnimFrame] = React.useState(0);
   React.useEffect(()=>{
     setAnimFrame(0);
@@ -314,19 +319,23 @@ function LayeredHeroSprite({ looks, displayW=48, isAttacking=false }) {
   },[cols, fps]);
   const src = looks.skin;
   if (!src) return null;
-  const url  = src.replace(/\\/g,"/").replace(/ /g,"%20");
-  // xPct: percentage-based background-position; maps frame 0→0%, frame cols-1→100%
-  const xPct = cols>1 ? animFrame/(cols-1)*100 : 0;
+  const url = src.replace(/\\/g,"/").replace(/ /g,"%20");
+  // Scale so frame height fills container exactly — wider frames get center-cropped
+  const scale    = displayW / frameH;
+  const scaledFW = Math.round(frameW * scale);
+  const bgW      = cols      * scaledFW;
+  const bgH      = totalRows * displayW;
+  const bpX      = -(animFrame * scaledFW + Math.round((scaledFW - displayW) / 2));
+  const bpY      = -(idleRow * displayW);
   return (
     <div style={{
-      width:displayW, height:displayW,
-      backgroundImage:`url("${url}")`,
-      backgroundRepeat:"no-repeat",
-      // 100% height = scale image so one row exactly fills container — no other rows visible
-      backgroundSize:`${cols*100}% 100%`,
-      backgroundPosition:`${xPct}% 0%`,
-      imageRendering:"pixelated",
-      overflow:"hidden",
+      width: displayW, height: displayW,
+      backgroundImage: `url("${url}")`,
+      backgroundRepeat: "no-repeat",
+      backgroundSize: `${bgW}px ${bgH}px`,
+      backgroundPosition: `${bpX}px ${bpY}px`,
+      imageRendering: "pixelated",
+      overflow: "hidden",
     }}/>
   );
 }
@@ -796,7 +805,7 @@ const sfx = (() => {
     gameOver:     ()=>rf("DSGNSynth_BUFF-Mecha Failing_HY_PC",       6, 0.75),
     portal:       ()=>rf("MAGSpel_CAST-Sphere Up_HY_PC",             6, 0.70),
     // ── Combat ───────────────────────────────────────────────────
-    combatStart:  ()=>rf("DSGNImpt_EXPLOSION-Bass Hit_HY_PC",        6, 0.70),
+    combatStart:  ()=>rf("DSGNTonl_MELEE-Sword Critical_HY_PC",      6, 0.62),
     bossStart:    ()=>{ rf("DSGNImpt_EXPLOSION-Mana Bomb_HY_PC",6,0.90); setTimeout(()=>rf("DSGNImpt_EXPLOSION-Eruption_HY_PC",6,0.65),250); },
     enemyDie:     ()=>rf("DSGNImpt_EXPLOSION-Eruption_HY_PC",        6, 0.80),
     slimeDeath:   ()=>rf("DSGNMisc_CAST-Slime Ball_HY_PC",           6, 0.82),
