@@ -1,5 +1,8 @@
 const { useState, useEffect, useRef } = React;
 
+// GitHub Pages serves from /RPG/ subpath; local dev serves from root
+const ASSET_BASE = window.location.hostname.includes("github.io") ? "/RPG" : "";
+
 /* ─── GLOBAL STYLES ──────────────────────────────────────────── */
 const GS = `
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=IM+Fell+English:ital@0;1&display=swap');
@@ -114,7 +117,7 @@ const ENEMY_SPRITE_POOL = [
 ];
 
 // Gandalf layered hero sprites — randomized per run
-const BASE = "/icons/sprites/GandalfHardcore Character Asset Pack";
+const BASE = ASSET_BASE+"/icons/sprites/GandalfHardcore Character Asset Pack";
 const HERO_LAYERS = {
   male: {
     skins:    ["Male Skin1.png","Male Skin2.png","Male Skin3.png","Male Skin4.png","Male Skin5.png"],
@@ -374,7 +377,7 @@ function HeroSprite({ className="Knight", scale=1, weapons=[], heroLooks=null, i
   );
 }
 
-const BOSS_GIF_BASE = "/icons/sprites/boss/boss_demon_slime_FREE_v1.0/gifs";
+const BOSS_GIF_BASE = ASSET_BASE+"/icons/sprites/boss/boss_demon_slime_FREE_v1.0/gifs";
 function DemonSlimeSprite({ scale=1, enemyFlash=false, phase="action", bossAttackPattern=null }) {
   const sz = Math.round(128 * scale);
   // Priority: dying > hit > charge-attack > cleave-attack > idle
@@ -408,7 +411,7 @@ function EnemySpriteSmall({ id, scale=1, sprite=null, attacking=false, enemyFlas
     const dims = ENEMY_DIMS[id]||{w:80,h:96};
     const displayW = Math.round(dims.w*scale);
     const displayH = Math.round(dims.h*scale);
-    const base = `/icons/sprites/${sprite.dir}/${sprite.variant}`;
+    const base = `${ASSET_BASE}/icons/sprites/${sprite.dir}/${sprite.variant}`;
     const src = attacking
       ? `${base}/${sprite.atkFile}`
       : `${base}/Idle.png`;
@@ -425,16 +428,15 @@ function Icon({ type, size=28, color }) {
   const s=size, c=color;
   switch(type){
     /* ── WEAPONS ── */
-    case"sword": return <img src="/icons/crossed-swords.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
-    case"hammer": return <img src="/icons/thor-hammer.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
-    case"daggers": return <img src="/icons/dagger-rose.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
-    case"staff": return <img src="/icons/crystal-wand.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
-    case"bow": return <img src="/icons/pocket-bow.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
-    case"boots": return <img src="/icons/sword-spade.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
-    case"axe": return <img src="/icons/battle-axe.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
-    case"spear": return <img src="/icons/flaming-trident.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
-    case"rpg": return <img src="/icons/nuclear-bomb.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
-    case"wand": return <img src="/icons/crystal-wand.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    case"sword": case"hammer": case"daggers": case"staff": case"bow":
+    case"boots": case"axe":   case"spear":   case"rpg":   case"wand": {
+      const WICO={sword:"crossed-swords",hammer:"thor-hammer",daggers:"dagger-rose",
+        staff:"crystal-wand",bow:"pocket-bow",boots:"sword-spade",axe:"battle-axe",
+        spear:"flaming-trident",rpg:"nuclear-bomb",wand:"crystal-wand"};
+      return <img src={ASSET_BASE+"/icons/"+WICO[type]+".svg"} width={s} height={s}
+        style={{display:"block",objectFit:"contain",imageRendering:"auto",
+          filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    };
 
     /* ── MAP NODES ── */
     case"combat":return(
@@ -701,11 +703,13 @@ function Icon({ type, size=28, color }) {
           fill="#ffffff" opacity=".38"/>
       </svg>
     );
-    case"sword_gun": return <img src="/icons/saber-and-pistol.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
-    case"knife_shotgun": return <img src="/icons/bayonet.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
-    case"sniper_spear": return <img src="/icons/high-shot.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
-    case"axe_pistol": return <img src="/icons/gun-rose.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
-    case"club_musket": return <img src="/icons/all-for-one.svg" width={s} height={s} style={{display:"block",objectFit:"contain",imageRendering:"auto",filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    case"sword_gun": case"knife_shotgun": case"sniper_spear": case"axe_pistol": case"club_musket": {
+      const PVPICO={sword_gun:"saber-and-pistol",knife_shotgun:"bayonet",
+        sniper_spear:"high-shot",axe_pistol:"gun-rose",club_musket:"all-for-one"};
+      return <img src={ASSET_BASE+"/icons/"+PVPICO[type]+".svg"} width={s} height={s}
+        style={{display:"block",objectFit:"contain",imageRendering:"auto",
+          filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+    }
     case"heart":return(
       <svg width={s} height={s} viewBox="0 0 16 16" style={{display:"block"}}>
         <path d="M8 13 Q2 9 2 5 Q2 2 5 2 Q6.5 2 8 4 Q9.5 2 11 2 Q14 2 14 5 Q14 9 8 13Z" fill={c||"#ff4455"}/>
@@ -750,8 +754,8 @@ const _ac = () => { if (!_actx) _actx = new _AC(); if (_actx.state==='suspended'
 
 const sfx = (() => {
   // ── File-based playback helpers ──────────────────────────────
-  const HY = "/sfx/Helton%20Yan's%20Pixel%20Combat%20-%20Single%20Files/";
-  const GN = "/sfx/Snake's%20Authentic%20Gun%20Sounds%20And%20More/Snake's%20Authentic%20Gun%20Sounds/Isolated/";
+  const HY = ASSET_BASE+"/sfx/Helton%20Yan's%20Pixel%20Combat%20-%20Single%20Files/";
+  const GN = ASSET_BASE+"/sfx/Snake's%20Authentic%20Gun%20Sounds%20And%20More/Snake's%20Authentic%20Gun%20Sounds/Isolated/";
   // Encode spaces in filenames
   const enc = s => s.replace(/ /g, "%20");
   // Build path: HY folder + base name + variant suffix
@@ -898,6 +902,7 @@ function App() {
   const [pvpMaxHp,   setPvpMaxHp]  = useState(80);
   const [pvpTurn,    setPvpTurn]   = useState("mine");    // "mine" | "theirs"
   const [pvpWinner,  setPvpWinner] = useState(null);      // null | "me" | "them"
+  const [mpDisconnected, setMpDisconnected] = useState(false);
   const [iWonRace,   setIWonRace]  = useState(false);
   const [bookOpen,   setBookOpen]  = useState(false);
   const [bookHoverPotion, setBookHoverPotion] = useState(null);
@@ -957,10 +962,10 @@ function App() {
     el.style.cssText = "position:fixed;right:16px;top:50%;transform:translateY(-50%);z-index:9999;pointer-events:none;background:rgba(4,4,12,.85);padding:10px 16px;border-radius:6px;border:1px solid #2a2a40;display:flex;flex-direction:column;gap:6px;font-family:Cinzel,serif;font-size:11px;letter-spacing:2px;backdrop-filter:blur(4px);";
     el.innerHTML = `
       <div style="font-size:8px;letter-spacing:3px;color:#4a4a6a;margin-bottom:4px;">LEGEND</div>
-      <div style="display:flex;align-items:center;gap:7px;color:#c8b888;"><img src="/icons/sprites/map/COMBAT.png" width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>COMBAT</div>
-      <div style="display:flex;align-items:center;gap:7px;color:#aa66ff;"><img src="/icons/sprites/map/ELITE.png"  width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>ELITE</div>
-      <div style="display:flex;align-items:center;gap:7px;color:#44cc66;"><img src="/icons/sprites/map/REST.png"   width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>REST</div>
-      <div style="display:flex;align-items:center;gap:7px;color:#ff4422;"><img src="/icons/sprites/map/BOSS.png"   width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>BOSS</div>
+      <div style="display:flex;align-items:center;gap:7px;color:#c8b888;"><img src="${ASSET_BASE}/icons/sprites/map/COMBAT.png" width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>COMBAT</div>
+      <div style="display:flex;align-items:center;gap:7px;color:#aa66ff;"><img src="${ASSET_BASE}/icons/sprites/map/ELITE.png"  width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>ELITE</div>
+      <div style="display:flex;align-items:center;gap:7px;color:#44cc66;"><img src="${ASSET_BASE}/icons/sprites/map/REST.png"   width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>REST</div>
+      <div style="display:flex;align-items:center;gap:7px;color:#ff4422;"><img src="${ASSET_BASE}/icons/sprites/map/BOSS.png"   width="20" height="20" style="image-rendering:pixelated;flex-shrink:0"/>BOSS</div>
     `;
     document.body.appendChild(el);
     return ()=>{ const x=document.getElementById("map-legend"); if(x) x.remove(); };
@@ -1113,8 +1118,25 @@ function App() {
 
   const setupConn = (conn) => {
     mpRef.current.conn = conn;
+    mpRef.current.cleanEnded = false; // set true when pvpWinner resolves normally
     conn.on("data", onPeerData);
-    conn.on("close", () => { mpRef.current.conn = null; setOppSnap(null); });
+    conn.on("close", () => {
+      mpRef.current.conn = null;
+      const wasActive = !mpRef.current.cleanEnded;
+      setOppSnap(null);
+      if (wasActive) {
+        setMpDisconnected(true);
+        // Brief pause so message is visible, then full reset to title
+        setTimeout(() => {
+          setGameMode("solo"); setMpStatus("idle");
+          setMpMode(null); setPvpWinner(null);
+          setCs(null); setScreen("title");
+          setTimeout(() => setMpDisconnected(false), 2800);
+        }, 400);
+      } else {
+        setGameMode("solo"); setMpStatus("idle"); setMpMode(null);
+      }
+    });
     conn.on("open", () => {
       // Introduce ourselves
       mpSend({ type:"state", name: portalName, floor:0, hp:60, maxHp:60,
@@ -1202,7 +1224,7 @@ function App() {
       mpSend({ type:"state", pvpAtk: { dmg, quality: q, ts } });
       setPvpOppHp(h => {
         const nh = Math.max(0, h - dmg);
-        if (nh <= 0) { setPvpWinner("me"); pvpModeRef.current = false; }
+        if (nh <= 0) { setPvpWinner("me"); pvpModeRef.current = false; mpRef.current.cleanEnded = true; }
         return nh;
       });
       setCs(prev=>prev?{...prev,phase:"enemy_turn",
@@ -1230,7 +1252,7 @@ function App() {
       setPvpMyHp(h => {
         const nh = Math.max(0, h - finalDmg);
         mpSend({ type:"state", pvpMyHp: nh, pvpTurnDone: Date.now() });
-        if (nh <= 0) { setPvpWinner("them"); pvpModeRef.current = false; }
+        if (nh <= 0) { setPvpWinner("them"); pvpModeRef.current = false; mpRef.current.cleanEnded = true; }
         return nh;
       });
       setPvpLog(lg => [...lg, q==="perfect"?`⚡ You parried ${oppSnap?.name||"RIVAL"}'s attack!`:
@@ -2671,6 +2693,31 @@ function App() {
   return (
     <div style={{minHeight:"100vh",background:"#020205",color:"#e8d5a3"}}>
       <style>{GS}</style>
+
+      {/* ── OPPONENT DISCONNECTED OVERLAY ── */}
+      {mpDisconnected&&(
+        <div style={{position:"fixed",inset:0,zIndex:9000,display:"flex",
+          alignItems:"center",justifyContent:"center",
+          background:"rgba(2,2,8,.88)",backdropFilter:"blur(6px)"}}>
+          <div style={{textAlign:"center",padding:"40px 52px",
+            background:"linear-gradient(160deg,#0d0d1a,#1a0a0a)",
+            border:"1px solid #cc222244",borderRadius:16,
+            boxShadow:"0 0 60px #cc000033"}}>
+            <div style={{fontSize:48,marginBottom:16}}>📡</div>
+            <div style={{fontFamily:"Cinzel",fontSize:22,fontWeight:700,letterSpacing:4,
+              color:"#ff4444",textShadow:"0 0 20px #ff2222",marginBottom:8}}>
+              CONNECTION LOST
+            </div>
+            <div style={{fontFamily:"Cinzel",fontSize:11,letterSpacing:2,color:"#aa6655",marginBottom:24}}>
+              Opponent disconnected
+            </div>
+            <div style={{fontFamily:"Cinzel",fontSize:10,letterSpacing:3,color:"#555566",
+              animation:"pulse .8s ease-in-out infinite"}}>
+              RETURNING TO TITLE…
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── PVP HP OVERLAY — fixed top-center during PvP combat ── */}
       {cs?.pvpMode&&screen==="combat"&&(
