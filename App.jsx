@@ -3106,8 +3106,8 @@ function App() {
       {/* ══ TITLE ══ */}
       {screen==="title"&&(
         <div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
-          {/* Title background image — anchored toward top so knights' heads stay in frame */}
-          <img src={`${ASSET_BASE}/icons/title/title.png`} alt=""
+          {/* Title background video */}
+          <video src={`${ASSET_BASE}/icons/title/title.mp4`} autoPlay loop muted playsInline
             style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"50% 10%",zIndex:0,pointerEvents:"none"}}/>
           {/* Dark vignette overlay */}
           <div style={{position:"absolute",inset:0,zIndex:0,
