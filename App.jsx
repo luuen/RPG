@@ -407,8 +407,7 @@ function DemonSlimeSprite({ renderW=238, renderH=132, enemyFlash=false, phase="a
   return (
     <div style={{position:"relative",width:renderW,height:renderH}}>
       <img key={src} src={src} width={renderW} height={renderH}
-        style={{display:"block",imageRendering:"pixelated",objectFit:"fill",
-          mixBlendMode:"screen"}}/>
+        style={{display:"block",imageRendering:"pixelated",objectFit:"fill"}}/>
       {/* Glow under boss — red tint during charge, green normally */}
       <div style={{position:"absolute",bottom:-6,left:"50%",transform:"translateX(-50%)",
         width:renderW*0.7,height:10,borderRadius:"50%",
@@ -4196,7 +4195,10 @@ function App() {
               <div style={{position:"absolute",left:eLeft,top:eTop,zIndex:4,
                 filter:cs.enemy.id==="pvp_opp"
                   ?(enemyFlash?"brightness(3) drop-shadow(0 0 18px #ff4400)":"drop-shadow(0 0 14px #4466ffaa)")
+                  :cs.enemy.id==="dragon"
+                    ?(enemyFlash?"brightness(2) drop-shadow(0 0 22px #ff4400)":"drop-shadow(0 0 22px #ff6600bb) drop-shadow(0 8px 4px #00000088)")
                   :`drop-shadow(0 0 22px ${enemyData.color}bb) drop-shadow(0 8px 4px #00000088)`,
+                mixBlendMode:cs.enemy.id==="dragon"?"screen":undefined,
                 animation:enemyFlash?`hitFlash .35s ease-out, squish .3s ease-out`:"none",
                 transformOrigin:"bottom center",
                 transform:cs.enemy.id==="dragon"?"scaleX(-1)":"none"}}>
