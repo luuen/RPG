@@ -69,10 +69,10 @@ body{background:#020205;overflow:hidden;user-select:none;color:#e8d5a3;font-fami
 const STARTER_WEAPONS = {
   sword:      { id:"sword",      name:"Iron Sword",    emoji:"⚔️",  baseDmg:12, speed:2.2, qteType:"swing_beat",    tier:"basic", desc:"Press A→W→D in sequence. Hit the beat!", classEmoji:"🛡️", className:"Knight"   },
   hammer:     { id:"hammer",     name:"War Hammer",    emoji:"🔨",  baseDmg:22, speed:1.0, qteType:"hold_release",  tier:"basic", desc:"Hold SPACE to charge. Release in the GREEN zone — too long = OVERCHARGE!", classEmoji:"⚒️", className:"Berserker"},
-  daggers:    { id:"daggers",    name:"Shadow Daggers",emoji:"🗡️",  baseDmg:9,  speed:3.0, qteType:"rapid_tap",    tier:"basic", tapTarget:8,  desc:"Mash SPACE 8 times before the timer runs out!", classEmoji:"🐍", className:"Rogue"    },
+  daggers:    { id:"daggers",    name:"Shadow Daggers",emoji:"🗡️",  baseDmg:9,  speed:3.0, qteType:"rapid_tap",    tier:"basic", tapTarget:8,  desc:"Mash A and D alternately 8 times before the timer runs out!", classEmoji:"🐍", className:"Rogue"    },
   staff:      { id:"staff",      name:"Arcane Staff",  emoji:"🪄",  baseDmg:16, speed:1.8, qteType:"sequence",     tier:"basic", seqLength:4,  desc:"Type the 4-letter rune sequence shown. One wrong key = restart!", classEmoji:"🌙", className:"Mage"     },
   bow:        { id:"bow",        name:"Elven Bow",     emoji:"🏹",  baseDmg:8,  speed:1.5, qteType:"archery",      tier:"basic", desc:"3 orbiting dots — press SPACE when each is in the center ring.", classEmoji:"🌿", className:"Ranger"   },
-  sword_gun:  { id:"sword_gun",  name:"Sword & Gun",   emoji:"⚔🔫", baseDmg:30, speed:1.8, qteType:"dual_action",  tier:"basic", dotSpeed:1.80, centerWidth:0.20, classEmoji:"🔫", className:"Duelist",  desc:"Hold A+W+D simultaneously, then LEFT CLICK when the dot hits the center zone." },
+  sword_gun:  { id:"sword_gun",  name:"Sword & Gun",   emoji:"⚔🔫", baseDmg:16, speed:1.8, qteType:"dual_action",  tier:"basic", dotSpeed:1.80, centerWidth:0.20, classEmoji:"🔫", className:"Duelist",  desc:"Hold A+W+D simultaneously, then LEFT CLICK when the dot hits the center zone." },
 };
 const ALL_WEAPONS = {
   ...STARTER_WEAPONS,
@@ -85,7 +85,7 @@ const ALL_WEAPONS = {
   // ── REFINED (elite drops only — blue) ──
   longsword:      { id:"longsword",     name:"Longsword",       emoji:"🗡️",  baseDmg:22, speed:2.0, qteType:"swing_beat",   tier:"refined", beatTimeout:1500,                                        classEmoji:"⚔️",  className:"Swordmaster", desc:"Faster combo window — A→W→D before time runs out!" },
   great_maul:     { id:"great_maul",    name:"Great Maul",      emoji:"🔨",  baseDmg:32, speed:1.0, qteType:"hold_release", tier:"refined", chargePerfectLo:0.78, chargePerfectHi:0.91,             classEmoji:"💪",  className:"Warlord",     desc:"Narrower perfect zone — hold steady and release at the peak." },
-  twin_blades:    { id:"twin_blades",   name:"Twin Blades",     emoji:"⚔️",  baseDmg:18, speed:3.5, qteType:"rapid_tap",   tier:"refined", tapTarget:11, rapidDur:1500,                             classEmoji:"🌀",  className:"Bladedancer", desc:"11 taps in 1.5 seconds — push faster!" },
+  twin_blades:    { id:"twin_blades",   name:"Twin Blades",     emoji:"⚔️",  baseDmg:18, speed:3.5, qteType:"rapid_tap",   tier:"refined", tapTarget:11, rapidDur:1500,                             classEmoji:"🌀",  className:"Bladedancer", desc:"Mash A+D 11 times in 1.5 seconds — push faster!" },
   runic_staff:    { id:"runic_staff",   name:"Runic Staff",     emoji:"🪄",  baseDmg:28, speed:1.6, qteType:"sequence",    tier:"refined", seqLength:5, seqDur:3200,                                classEmoji:"📖",  className:"Runekeeper",  desc:"5-rune sequence, tighter window — one mistake restarts!" },
   hunters_bow:    { id:"hunters_bow",   name:"Hunter's Bow",    emoji:"🏹",  baseDmg:18, speed:1.5, qteType:"archery",     tier:"refined", archDur:3200,                                            classEmoji:"🎯",  className:"Hunter",      desc:"Faster orbiting dots — time each shot carefully." },
   iron_stompers:  { id:"iron_stompers", name:"Iron Stompers",   emoji:"👢",  baseDmg:18, speed:1.4, qteType:"stomp",       tier:"refined", stompDur:650,                                            classEmoji:"🦵",  className:"Crusher",     desc:"Faster stomp — hit the timing at peak force!" },
@@ -94,7 +94,7 @@ const ALL_WEAPONS = {
   // ── EPIC (elite drops only — purple) ──
   obsidian_blade: { id:"obsidian_blade",name:"Obsidian Blade",  emoji:"🗡️",  baseDmg:38, speed:2.2, qteType:"swing_beat",  tier:"epic", beatTimeout:900,                                           classEmoji:"🌑",  className:"Darkblade",  desc:"Blink-fast — nail A→W→D in under a second or miss completely." },
   titan_hammer:   { id:"titan_hammer",  name:"Titan's Hammer",  emoji:"🔨",  baseDmg:48, speed:0.9, qteType:"hold_release",tier:"epic", chargePerfectLo:0.84, chargePerfectHi:0.91,               classEmoji:"⚡",  className:"Titan",      desc:"Razor-thin perfect zone — hold steady, release at the peak." },
-  shadow_fangs:   { id:"shadow_fangs",  name:"Shadow Fangs",    emoji:"🗡️",  baseDmg:30, speed:4.0, qteType:"rapid_tap",  tier:"epic", tapTarget:14, rapidDur:1300,                               classEmoji:"🕷️", className:"Assassin",   desc:"14 taps in 1.3 seconds — pure chaos speed." },
+  shadow_fangs:   { id:"shadow_fangs",  name:"Shadow Fangs",    emoji:"🗡️",  baseDmg:30, speed:4.0, qteType:"rapid_tap",  tier:"epic", tapTarget:14, rapidDur:1300,                               classEmoji:"🕷️", className:"Assassin",   desc:"Mash A+D 14 times in 1.3 seconds — pure chaos speed." },
   void_scepter:   { id:"void_scepter",  name:"Void Scepter",    emoji:"✨",  baseDmg:42, speed:1.8, qteType:"sequence",   tier:"epic", seqLength:6, seqDur:2600,                                   classEmoji:"🌌",  className:"Arcanist",   desc:"6 runes in 2.6 seconds — one mistake and you restart." },
   darkwood_bow:   { id:"darkwood_bow",  name:"Darkwood Bow",    emoji:"🏹",  baseDmg:32, speed:1.5, qteType:"archery",    tier:"epic", archDur:2500,                                               classEmoji:"🌙",  className:"Shadowshot", desc:"Fast-orbiting dots — lightning reflexes needed." },
   thunder_boots:  { id:"thunder_boots", name:"Thunder Boots",   emoji:"👟",  baseDmg:32, speed:1.4, qteType:"stomp",      tier:"epic", stompDur:530,                                               classEmoji:"⚡",  className:"Thunderfoot",desc:"Blink-fast stomp — the window is tiny." },
@@ -106,13 +106,18 @@ const ALL_WEAPONS = {
 };
 
 /* ─── ENEMY DATA ─────────────────────────────────────────────── */
+// XP thresholds per level transition (non-resetting: overage carries over)
+// L1→2: 35 | L2→3: 75 | L3→4: 60 | L4→5: 110 | L5→6: 160
+const XP_THRESHOLDS = [35, 75, 60, 110, 160];
+const xpThresholdFor = (level) => XP_THRESHOLDS[level - 1] ?? 9999;
+
 const ENEMIES = {
-  goblin:   { name:"Goblin Scout",     hp:22,  emoji:"👺", xp:20,  atk:5,  color:"#55bb55", desc:"A cunning little pest"      },
-  skeleton: { name:"Skeleton Warrior", hp:32,  emoji:"💀", xp:30,  atk:7,  color:"#aaaaaa", desc:"Bones that refuse to rest"  },
-  eye:      { name:"Void Eye",         hp:28,  emoji:"👁️", xp:35,  atk:10, color:"#9944ff", desc:"It sees into your soul"     },
-  golem:    { name:"Stone Golem",      hp:65,  emoji:"🗿", xp:55,  atk:12, color:"#aa7744", desc:"Ancient earth made flesh"   },
-  wraith:   { name:"Wailing Wraith",   hp:40,  emoji:"👻", xp:45,  atk:14, color:"#4488ff", desc:"A spirit of pure malice"    },
-  dragon:   { name:"Demon Slime",       hp:150, emoji:"🟢", xp:500, atk:18, color:"#44dd66", desc:"A demonic mass of pure malice" },
+  goblin:   { name:"Goblin Scout",     hp:22,  emoji:"👺", xp:35,  atk:5,  color:"#55bb55", desc:"A cunning little pest"      },
+  skeleton: { name:"Skeleton Warrior", hp:32,  emoji:"💀", xp:40,  atk:7,  color:"#aaaaaa", desc:"Bones that refuse to rest"  },
+  eye:      { name:"Void Eye",         hp:28,  emoji:"👁️", xp:45,  atk:10, color:"#9944ff", desc:"It sees into your soul"     },
+  golem:    { name:"Stone Golem",      hp:65,  emoji:"🗿", xp:60,  atk:12, color:"#aa7744", desc:"Ancient earth made flesh"   },
+  wraith:   { name:"Wailing Wraith",   hp:40,  emoji:"👻", xp:50,  atk:14, color:"#4488ff", desc:"A spirit of pure malice"    },
+  dragon:   { name:"Demon Slime",       hp:150, emoji:"🟢", xp:160, atk:18, color:"#44dd66", desc:"A demonic mass of pure malice" },
 };
 const ENEMY_DIMS = {
   goblin:{w:64,h:78}, skeleton:{w:56,h:88}, eye:{w:80,h:80},
@@ -129,9 +134,9 @@ const ENEMY_SPRITE_POOL = [
   {variant:"Minotaur_1",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
   {variant:"Minotaur_2",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
   {variant:"Minotaur_3",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
-  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-10},
-  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-10},
-  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-10},
+  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:0},
+  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:0},
+  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:0},
 ];
 
 // Gandalf layered hero sprites — randomized per run
@@ -256,12 +261,25 @@ const pickRewards = (held, eliteDrop=false) => {
     if (r.eliteOnly && !eliteDrop) return false;
     return true;
   });
-  // Weighted pool: basic/consumable=4 copies, refined=2, epic=1 (rarer in elite drops)
+  // Weighted pool: basic/consumable=4 copies, refined=2, epic=1
   const weighted = pool.flatMap(r => Array(r.epicOnly?1:r.eliteOnly?2:4).fill(r));
   const pickUnique = arr => {
     const seen = new Set();
     return [...arr].sort(()=>Math.random()-.5).filter(r=>{ if(seen.has(r.id)) return false; seen.add(r.id); return true; });
   };
+  // Elite drops: guarantee at least 1 epic weapon (then fill remaining 2 slots normally)
+  if (eliteDrop) {
+    const epicWeapons = pool.filter(r=>r.type==="weapon"&&r.epicOnly);
+    const otherPool   = pool.filter(r=>!(r.type==="weapon"&&r.epicOnly));
+    const otherW      = pickUnique(otherPool.flatMap(r=>Array(r.eliteOnly?2:4).fill(r)));
+    const potions     = otherW.filter(r=>r.type==="potion");
+    const nonPotion   = otherW.filter(r=>r.type!=="potion");
+    if (epicWeapons.length > 0) {
+      const guaranteed = epicWeapons[Math.floor(Math.random()*epicWeapons.length)];
+      const filler = potions.length>0 ? [potions[0], ...nonPotion.slice(0,1)] : nonPotion.slice(0,2);
+      return [guaranteed, ...filler].sort(()=>Math.random()-.5);
+    }
+  }
   const potions = pickUnique(weighted.filter(r=>r.type==="potion"));
   const others  = pickUnique(weighted.filter(r=>r.type!=="potion"));
   const result = potions.length>0
@@ -289,13 +307,14 @@ function heroStompPos(t, landLeft, landTop) {
   if (t <= LAND_FRAC) {
     const s = easeIO(t / LAND_FRAC);
     const left = HR_L + (landLeft - HR_L) * s;
-    const P0 = HR_T, P1 = 6, P2 = landTop;
+    // Arc control point: midpoint between HR_T and landTop, pulled 40px above it
+    const P0 = HR_T, P1 = Math.max(0, Math.min(HR_T, landTop) - 40), P2 = landTop;
     const top = (1-s)*(1-s)*P0 + 2*(1-s)*s*P1 + s*s*P2;
     return { left, top };
   } else {
     const s = easeIO((t - LAND_FRAC) / (1 - LAND_FRAC));
     const left = landLeft + (HR_L - landLeft) * s;
-    const P0 = landTop, P1 = 40, P2 = HR_T;
+    const P0 = landTop, P1 = Math.min(HR_T, landTop + 60), P2 = HR_T;
     const top = (1-s)*(1-s)*P0 + 2*(1-s)*s*P1 + s*s*P2;
     return { left, top };
   }
@@ -310,9 +329,9 @@ function heroReturnHomePos(t, landLeft, landTop) {
   return { left, top };
 }
 
-// Bounce on enemy head — apex at top, land back at same spot (pogo)
+// Bounce on enemy head — apex well above enemy head for visible arc
 function heroStompBouncePos(t, landLeft, landTop) {
-  const APEX = 8; // near top of battlefield — visible but still shows arc
+  const APEX = Math.max(0, landTop - 48); // 48px above enemy head, clamped ≥0
   if (t <= LAND_FRAC) {
     const s = easeIO(t / LAND_FRAC);
     return { left: landLeft, top: landTop + (APEX - landTop) * s };
@@ -417,6 +436,9 @@ const CLASS_COLORS = {
 };
 const TIER_COLOR = { basic:"#e8d5a3", refined:"#4488ff", epic:"#aa44ff", legendary:"#ffaa00" };
 const TIER_LABEL = { basic:"", refined:"Refined", epic:"Epic", legendary:"Legendary" };
+const TIER_DMG_MULT = { basic:1.0, refined:1.35, epic:1.75, legendary:2.3 };
+// Apply tier scaling to baseDmg — refined/epic/legendary weapons hit significantly harder
+const weaponDmg = (w) => Math.round((w?.baseDmg||0) * (TIER_DMG_MULT[w?.tier||"basic"]||1.0));
 const SKIN = "#e8c47a";
 
 function HeroSprite({ className="Knight", scale=1, weapons=[], heroLooks=null, isAttacking=false }) {
@@ -1127,8 +1149,11 @@ function App() {
   })));
 
   useEffect(()=>{
-    if(player&&player.xp>=player.level*40&&!levelUpPending) setLevelUpPending(true);
-  },[player?.xp,player?.level]);
+    if(player&&!levelUpPending&&player.level<=XP_THRESHOLDS.length) {
+      const needed = xpThresholdFor(player.level);
+      if(player.xp >= needed) setLevelUpPending(true);
+    }
+  },[player?.xp,player?.level,levelUpPending]);
 
   // ── Portal bootstrap — parse URL params + fetch registry on mount ──
   useEffect(()=>{
@@ -1576,7 +1601,7 @@ function App() {
     const elite = node.type === "elite";
     const hp  = elite ? Math.round(e.hp  * 1.6) : e.hp;
     const atk = elite ? Math.round(e.atk * 1.3) : e.atk;
-    const xp  = elite ? Math.round(e.xp  * 1.8) : e.xp;
+    const xp  = elite ? Math.round(e.xp  * 3.0) : e.xp;
     if (node.enemy==="dragon") sfx.bossStart();
     const eSprite = node.enemy!=="dragon" ? ENEMY_SPRITE_POOL[Math.floor(Math.random()*ENEMY_SPRITE_POOL.length)] : null;
     const eName = eSprite ? eSprite.name : e.name;
@@ -1591,7 +1616,7 @@ function App() {
   /* ── Core attack resolution ──────────────────────────────── */
   const resolveAttack = (q, weapon, dmgOverride=null) => {
     const mult = q==="perfect"?1.5:q==="good"?1.0:0.3;
-    const dmg  = dmgOverride!==null ? dmgOverride : Math.floor((weapon.baseDmg+(player?.str||0))*mult);
+    const dmg  = dmgOverride!==null ? dmgOverride : Math.floor((weaponDmg(weapon)+(player?.str||0))*mult);
     // PvP routing — bypass normal combat entirely
     if (pvpModeRef.current && pvpAtkCbRef.current) {
       pvpAtkCbRef.current(q, weapon, dmg);
@@ -1792,7 +1817,7 @@ function App() {
           mult = elapsed < 500 ? 1.5 : elapsed < 900 ? 1.0 : 0.75;
           q    = elapsed < 500 ? "perfect" : "good";
         }
-        dmg = Math.max(1, Math.floor((weapon.baseDmg+(player?.str||0)) * mult));
+        dmg = Math.max(1, Math.floor((weaponDmg(weapon)+(player?.str||0)) * mult));
         if (q==="perfect") sfx.swordPerfect();
         triggerImpact(q==="perfect"?2:1);
         const hitsLabel = `${hits}/3`;
@@ -1833,7 +1858,7 @@ function App() {
         if (ref.done) return;
         ref.done = true;
         window.removeEventListener("keydown", onKey);
-        const dmg = Math.max(1, Math.floor((weapon.baseDmg+(player?.str||0))*0.30));
+        const dmg = Math.max(1, Math.floor((weaponDmg(weapon)+(player?.str||0))*0.30));
         showHit("TIMEOUT −"+dmg, "#666");
         setQteAnim(null);
         setTimeout(()=>resolveAttack("miss",weapon,dmg), 60);
@@ -1856,7 +1881,7 @@ function App() {
   // ── HOLD-RELEASE: charge up the weapon, release in the green zone ──
   // Bar fills 0→100% over CHARGE_MAX_MS. At 100% = auto overcharge (miss).
   // Perfect zone: 78-95% of bar. Good zone: 60-78%.
-  const CHARGE_MAX_MS = 1300;
+  const CHARGE_MAX_MS = 700;
   const CHARGE_PERFECT_LO = 0.72;
   const CHARGE_PERFECT_HI = 0.94;
   const startChargeQTE = (weapon) => {
@@ -1925,13 +1950,18 @@ function App() {
     const rapidDurEff = weapon.rapidDur ?? RAPID_DUR;
     const ref = qteRef.current;
     const tapTarget = weapon.tapTarget||8;
-    ref.startMs = performance.now(); ref.taps = 0; ref.done = false;
+    ref.startMs = performance.now(); ref.taps = 0; ref.done = false; ref.lastKey = null;
     setQteAnim({ type:"rapid_tap", weapon, t:0, taps:0, tapTarget });
 
+    // A/D alternation — press A then D then A... as fast as possible
     const onKey = (e) => {
-      if (e.code!=="Space"||ref.done) return;
+      if (ref.done) return;
+      const k = e.code;
+      if (k!=="KeyA"&&k!=="KeyD") return;
       e.preventDefault();
+      // Accept any A/D press (don't require strict alternation — just mash)
       ref.taps++;
+      ref.lastKey = k;
       sfx.daggerTap();
       setQteAnim(prev=>prev?{...prev,taps:ref.taps}:null);
       if (ref.taps>=tapTarget) {
@@ -2001,7 +2031,7 @@ function App() {
         window.removeEventListener("keydown",onKey);
         const ratio = ref.inputs/pokeTargEff;
         const q = ratio>=.85?"perfect":ratio>=.5?"good":"miss";
-        const dmg = Math.max(1,Math.floor((weapon.baseDmg+(player?.str||0))*ratio*1.8));
+        const dmg = Math.max(1,Math.floor((weaponDmg(weapon)+(player?.str||0))*ratio*1.8));
         showHit(q==="perfect"?"PERFECT!":q==="good"?`GOOD! ${ref.inputs}/${pokeTargEff}`:`WEAK! ${ref.inputs}/${pokeTargEff}`,
                 q==="perfect"?"#44ff88":q==="good"?"#ffcc44":"#666");
         setQteAnim(null);
@@ -2056,7 +2086,7 @@ function App() {
       const dist = Math.sqrt(d.x*d.x+d.y*d.y);
       const q = dist<0.20?"perfect":dist<0.56?"good":"miss";
       const dmgMult = dist<0.20?1.6:dist<0.56?1.0:0.3;
-      const dmg = Math.max(1,Math.floor((weapon.baseDmg+(player?.str||0))*dmgMult));
+      const dmg = Math.max(1,Math.floor((weaponDmg(weapon)+(player?.str||0))*dmgMult));
       ref.lockedDots.push({x:d.x,y:d.y,q,dmg});
       ref.shotsFired++;
       sfx.bowRelease();
@@ -2186,7 +2216,7 @@ function App() {
         clearTimeout(ref.seqTimer);
         const ratio = ref.correctCount / seq.length;
         const q = ratio>=.75?"perfect":ratio>=.45?"good":"miss";
-        const dmg = Math.max(1,Math.floor((weapon.baseDmg+(player?.str||0))*ratio*2.2));
+        const dmg = Math.max(1,Math.floor((weaponDmg(weapon)+(player?.str||0))*ratio*2.2));
         fireMagicBolt(q, dmg, weapon);
       } else {
         setQteAnim(prev=>prev?{...prev,input:ref.input,correctCount:ref.correctCount,badKey:!correct}:null);
@@ -2201,7 +2231,7 @@ function App() {
         window.removeEventListener("keydown",onKey);
         const ratio = ref.correctCount / seq.length;
         const q = ratio>=.75?"perfect":ratio>=.45?"good":"miss";
-        const dmg = Math.max(1,Math.floor((weapon.baseDmg+(player?.str||0))*ratio*2.2));
+        const dmg = Math.max(1,Math.floor((weaponDmg(weapon)+(player?.str||0))*ratio*2.2));
         fireMagicBolt(q, dmg, weapon);
       }
     }, seqDurEff);
@@ -2279,7 +2309,7 @@ function App() {
       requestAnimationFrame(tick);
     };
 
-    const dmgFor = q => Math.floor((weapon.baseDmg+(player?.str||0))*(q==="perfect"?1.5:q==="good"?1.0:0.25));
+    const dmgFor = q => Math.floor((weaponDmg(weapon)+(player?.str||0))*(q==="perfect"?1.5:q==="good"?1.0:0.25));
 
     doContact(0, q1 => {
       sfx.stompLand(q1);
@@ -3118,7 +3148,7 @@ function App() {
                             <div style={{fontFamily:"Cinzel",fontSize:10,fontWeight:700,
                               color:pvp?"#5a1a00":"#2a1408",letterSpacing:1}}>{w.name}</div>
                             <div style={{fontFamily:"Cinzel",fontSize:8,opacity:.45,
-                              color:"#5a4028",letterSpacing:.5}}>{w.baseDmg+(player.str||0)} ATK</div>
+                              color:"#5a4028",letterSpacing:.5}}>{weaponDmg(w)+(player.str||0)} ATK</div>
                           </div>
                         </button>
                       );
@@ -3161,9 +3191,9 @@ function App() {
           <p style={{opacity:.45,marginBottom:40,letterSpacing:3,fontFamily:"Cinzel",fontSize:13}}>LEVEL {player.level} → {player.level+1}</p>
           <div style={{display:"flex",gap:24}}>
             <button className="btn" style={{padding:"16px 36px",fontSize:15}}
-              onClick={()=>{setPlayer(p=>p?({...p,level:p.level+1,xp:0,maxHp:p.maxHp+15,hp:Math.min(p.hp+15,p.maxHp+15)}):p);setLevelUpPending(false);}}>❤️ +15 MAX HP</button>
+              onClick={()=>{setPlayer(p=>{if(!p)return p;const t=xpThresholdFor(p.level);return{...p,level:p.level+1,xp:Math.max(0,p.xp-t),maxHp:p.maxHp+15,hp:Math.min(p.hp+15,p.maxHp+15)};});setLevelUpPending(false);}}>❤️ +15 MAX HP</button>
             <button className="btn" style={{padding:"16px 36px",fontSize:15}}
-              onClick={()=>{setPlayer(p=>p?({...p,level:p.level+1,xp:0,str:p.str+3}):p);setLevelUpPending(false);}}>⚔️ +3 STRENGTH</button>
+              onClick={()=>{setPlayer(p=>{if(!p)return p;const t=xpThresholdFor(p.level);return{...p,level:p.level+1,xp:Math.max(0,p.xp-t),str:p.str+3};});setLevelUpPending(false);}}>⚔️ +3 STRENGTH</button>
           </div>
         </div>
       )}
@@ -3172,7 +3202,9 @@ function App() {
       {screen==="title"&&(
         <div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
           {/* Title background video */}
-          <video src={`${ASSET_BASE}/icons/title/title.mp4`} autoPlay loop muted playsInline
+          <video src={`${ASSET_BASE}/icons/title/title.mp4`} autoPlay muted playsInline
+            onLoadedData={e=>{e.target.currentTime=3;}}
+            onEnded={e=>{e.target.currentTime=3;e.target.play().catch(()=>{});}}
             style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"50% 10%",zIndex:0,pointerEvents:"none"}}/>
           {/* Dark vignette overlay */}
           <div style={{position:"absolute",inset:0,zIndex:0,
@@ -3347,13 +3379,13 @@ function App() {
                         {w.desc}
                       </div>
                       <div style={{marginTop:8,fontSize:10,fontFamily:"Cinzel",color:"#6688aa",letterSpacing:1}}>
-                        ATK {w.baseDmg}
+                        ATK {weaponDmg(w)}
                       </div>
                     </div>
                   )}
                   <div style={{fontSize:12,opacity:.55,lineHeight:1.7,marginBottom:"auto",paddingBottom:14}}>{w.desc}</div>
                   <div style={{fontSize:11,fontFamily:"Cinzel",padding:"5px 10px",border:`1px solid ${sel?"#ffcc4455":"#222"}`,color:sel?"#ffcc44":"#555",marginBottom:10}}>{qteLabel}</div>
-                  <div style={{fontSize:12,opacity:.45,fontFamily:"Cinzel"}}>ATK {w.baseDmg}</div>
+                  <div style={{fontSize:12,opacity:.45,fontFamily:"Cinzel"}}>ATK {weaponDmg(w)}</div>
                 </div>
               );
             })}
@@ -3374,7 +3406,7 @@ function App() {
           </div>
           {/* XP bar */}
           <div style={{height:3,background:"#0a0a14",flexShrink:0}}>
-            <div style={{height:"100%",background:"linear-gradient(to right,#6622aa,#aa44ff)",width:`${Math.min(100,(player.xp/(player.level*40))*100)}%`,transition:"width .5s",boxShadow:"0 0 8px #8833ff"}}/>
+            <div style={{height:"100%",background:"linear-gradient(to right,#6622aa,#aa44ff)",width:`${Math.min(100,(player.xp/xpThresholdFor(player.level))*100)}%`,transition:"width .5s",boxShadow:"0 0 8px #8833ff"}}/>
           </div>
           {/* Map */}
           <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",padding:8}}>
@@ -3493,14 +3525,29 @@ function App() {
           <div style={{height:"100vh",display:"flex",flexDirection:"column",background:"#020205",overflow:"hidden",animation:"fadeIn .35s"}}>
 
             {/* ─── Slim combat HUD ─────────────────────────── */}
-            <div style={{flexShrink:0,padding:"7px 20px",background:"rgba(0,0,0,.55)",backdropFilter:"blur(4px)",
-              borderBottom:"1px solid #1e1e30",display:"flex",justifyContent:"space-between",alignItems:"center",
-              fontFamily:"Cinzel",fontSize:14,letterSpacing:1}}>
-              <span style={{color:"#c8b888",fontWeight:600,display:"inline-flex",alignItems:"center",gap:6}}><Icon type={player.weapons?.[0]||"sword"} size={16} color="#c8b888"/>{player.class} · Lv{player.level}</span>
-              <span style={{color:cs.pvpMode?"#ff8844":cs.elite?"#aa66ff":enemyData.color,letterSpacing:2,fontWeight:600}}>
-                {cs.pvpMode?"⚔ ":cs.elite?"⚡ ELITE — ":""}{cs.enemy.name}
-              </span>
-            </div>
+            {(()=>{
+              const hudWeaponId  = player.weapons?.[0]||"sword";
+              const hudWeapon    = ALL_WEAPONS[hudWeaponId];
+              const hudTierColor = TIER_COLOR[hudWeapon?.tier||"basic"]||"#e8d5a3";
+              const hudLabel     = TIER_LABEL[hudWeapon?.tier||"basic"];
+              return (
+                <div style={{flexShrink:0,padding:"7px 20px",background:"rgba(0,0,0,.55)",backdropFilter:"blur(4px)",
+                  borderBottom:"1px solid #1e1e30",display:"flex",justifyContent:"space-between",alignItems:"center",
+                  fontFamily:"Cinzel",fontSize:14,letterSpacing:1}}>
+                  {/* Left = enemy (enemy sprite is on left of battlefield) */}
+                  <span style={{color:cs.pvpMode?"#ff8844":cs.elite?"#aa66ff":enemyData.color,letterSpacing:2,fontWeight:600}}>
+                    {cs.pvpMode?"⚔ ":cs.elite?"⚡ ELITE — ":""}{cs.enemy.name}
+                  </span>
+                  {/* Right = player (hero sprite is on right of battlefield) */}
+                  <span style={{display:"inline-flex",alignItems:"center",gap:6,fontWeight:600}}>
+                    <Icon type={hudWeaponId} size={16} color={hudTierColor}/>
+                    <span style={{color:"#c8b888"}}>{player.class} · Lv{player.level}</span>
+                    {hudLabel&&<span style={{color:hudTierColor,fontSize:10,opacity:.9}}>[{hudLabel}]</span>}
+                    <span style={{color:hudTierColor,fontSize:11}}>{hudWeapon?.name||hudWeaponId}</span>
+                  </span>
+                </div>
+              );
+            })()}
 
             {/* ─── BATTLEFIELD — fills most of screen ──────── */}
             <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
@@ -3574,86 +3621,60 @@ function App() {
                 );
               })()}
 
-              {/* ── CHARGE: vertical power meter ── */}
+              {/* ── CHARGE: compact power bar above hero head ── */}
               {chargeActive&&(()=>{
-                // Horizontal bar — centered in battlefield
-                const mW=300, mH=22, mL=BFW/2-mW/2, mT=BFH/2+30;
+                // Compact bar anchored above the hero's head
+                const mW=160, mH=14;
+                const hcx = (heroPos?.left||HR_L) + HSW/2;
+                const hty = (heroPos?.top||HR_T);
+                const mL  = hcx - mW/2;
+                const mT  = hty - mH - 10;
                 const pct = Math.min(charge*100, 100);
                 const goodLo=50, perfLo=CHARGE_PERFECT_LO*100, perfHi=CHARGE_PERFECT_HI*100;
                 const fillCol = pct>=100?"#ff3311":pct>=perfHi?"#ff2200":pct>=perfLo?"#00ff66":pct>=goodLo?"#ffaa22":"#3388ff";
                 const isPerfectZone = pct>=perfLo && pct<perfHi;
                 const isDanger      = pct>=perfHi;
                 const borderCol = isDanger?"#ff2200":isPerfectZone?"#00ff66":pct>=goodLo?"#ffaa22":"#334466";
-                const outerGlow = isDanger?"0 0 32px #ff220099":isPerfectZone?"0 0 28px #00ff6699":"0 0 6px #111";
+                const outerGlow = isDanger?"0 0 22px #ff220099":isPerfectZone?"0 0 18px #00ff6699":"0 0 4px #111";
                 return (
                   <>
-                    {/* HOLD instruction — above bar */}
-                    <div style={{position:"absolute",left:mL+mW/2,top:mT-20,
-                      transform:"translateX(-50%)",fontFamily:"Cinzel",fontSize:10,letterSpacing:2,
-                      color:"#6677aa",zIndex:9,whiteSpace:"nowrap"}}>
-                      HOLD SPACE
-                    </div>
-
-                    {/* Track — overflow:hidden keeps ALL zone dividers inside */}
+                    {/* Track — overflow:hidden keeps zone dividers clipped */}
                     <div style={{position:"absolute",left:mL,top:mT,width:mW,height:mH,
-                      borderRadius:5,border:`2px solid ${borderCol}`,
+                      borderRadius:3,border:`1px solid ${borderCol}`,
                       background:"#060610",zIndex:9,overflow:"hidden",boxShadow:outerGlow}}>
 
-                      {/* Zone bands — left to right */}
+                      {/* Zone bands */}
                       <div style={{position:"absolute",left:0,top:0,width:`${goodLo}%`,height:"100%",background:"rgba(30,60,180,.30)"}}/>
                       <div style={{position:"absolute",left:`${goodLo}%`,top:0,width:`${perfLo-goodLo}%`,height:"100%",background:"rgba(200,120,0,.28)"}}/>
                       <div style={{position:"absolute",left:`${perfLo}%`,top:0,width:`${perfHi-perfLo}%`,height:"100%",
-                        background:"rgba(0,255,100,.55)",boxShadow:"inset 0 0 10px #00ff6699"}}/>
+                        background:"rgba(0,255,100,.55)",boxShadow:"inset 0 0 8px #00ff6699"}}/>
                       <div style={{position:"absolute",left:`${perfHi}%`,top:0,width:`${100-perfHi}%`,height:"100%",background:"rgba(255,30,0,.40)"}}/>
 
-                      {/* Fill — grows left to right */}
+                      {/* Fill */}
                       <div style={{position:"absolute",left:0,top:0,height:"100%",width:`${pct}%`,
                         background:`linear-gradient(to right,${fillCol}bb,${fillCol})`,
-                        boxShadow:`0 0 18px ${fillCol},inset 0 0 8px rgba(255,255,255,.15)`,
-                        transition:"width .02s linear"}}/>
+                        boxShadow:`0 0 12px ${fillCol},inset 0 0 6px rgba(255,255,255,.12)`,
+                        transition:"width .015s linear"}}/>
 
-                      {/* Zone dividers — vertical lines, fully inside via overflow:hidden */}
+                      {/* Zone dividers */}
                       {[{v:goodLo,col:"#ffcc44"},{v:perfLo,col:"#00ff66"},{v:perfHi,col:"#ff2200"}].map(({v,col},i)=>(
                         <div key={i} style={{position:"absolute",left:`${v}%`,top:0,
                           width:2,height:"100%",background:col,
-                          boxShadow:`0 0 5px ${col}`,transform:"translateX(-1px)",zIndex:10}}/>
+                          boxShadow:`0 0 4px ${col}`,transform:"translateX(-1px)",zIndex:10}}/>
                       ))}
 
-                      {/* Needle — vertical bar at current charge */}
+                      {/* Needle */}
                       <div style={{position:"absolute",left:`${pct}%`,top:0,
-                        width:3,height:"100%",background:"#fff",borderRadius:1,zIndex:11,
-                        boxShadow:`0 0 10px #fff,0 0 20px ${fillCol}`,
-                        transform:"translateX(-1px)",transition:"left .02s linear"}}/>
+                        width:2,height:"100%",background:"#fff",borderRadius:1,zIndex:11,
+                        boxShadow:`0 0 8px #fff,0 0 14px ${fillCol}`,
+                        transform:"translateX(-1px)",transition:"left .015s linear"}}/>
                     </div>
 
-                    {/* Zone labels — below bar, clamped inside mL→mL+mW */}
-                    {[{v:goodLo,col:"#ffcc44",lbl:"GOOD"},{v:perfLo,col:"#00ff66",lbl:"RELEASE"},{v:perfHi,col:"#ff2200",lbl:"!"}].map(({v,col,lbl},i)=>(
-                      <div key={i} style={{position:"absolute",
-                        left:Math.min(Math.max(mL+v/100*mW, mL+14), mL+mW-14),
-                        top:mT+mH+5,transform:"translateX(-50%)",
-                        fontFamily:"Cinzel",fontSize:8,letterSpacing:1,color:col,
-                        textShadow:`0 0 6px ${col}`,zIndex:10,whiteSpace:"nowrap",fontWeight:700}}>
-                        {lbl}
-                      </div>
-                    ))}
-
-                    {/* NOW flash — above bar when in perfect zone */}
-                    {isPerfectZone&&(
-                      <div style={{position:"absolute",left:mL+mW/2,top:mT-44,
-                        transform:"translateX(-50%)",fontFamily:"Cinzel",fontWeight:900,fontSize:16,
-                        letterSpacing:3,color:"#00ff66",
-                        textShadow:"0 0 16px #00ff66,0 0 32px #00ff66",
-                        zIndex:12,whiteSpace:"nowrap",
-                        animation:"chargeRelease .25s ease-in-out infinite alternate"}}>
-                        ★ RELEASE!
-                      </div>
-                    )}
-
-                    {/* Hammer icon above hero */}
-                    <div style={{position:"absolute",left:(heroPos?.left||HR_L)+HSW/2-9,top:(heroPos?.top||HR_T)-30,
+                    {/* Weapon icon above bar */}
+                    <div style={{position:"absolute",left:mL+mW/2-9,top:mT-22,
                       zIndex:9,animation:"float .4s ease-in-out infinite",
-                      filter:isPerfectZone?"drop-shadow(0 0 12px #00ff66)":isDanger?"drop-shadow(0 0 12px #ff2200)":"none"}}>
-                      <Icon type={qteAnim?.weapon?.id||"hammer"} size={20}/>
+                      filter:isPerfectZone?"drop-shadow(0 0 10px #00ff66)":isDanger?"drop-shadow(0 0 10px #ff2200)":"none"}}>
+                      <Icon type={qteAnim?.weapon?.id||"hammer"} size={18}/>
                     </div>
                   </>
                 );
@@ -4561,7 +4582,7 @@ function App() {
                 left:heroPos?heroPos.left:HR_L,
                 top:heroPos?heroPos.top:HR_T,
                 zIndex:6,
-                transform:"scaleX(-1)",
+                transform:"scaleX(1)",
                 animation:"none",
                 filter:qteAnim?.type==="defend"?"drop-shadow(0 0 10px #4488ff)":
                        chargeActive&&cIsPerfect?"drop-shadow(0 0 14px #44ff88)":"none"}}>
@@ -4570,7 +4591,7 @@ function App() {
 
               {/* Battlefield status line */}
               <div style={{position:"absolute",top:qteAnim?.type==="swing_beat"||qteAnim?.type==="hold_release"||qteAnim?.type==="poke"?50:qteAnim?.type==="sequence"?30:10,left:"50%",transform:"translateX(-50%)",fontFamily:"Cinzel",fontSize:10,letterSpacing:3,zIndex:9,whiteSpace:"nowrap"}}>
-                {qteAnim?.type==="rapid_tap"  ? <span style={{color:"#ff8844",animation:"pulse .15s ease-in-out infinite",fontWeight:700}}>MASH [SPACE]</span>
+                {qteAnim?.type==="rapid_tap"  ? <span style={{color:"#ff8844",animation:"pulse .15s ease-in-out infinite",fontWeight:700}}>MASH [A] [D]</span>
                 :cs.phase==="enemy_turn"      ? <span style={{opacity:.25,fontSize:9}}>ENEMY INCOMING</span>
                 :cs.phase==="won"             ? <span style={{color:"#44ff88",animation:"glow 1.5s infinite"}}>VICTORY!</span>
                 :cs.phase==="action"          ? <span style={{opacity:.35}}>CHOOSE YOUR ATTACK</span>
@@ -4784,7 +4805,7 @@ function App() {
                   <div style={{fontFamily:"Cinzel",fontSize:15,marginBottom:8,letterSpacing:1,
                     color:isPotion?"#dd99ff":wD?wTierColor:"#e8d5a3"}}>{r.label}</div>
                   <div style={{fontSize:12,opacity:.6,lineHeight:1.5,color:isPotion?"#bb88ee":"inherit"}}>
-                    {wD?`${wD.name} (${wD.baseDmg} ATK · ${QTE_LABEL[wD.qteType]})`:r.desc}
+                    {wD?`${wD.name} (${weaponDmg(wD)} ATK · ${QTE_LABEL[wD.qteType]})`:r.desc}
                   </div>
                 </div>
               );
@@ -4972,7 +4993,7 @@ function App() {
               {/* My hero (right side) */}
               <div style={{position:"absolute",
                 left:heroPos?heroPos.left:HR_L, top:heroPos?heroPos.top:HR_T,
-                zIndex:6,transform:"scaleX(-1)",
+                zIndex:6,transform:"scaleX(1)",
                 animation:"none"}}>
                 <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={cs?.phase==="attacking"}/>
               </div>
