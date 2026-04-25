@@ -3202,9 +3202,10 @@ function App() {
       {screen==="title"&&(
         <div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
           {/* Title background video */}
-          <video src={`${ASSET_BASE}/icons/title/title.mp4`} autoPlay muted playsInline
-            onLoadedData={e=>{e.target.currentTime=3;}}
-            onEnded={e=>{e.target.currentTime=3;e.target.play().catch(()=>{});}}
+          <video src={`${ASSET_BASE}/icons/title/title.mp4`} muted playsInline
+            onLoadedMetadata={e=>{e.target.currentTime=3;}}
+            onSeeked={e=>{e.target.paused&&e.target.play().catch(()=>{});}}
+            onEnded={e=>{e.target.currentTime=3;}}
             style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"50% 10%",zIndex:0,pointerEvents:"none"}}/>
           {/* Dark vignette overlay */}
           <div style={{position:"absolute",inset:0,zIndex:0,
