@@ -67,26 +67,42 @@ body{background:#020205;overflow:hidden;user-select:none;color:#e8d5a3;font-fami
 
 /* ─── WEAPON DATA ────────────────────────────────────────────── */
 const STARTER_WEAPONS = {
-  sword:      { id:"sword",      name:"Iron Sword",    emoji:"⚔️", baseDmg:12, speed:2.2, qteType:"swing_beat",  desc:"Press A when dial hits LEFT, D when it hits RIGHT. Hit the beat!", classEmoji:"🛡️", className:"Knight"    },
-  hammer:     { id:"hammer",     name:"War Hammer",    emoji:"🔨", baseDmg:22, speed:1.0, qteType:"hold_release",desc:"Hold SPACE to charge. Release in the GREEN zone — too long = OVERCHARGE!", classEmoji:"⚒️", className:"Berserker" },
-  daggers:    { id:"daggers",    name:"Shadow Daggers",emoji:"🗡️", baseDmg:9,  speed:3.0, qteType:"rapid_tap",  tapTarget:8, desc:"Mash SPACE 8 times before the timer runs out. Go fast!", classEmoji:"🐍", className:"Rogue"     },
-  staff:      { id:"staff",      name:"Arcane Staff",  emoji:"🪄", baseDmg:16, speed:1.8, qteType:"sequence",   seqLength:4, desc:"Type the 4-letter rune sequence shown. One wrong key = restart!", classEmoji:"🌙", className:"Mage"      },
-  bow:        { id:"bow",        name:"Elven Bow",     emoji:"🏹", baseDmg:8,  speed:1.5, qteType:"archery",    desc:"3 orbiting dots — press SPACE when each is in the center ring.", classEmoji:"🌿", className:"Ranger"    },
-  sword_gun:  { id:"sword_gun",  name:"Sword & Gun",   emoji:"⚔🔫", baseDmg:30, speed:1.8, qteType:"dual_action", dotSpeed:1.80, centerWidth:0.20, classEmoji:"🔫", className:"Duelist",    desc:"Hold A+W+D simultaneously, then LEFT CLICK when the dot hits the center zone." },
+  sword:      { id:"sword",      name:"Iron Sword",    emoji:"⚔️",  baseDmg:12, speed:2.2, qteType:"swing_beat",    tier:"basic", desc:"Press A→W→D in sequence. Hit the beat!", classEmoji:"🛡️", className:"Knight"   },
+  hammer:     { id:"hammer",     name:"War Hammer",    emoji:"🔨",  baseDmg:22, speed:1.0, qteType:"hold_release",  tier:"basic", desc:"Hold SPACE to charge. Release in the GREEN zone — too long = OVERCHARGE!", classEmoji:"⚒️", className:"Berserker"},
+  daggers:    { id:"daggers",    name:"Shadow Daggers",emoji:"🗡️",  baseDmg:9,  speed:3.0, qteType:"rapid_tap",    tier:"basic", tapTarget:8,  desc:"Mash SPACE 8 times before the timer runs out!", classEmoji:"🐍", className:"Rogue"    },
+  staff:      { id:"staff",      name:"Arcane Staff",  emoji:"🪄",  baseDmg:16, speed:1.8, qteType:"sequence",     tier:"basic", seqLength:4,  desc:"Type the 4-letter rune sequence shown. One wrong key = restart!", classEmoji:"🌙", className:"Mage"     },
+  bow:        { id:"bow",        name:"Elven Bow",     emoji:"🏹",  baseDmg:8,  speed:1.5, qteType:"archery",      tier:"basic", desc:"3 orbiting dots — press SPACE when each is in the center ring.", classEmoji:"🌿", className:"Ranger"   },
+  sword_gun:  { id:"sword_gun",  name:"Sword & Gun",   emoji:"⚔🔫", baseDmg:30, speed:1.8, qteType:"dual_action",  tier:"basic", dotSpeed:1.80, centerWidth:0.20, classEmoji:"🔫", className:"Duelist",  desc:"Hold A+W+D simultaneously, then LEFT CLICK when the dot hits the center zone." },
 };
 const ALL_WEAPONS = {
   ...STARTER_WEAPONS,
-  boots:       { id:"boots",       name:"Iron Boots",     emoji:"👟", baseDmg:8,  speed:1.4, qteType:"stomp",        classEmoji:"👊", className:"Brawler"     },
-  axe:         { id:"axe",         name:"Battle Axe",     emoji:"🪓", baseDmg:19, speed:1.1, qteType:"hold_release", classEmoji:"🪓", className:"Warrior"     },
-  spear:       { id:"spear",       name:"Iron Spear",     emoji:"🔱", baseDmg:15, speed:1.9, qteType:"poke",         classEmoji:"🔱", className:"Lancer"      },
-  wand:        { id:"wand",        name:"Chaos Wand",     emoji:"✨", baseDmg:18, speed:2.0, qteType:"sequence",        seqLength:3, classEmoji:"✨", className:"Sorcerer"   },
-  rpg:         { id:"rpg",         name:"RPG",            emoji:"🚀", baseDmg:55, speed:1.2, qteType:"sequence_reveal", seqLength:10, classEmoji:"💥", className:"Demolisher" },
-  // ── DUAL ACTION weapons: hold A+W+D, click when dot centers ──
-  sword_gun:    { id:"sword_gun",    name:"Sword & Gun",    emoji:"⚔🔫", baseDmg:30, speed:1.8, qteType:"dual_action", dotSpeed:1.80, centerWidth:0.20, classEmoji:"🔫", className:"Duelist",     desc:"Hold A+W+D, then LEFT CLICK when the dot hits the center zone." },
-  knife_shotgun:{ id:"knife_shotgun",name:"Knife & Shotgun",emoji:"🔪💥", baseDmg:24, speed:2.2, qteType:"dual_action", dotSpeed:2.60, centerWidth:0.30, classEmoji:"💥", className:"Brawgunner",  desc:"Fast chaotic dot — wide zone saves you. Hold A+W+D and click." },
-  sniper_spear: { id:"sniper_spear", name:"Sniper & Spear", emoji:"🎯🔱", baseDmg:55, speed:1.0, qteType:"dual_action", dotSpeed:0.90, centerWidth:0.07, classEmoji:"🎯", className:"Deadeye",     desc:"Slow dot, tiny zone. Nail it for massive damage. Hold A+W+D, click center." },
-  axe_pistol:   { id:"axe_pistol",   name:"Axe & Pistol",  emoji:"🪓🔫", baseDmg:36, speed:1.5, qteType:"dual_action", dotSpeed:2.10, centerWidth:0.14, classEmoji:"🪓", className:"Gunslinger",  desc:"Medium speed, punishing zone. Hold A+W+D, click the center." },
-  club_musket:  { id:"club_musket",  name:"Club & Musket",  emoji:"🏏💥", baseDmg:46, speed:1.0, qteType:"dual_action", dotSpeed:0.70, centerWidth:0.10, classEmoji:"💥", className:"Rifleman",    desc:"Agonisingly slow dot, tiny zone — massive payoff. Hold A+W+D, click." },
+  // ── BASIC (non-starter) ──
+  boots:          { id:"boots",         name:"Iron Boots",      emoji:"👟",  baseDmg:8,  speed:1.4, qteType:"stomp",        tier:"basic",                                        classEmoji:"👊",  className:"Brawler"     },
+  axe:            { id:"axe",           name:"Battle Axe",      emoji:"🪓",  baseDmg:19, speed:1.1, qteType:"hold_release", tier:"basic",                                        classEmoji:"🪓",  className:"Warrior"     },
+  spear:          { id:"spear",         name:"Iron Spear",      emoji:"🔱",  baseDmg:15, speed:1.9, qteType:"poke",         tier:"basic",                                        classEmoji:"🔱",  className:"Lancer"      },
+  wand:           { id:"wand",          name:"Chaos Wand",      emoji:"✨",  baseDmg:18, speed:2.0, qteType:"sequence",     tier:"basic",  seqLength:3,                          classEmoji:"✨",  className:"Sorcerer"    },
+  knife_shotgun:  { id:"knife_shotgun", name:"Knife & Shotgun", emoji:"🔪💥", baseDmg:24, speed:2.2, qteType:"dual_action", tier:"basic",  dotSpeed:2.60, centerWidth:0.30,      classEmoji:"💥",  className:"Brawgunner", desc:"Fast chaotic dot — wide zone saves you. Hold A+W+D and click." },
+  // ── REFINED (elite drops only — blue) ──
+  longsword:      { id:"longsword",     name:"Longsword",       emoji:"🗡️",  baseDmg:22, speed:2.0, qteType:"swing_beat",   tier:"refined", beatTimeout:1500,                                        classEmoji:"⚔️",  className:"Swordmaster", desc:"Faster combo window — A→W→D before time runs out!" },
+  great_maul:     { id:"great_maul",    name:"Great Maul",      emoji:"🔨",  baseDmg:32, speed:1.0, qteType:"hold_release", tier:"refined", chargePerfectLo:0.78, chargePerfectHi:0.91,             classEmoji:"💪",  className:"Warlord",     desc:"Narrower perfect zone — hold steady and release at the peak." },
+  twin_blades:    { id:"twin_blades",   name:"Twin Blades",     emoji:"⚔️",  baseDmg:18, speed:3.5, qteType:"rapid_tap",   tier:"refined", tapTarget:11, rapidDur:1500,                             classEmoji:"🌀",  className:"Bladedancer", desc:"11 taps in 1.5 seconds — push faster!" },
+  runic_staff:    { id:"runic_staff",   name:"Runic Staff",     emoji:"🪄",  baseDmg:28, speed:1.6, qteType:"sequence",    tier:"refined", seqLength:5, seqDur:3200,                                classEmoji:"📖",  className:"Runekeeper",  desc:"5-rune sequence, tighter window — one mistake restarts!" },
+  hunters_bow:    { id:"hunters_bow",   name:"Hunter's Bow",    emoji:"🏹",  baseDmg:18, speed:1.5, qteType:"archery",     tier:"refined", archDur:3200,                                            classEmoji:"🎯",  className:"Hunter",      desc:"Faster orbiting dots — time each shot carefully." },
+  iron_stompers:  { id:"iron_stompers", name:"Iron Stompers",   emoji:"👢",  baseDmg:18, speed:1.4, qteType:"stomp",       tier:"refined", stompDur:650,                                            classEmoji:"🦵",  className:"Crusher",     desc:"Faster stomp — hit the timing at peak force!" },
+  war_lance:      { id:"war_lance",     name:"War Lance",       emoji:"🔱",  baseDmg:26, speed:2.0, qteType:"poke",        tier:"refined", pokeDur:1800, pokeTarg:18,                               classEmoji:"⚡",  className:"Vanguard",    desc:"18 alternations, less time — rhythm is key." },
+  axe_pistol:     { id:"axe_pistol",    name:"Axe & Pistol",   emoji:"🪓🔫", baseDmg:36, speed:1.5, qteType:"dual_action", tier:"refined", dotSpeed:2.10, centerWidth:0.14,                         classEmoji:"🪓",  className:"Gunslinger",  desc:"Medium speed, punishing zone. Hold A+W+D, click the center." },
+  // ── EPIC (elite drops only — purple) ──
+  obsidian_blade: { id:"obsidian_blade",name:"Obsidian Blade",  emoji:"🗡️",  baseDmg:38, speed:2.2, qteType:"swing_beat",  tier:"epic", beatTimeout:900,                                           classEmoji:"🌑",  className:"Darkblade",  desc:"Blink-fast — nail A→W→D in under a second or miss completely." },
+  titan_hammer:   { id:"titan_hammer",  name:"Titan's Hammer",  emoji:"🔨",  baseDmg:48, speed:0.9, qteType:"hold_release",tier:"epic", chargePerfectLo:0.84, chargePerfectHi:0.91,               classEmoji:"⚡",  className:"Titan",      desc:"Razor-thin perfect zone — hold steady, release at the peak." },
+  shadow_fangs:   { id:"shadow_fangs",  name:"Shadow Fangs",    emoji:"🗡️",  baseDmg:30, speed:4.0, qteType:"rapid_tap",  tier:"epic", tapTarget:14, rapidDur:1300,                               classEmoji:"🕷️", className:"Assassin",   desc:"14 taps in 1.3 seconds — pure chaos speed." },
+  void_scepter:   { id:"void_scepter",  name:"Void Scepter",    emoji:"✨",  baseDmg:42, speed:1.8, qteType:"sequence",   tier:"epic", seqLength:6, seqDur:2600,                                   classEmoji:"🌌",  className:"Arcanist",   desc:"6 runes in 2.6 seconds — one mistake and you restart." },
+  darkwood_bow:   { id:"darkwood_bow",  name:"Darkwood Bow",    emoji:"🏹",  baseDmg:32, speed:1.5, qteType:"archery",    tier:"epic", archDur:2500,                                               classEmoji:"🌙",  className:"Shadowshot", desc:"Fast-orbiting dots — lightning reflexes needed." },
+  thunder_boots:  { id:"thunder_boots", name:"Thunder Boots",   emoji:"👟",  baseDmg:32, speed:1.4, qteType:"stomp",      tier:"epic", stompDur:530,                                               classEmoji:"⚡",  className:"Thunderfoot",desc:"Blink-fast stomp — the window is tiny." },
+  dragon_lance:   { id:"dragon_lance",  name:"Dragon Lance",    emoji:"🔱",  baseDmg:40, speed:2.0, qteType:"poke",       tier:"epic", pokeDur:1400, pokeTarg:22,                                  classEmoji:"🐉",  className:"Dragoon",    desc:"22 rapid alternations — don't break your rhythm." },
+  club_musket:    { id:"club_musket",   name:"Club & Musket",   emoji:"🏏💥", baseDmg:46, speed:1.0, qteType:"dual_action",tier:"epic", dotSpeed:0.70, centerWidth:0.10,                           classEmoji:"💥",  className:"Rifleman",   desc:"Agonisingly slow dot, tiny zone — massive payoff. Hold A+W+D, click." },
+  sniper_spear:   { id:"sniper_spear",  name:"Sniper & Spear",  emoji:"🎯🔱", baseDmg:50, speed:1.0, qteType:"dual_action",tier:"epic", dotSpeed:0.90, centerWidth:0.07,                           classEmoji:"🎯",  className:"Deadeye",    desc:"Slow dot, tiny zone. Nail it for massive damage. Hold A+W+D, click center." },
+  // ── LEGENDARY ──
+  rpg:            { id:"rpg",           name:"RPG",             emoji:"🚀",  baseDmg:55, speed:1.2, qteType:"sequence_reveal", tier:"legendary", seqLength:10, classEmoji:"💥", className:"Demolisher" },
 };
 
 /* ─── ENEMY DATA ─────────────────────────────────────────────── */
@@ -202,16 +218,36 @@ const POTIONS = [
 
 /* ─── REWARDS ────────────────────────────────────────────────── */
 const BASE_REWARDS = [
-  { id:"hp15",    type:"heal",   label:"Health Vial",    emoji:"🧪", desc:"Restore 15 HP",  value:15 },
-  { id:"hp30",    type:"heal",   label:"Health Potion",  emoji:"⚗️", desc:"Restore 30 HP",  value:30 },
-  { id:"str1",    type:"stat",   label:"Strength Shard", emoji:"💪", desc:"+1 Strength",     stat:"str",   value:1  },
-  { id:"mhp10",   type:"stat",   label:"Vitality Shard", emoji:"❤️", desc:"+10 Max HP",      stat:"maxHp", value:10 },
-  { id:"w_boots", type:"weapon", label:"Iron Boots",     emoji:"👟", weaponId:"boots" },
-  { id:"w_axe",   type:"weapon", label:"Battle Axe",     emoji:"🪓", weaponId:"axe"   },
-  { id:"w_spear", type:"weapon", label:"Iron Spear",     emoji:"🔱", weaponId:"spear" },
-  { id:"w_wand",  type:"weapon", label:"Chaos Wand",     emoji:"✨", weaponId:"wand"  },
-  // RPG excluded from drops — dragon kill only
-  // Potions — each can appear at most once per pick
+  { id:"hp15",  type:"heal", label:"Health Vial",   emoji:"🧪", desc:"Restore 15 HP", value:15 },
+  { id:"hp30",  type:"heal", label:"Health Potion", emoji:"⚗️", desc:"Restore 30 HP", value:30 },
+  { id:"str1",  type:"stat", label:"Strength Shard",emoji:"💪", desc:"+1 Strength",    stat:"str",   value:1  },
+  { id:"mhp10", type:"stat", label:"Vitality Shard",emoji:"❤️", desc:"+10 Max HP",     stat:"maxHp", value:10 },
+  // Basic weapons (normal + elite drops)
+  { id:"w_boots",        type:"weapon", label:"Iron Boots",      emoji:"👟",  weaponId:"boots"        },
+  { id:"w_axe",          type:"weapon", label:"Battle Axe",      emoji:"🪓",  weaponId:"axe"          },
+  { id:"w_spear",        type:"weapon", label:"Iron Spear",      emoji:"🔱",  weaponId:"spear"        },
+  { id:"w_wand",         type:"weapon", label:"Chaos Wand",      emoji:"✨",  weaponId:"wand"         },
+  { id:"w_knife_shotgun",type:"weapon", label:"Knife & Shotgun", emoji:"🔪💥", weaponId:"knife_shotgun"},
+  // Refined weapons (elite drops only)
+  { id:"w_longsword",    type:"weapon", label:"Longsword",       emoji:"🗡️",  weaponId:"longsword",    eliteOnly:true },
+  { id:"w_great_maul",   type:"weapon", label:"Great Maul",      emoji:"🔨",  weaponId:"great_maul",   eliteOnly:true },
+  { id:"w_twin_blades",  type:"weapon", label:"Twin Blades",     emoji:"⚔️",  weaponId:"twin_blades",  eliteOnly:true },
+  { id:"w_runic_staff",  type:"weapon", label:"Runic Staff",     emoji:"🪄",  weaponId:"runic_staff",  eliteOnly:true },
+  { id:"w_hunters_bow",  type:"weapon", label:"Hunter's Bow",    emoji:"🏹",  weaponId:"hunters_bow",  eliteOnly:true },
+  { id:"w_iron_stompers",type:"weapon", label:"Iron Stompers",   emoji:"👢",  weaponId:"iron_stompers",eliteOnly:true },
+  { id:"w_war_lance",    type:"weapon", label:"War Lance",       emoji:"🔱",  weaponId:"war_lance",    eliteOnly:true },
+  { id:"w_axe_pistol",   type:"weapon", label:"Axe & Pistol",   emoji:"🪓🔫", weaponId:"axe_pistol",   eliteOnly:true },
+  // Epic weapons (elite drops only, rarer weight)
+  { id:"w_obsidian_blade",type:"weapon",label:"Obsidian Blade",  emoji:"🗡️",  weaponId:"obsidian_blade",eliteOnly:true, epicOnly:true },
+  { id:"w_titan_hammer",  type:"weapon",label:"Titan's Hammer",  emoji:"🔨",  weaponId:"titan_hammer",  eliteOnly:true, epicOnly:true },
+  { id:"w_shadow_fangs",  type:"weapon",label:"Shadow Fangs",    emoji:"🗡️",  weaponId:"shadow_fangs",  eliteOnly:true, epicOnly:true },
+  { id:"w_void_scepter",  type:"weapon",label:"Void Scepter",    emoji:"✨",  weaponId:"void_scepter",  eliteOnly:true, epicOnly:true },
+  { id:"w_darkwood_bow",  type:"weapon",label:"Darkwood Bow",    emoji:"🏹",  weaponId:"darkwood_bow",  eliteOnly:true, epicOnly:true },
+  { id:"w_thunder_boots", type:"weapon",label:"Thunder Boots",   emoji:"👟",  weaponId:"thunder_boots", eliteOnly:true, epicOnly:true },
+  { id:"w_dragon_lance",  type:"weapon",label:"Dragon Lance",    emoji:"🔱",  weaponId:"dragon_lance",  eliteOnly:true, epicOnly:true },
+  { id:"w_club_musket",   type:"weapon",label:"Club & Musket",   emoji:"🏏💥", weaponId:"club_musket",   eliteOnly:true, epicOnly:true },
+  { id:"w_sniper_spear",  type:"weapon",label:"Sniper & Spear",  emoji:"🎯🔱", weaponId:"sniper_spear",  eliteOnly:true, epicOnly:true },
+  // RPG excluded — dragon kill only
   ...POTIONS.map(pt=>({ id:`pot_${pt.id}`, type:"potion", label:pt.name, emoji:pt.emoji, desc:pt.desc, potion:pt })),
 ];
 const pickRewards = (held, eliteDrop=false) => {
@@ -220,13 +256,18 @@ const pickRewards = (held, eliteDrop=false) => {
     if (r.eliteOnly && !eliteDrop) return false;
     return true;
   });
-  const potions  = pool.filter(r=>r.type==="potion").sort(()=>Math.random()-.5);
-  const others   = pool.filter(r=>r.type!=="potion").sort(()=>Math.random()-.5);
-  // Always guarantee exactly 1 potion slot if any potion available
+  // Weighted pool: basic/consumable=4 copies, refined=2, epic=1 (rarer in elite drops)
+  const weighted = pool.flatMap(r => Array(r.epicOnly?1:r.eliteOnly?2:4).fill(r));
+  const pickUnique = arr => {
+    const seen = new Set();
+    return [...arr].sort(()=>Math.random()-.5).filter(r=>{ if(seen.has(r.id)) return false; seen.add(r.id); return true; });
+  };
+  const potions = pickUnique(weighted.filter(r=>r.type==="potion"));
+  const others  = pickUnique(weighted.filter(r=>r.type!=="potion"));
   const result = potions.length>0
     ? [potions[0], ...others.slice(0,2)]
     : others.slice(0,3);
-  return result.sort(()=>Math.random()-.5); // shuffle final order
+  return result.sort(()=>Math.random()-.5);
 };
 
 /* ─── BATTLEFIELD CONSTANTS ──────────────────────────────────── */
@@ -353,12 +394,29 @@ function LayeredHeroSprite({ looks, displayW=41, displayH=65, isAttacking=false 
 }
 
 const CLASS_COLORS = {
-  Knight:{body:"#4466bb",trim:"#ddaa33"}, Berserker:{body:"#882222",trim:"#dd6622"},
-  Rogue:{body:"#223344",trim:"#44aaaa"},  Mage:{body:"#442288",trim:"#aa44ff"},
-  Ranger:{body:"#224422",trim:"#44bb44"}, Brawler:{body:"#664422",trim:"#ccaa44"},
-  Warrior:{body:"#556677",trim:"#aabbcc"},Lancer:{body:"#334455",trim:"#4488cc"},
-  Sorcerer:{body:"#331144",trim:"#cc44ff"},
+  // Basic
+  Knight:{body:"#4466bb",trim:"#ddaa33"},   Berserker:{body:"#882222",trim:"#dd6622"},
+  Rogue:{body:"#223344",trim:"#44aaaa"},    Mage:{body:"#442288",trim:"#aa44ff"},
+  Ranger:{body:"#224422",trim:"#44bb44"},   Brawler:{body:"#664422",trim:"#ccaa44"},
+  Warrior:{body:"#556677",trim:"#aabbcc"},  Lancer:{body:"#334455",trim:"#4488cc"},
+  Sorcerer:{body:"#331144",trim:"#cc44ff"}, Duelist:{body:"#664433",trim:"#ffaa44"},
+  Brawgunner:{body:"#774433",trim:"#ff7700"},
+  // Refined
+  Swordmaster:{body:"#334488",trim:"#88aaff"}, Warlord:{body:"#553322",trim:"#ff8844"},
+  Bladedancer:{body:"#223355",trim:"#44ddff"}, Runekeeper:{body:"#2a1155",trim:"#8844ff"},
+  Hunter:{body:"#1a3322",trim:"#44cc77"},      Crusher:{body:"#553322",trim:"#cc8844"},
+  Vanguard:{body:"#223355",trim:"#4488ff"},    Gunslinger:{body:"#553344",trim:"#ff6688"},
+  // Epic
+  Darkblade:{body:"#111122",trim:"#aa22ff"},   Titan:{body:"#221133",trim:"#ff44dd"},
+  Assassin:{body:"#110022",trim:"#cc00ff"},    Arcanist:{body:"#0a0022",trim:"#dd66ff"},
+  Shadowshot:{body:"#110033",trim:"#9933ff"},  Thunderfoot:{body:"#001133",trim:"#44aaff"},
+  Dragoon:{body:"#110022",trim:"#ff2244"},     Rifleman:{body:"#664422",trim:"#ff8844"},
+  Deadeye:{body:"#334455",trim:"#88ddff"},
+  // Legendary
+  Demolisher:{body:"#663322",trim:"#ff5500"},
 };
+const TIER_COLOR = { basic:"#e8d5a3", refined:"#4488ff", epic:"#aa44ff", legendary:"#ffaa00" };
+const TIER_LABEL = { basic:"", refined:"Refined", epic:"Epic", legendary:"Legendary" };
 const SKIN = "#e8c47a";
 
 function HeroSprite({ className="Knight", scale=1, weapons=[], heroLooks=null, isAttacking=false }) {
@@ -1706,6 +1764,7 @@ function App() {
   const BEAT_TIMEOUT  = 2200;
   const BEAT_COMBO    = ["A","W","D"];
   const startSwingBeatQTE = (weapon) => {
+    const beatTimeout = weapon.beatTimeout ?? BEAT_TIMEOUT;
     const ref = qteRef.current;
     ref.done         = false;
     ref.step         = 0;          // index of next expected key (0-2)
@@ -1780,11 +1839,11 @@ function App() {
         showHit("TIMEOUT −"+dmg, "#666");
         setQteAnim(null);
         setTimeout(()=>resolveAttack("miss",weapon,dmg), 60);
-      }, BEAT_TIMEOUT);
+      }, beatTimeout);
     }, BEAT_WALK_MS);
 
     const walkStart = performance.now();
-    const BEAT_ANIM_DUR = BEAT_WALK_MS + BEAT_TIMEOUT;
+    const BEAT_ANIM_DUR = BEAT_WALK_MS + beatTimeout;
     const tick = () => {
       if (ref.done) return;
       const t = Math.min(1,(performance.now()-walkStart)/BEAT_ANIM_DUR);
@@ -1801,8 +1860,10 @@ function App() {
   // Perfect zone: 78-95% of bar. Good zone: 60-78%.
   const CHARGE_MAX_MS = 1300;
   const CHARGE_PERFECT_LO = 0.72;
-  const CHARGE_PERFECT_HI = 0.94; // 22% window = ~550ms
+  const CHARGE_PERFECT_HI = 0.94;
   const startChargeQTE = (weapon) => {
+    const cplo = weapon.chargePerfectLo ?? CHARGE_PERFECT_LO;
+    const cphi = weapon.chargePerfectHi ?? CHARGE_PERFECT_HI;
     const ref = qteRef.current;
     ref.holdStart = null; ref.released = false; ref.releaseCharge = 0;
     setQteAnim({ type:"hold_release", weapon, charge:0, released:false, releaseT:0 });
@@ -1819,7 +1880,7 @@ function App() {
       window.removeEventListener("keydown",onDown);
       window.removeEventListener("keyup",onUp);
       clearTimeout(ref.autoTimer);
-      const q = c>=CHARGE_PERFECT_LO&&c<1.0?"perfect":c>=0.50&&c<1.0?"good":"miss";
+      const q = c>=cplo&&c<cphi?"perfect":c>=0.50&&c<1.0?"good":"miss";
       const isOvercharge = c>=1.0;
       if (isOvercharge) {
         sfx.hammerOvercharge();
@@ -1863,6 +1924,7 @@ function App() {
   // ── RAPID TAP: mash SPACE — hero oscillates toward enemy ──
   const RAPID_DUR = 1800;
   const startRapidTapQTE = (weapon) => {
+    const rapidDurEff = weapon.rapidDur ?? RAPID_DUR;
     const ref = qteRef.current;
     const tapTarget = weapon.tapTarget||8;
     ref.startMs = performance.now(); ref.taps = 0; ref.done = false;
@@ -1887,7 +1949,7 @@ function App() {
 
     const tick = () => {
       if (ref.done) return;
-      const t = Math.min(1,(performance.now()-ref.startMs)/RAPID_DUR);
+      const t = Math.min(1,(performance.now()-ref.startMs)/rapidDurEff);
       setQteAnim(prev=>prev?{...prev,t}:null);
       if (t<1) { requestAnimationFrame(tick); return; }
       window.removeEventListener("keydown",onKey);
@@ -1906,10 +1968,12 @@ function App() {
   const POKE_DUR = 2200;
   const POKE_TARGET = 14;
   const startPokeQTE = (weapon) => {
+    const pokeDurEff  = weapon.pokeDur  ?? POKE_DUR;
+    const pokeTargEff = weapon.pokeTarg ?? POKE_TARGET;
     const ref = qteRef.current;
     ref.startMs = performance.now();
     ref.inputs = 0; ref.done = false; ref.lastKey = null;
-    setQteAnim({ type:"poke", weapon, t:0, inputs:0, tapTarget:POKE_TARGET });
+    setQteAnim({ type:"poke", weapon, t:0, inputs:0, tapTarget:pokeTargEff });
 
     const onKey = (e) => {
       if (ref.done) return;
@@ -1921,7 +1985,7 @@ function App() {
         ref.inputs++;
         ref.lastKey=k;
         setQteAnim(prev=>prev?{...prev,inputs:ref.inputs,lastKey:k}:null);
-        if (ref.inputs>=POKE_TARGET) {
+        if (ref.inputs>=pokeTargEff) {
           ref.done=true;
           window.removeEventListener("keydown",onKey);
           clearTimeout(ref.pokeTimer);
@@ -1937,19 +2001,19 @@ function App() {
       if (!ref.done) {
         ref.done=true;
         window.removeEventListener("keydown",onKey);
-        const ratio = ref.inputs/POKE_TARGET;
+        const ratio = ref.inputs/pokeTargEff;
         const q = ratio>=.85?"perfect":ratio>=.5?"good":"miss";
         const dmg = Math.max(1,Math.floor((weapon.baseDmg+(player?.str||0))*ratio*1.8));
-        showHit(q==="perfect"?"PERFECT!":q==="good"?`GOOD! ${ref.inputs}/${POKE_TARGET}`:`WEAK! ${ref.inputs}/${POKE_TARGET}`,
+        showHit(q==="perfect"?"PERFECT!":q==="good"?`GOOD! ${ref.inputs}/${pokeTargEff}`:`WEAK! ${ref.inputs}/${pokeTargEff}`,
                 q==="perfect"?"#44ff88":q==="good"?"#ffcc44":"#666");
         setQteAnim(null);
         setTimeout(()=>resolveAttack(q,weapon,Math.max(1,dmg)),80);
       }
-    },POKE_DUR);
+    },pokeDurEff);
 
     const tick = ()=>{
       if (ref.done) return;
-      const t = Math.min(1,(performance.now()-ref.startMs)/POKE_DUR);
+      const t = Math.min(1,(performance.now()-ref.startMs)/pokeDurEff);
       setQteAnim(prev=>prev?{...prev,t}:null);
       if (t<1) requestAnimationFrame(tick);
     };
@@ -1960,6 +2024,7 @@ function App() {
   const ARCHERY_DUR = 4500;
   const ARCHERY_DOTS = 3;
   const startArcheryQTE = (weapon) => {
+    const archeryDurEff = weapon.archDur ?? ARCHERY_DUR;
     const ref = qteRef.current;
     ref.startMs = performance.now();
     ref.shotsFired = 0; // how many SPACE presses done (0-3)
@@ -2044,7 +2109,7 @@ function App() {
     const tick = ()=>{
       if (ref.done) return;
       const elapsed = performance.now()-ref.startMs;
-      const t = Math.min(1,elapsed/ARCHERY_DUR);
+      const t = Math.min(1,elapsed/archeryDurEff);
       const tSec = elapsed/1000;
       ref.dots.forEach(d=>{
         // Radius pulses 0→1→0, so dot passes through center once per pulseFreq cycle
@@ -2098,6 +2163,7 @@ function App() {
   const SEQ_DUR = 4000;
   const ALL_KEYS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const startSequenceQTE = (weapon) => {
+    const seqDurEff = weapon.seqDur ?? SEQ_DUR;
     const ref = qteRef.current;
     const len = Math.max(8, weapon.seqLength||8);
     const seq = Array.from({length:len},()=>ALL_KEYS[Math.floor(Math.random()*ALL_KEYS.length)]);
@@ -2140,11 +2206,11 @@ function App() {
         const dmg = Math.max(1,Math.floor((weapon.baseDmg+(player?.str||0))*ratio*2.2));
         fireMagicBolt(q, dmg, weapon);
       }
-    }, SEQ_DUR);
+    }, seqDurEff);
 
     const tick = () => {
       if (ref.done) return;
-      const t = Math.min(1,(performance.now()-ref.startMs)/SEQ_DUR);
+      const t = Math.min(1,(performance.now()-ref.startMs)/seqDurEff);
       setQteAnim(prev=>prev?{...prev,t}:null);
       requestAnimationFrame(tick);
     };
@@ -2158,6 +2224,8 @@ function App() {
   // Contact 1: hero bounces UP from enemy head and lands back on it.
   //   After landing → return home, then resolve.
   const startStompQTE = (weapon) => {
+    const stompDurEff     = weapon.stompDur ?? STOMP_DUR;
+    const stompApproachEff = Math.round(stompDurEff * LAND_FRAC);
     // Use pool sprite frame height if available — pool sprites are 128×128, not ENEMY_DIMS
     const dims = cs?.enemySprite ? {w:cs.enemySprite.frameW, h:cs.enemySprite.frameH} : (ENEMY_DIMS[cs?.enemy?.id]||{w:55,h:70});
     const eScaledH = dims.h*1.1;
@@ -2184,7 +2252,7 @@ function App() {
       const jumpStart = performance.now();
       ref.pressMs = null; ref.flashDone = false;
       // Contact 0 = approach only (short); contact 1 = full bounce arc
-      const dur = contactNum===0 ? STOMP_APPROACH_DUR : STOMP_DUR;
+      const dur = contactNum===0 ? stompApproachEff : stompDurEff;
       if(contactNum===0) sfx.stompApproach(); else sfx.stompBounce();
       setQteAnim({ type:"stomp", weapon, t:0, bounce:contactNum });
 
@@ -4614,12 +4682,13 @@ function App() {
 
             {/* ── CAST/LAUNCH TIMER — numeric ms countdown, position:fixed ── */}
             {(qteAnim?.type==="sequence"||qteAnim?.type==="sequence_reveal")&&castStartRef.current&&(()=>{
+              const seqDurActive = qteAnim?.weapon?.seqDur ?? SEQ_DUR;
               const elapsed   = performance.now() - castStartRef.current;
-              const remaining = Math.max(0, SEQ_DUR - elapsed);
+              const remaining = Math.max(0, seqDurActive - elapsed);
               const remSec    = Math.floor(remaining / 1000);
               const remMsPart = Math.floor(remaining % 1000);
-              const danger    = remaining < SEQ_DUR * 0.35;
-              const warn      = remaining < SEQ_DUR * 0.60;
+              const danger    = remaining < seqDurActive * 0.35;
+              const warn      = remaining < seqDurActive * 0.60;
               const col       = danger ? "#ff3333" : warn ? "#ffaa22" : "#aa44ff";
               return (
                 <div style={{position:"fixed",top:46,left:"50%",transform:"translateX(-50%)",
@@ -4666,30 +4735,38 @@ function App() {
           <div style={{display:"flex",gap:20,flexWrap:"wrap",justifyContent:"center"}}>
             {rewards.map((r,i)=>{
               const wD=r.type==="weapon"?ALL_WEAPONS[r.weaponId]:null;
+              const wTier = wD?.tier ?? "basic";
+              const wTierColor = TIER_COLOR[wTier];
+              const wTierLabel = TIER_LABEL[wTier];
               const isPotion = r.type==="potion";
-              const baseBorder = isPotion?"1px solid #7733aa":"1px solid #2a2a3a";
-              const baseBg     = isPotion?"#0d0818":"#08080f";
-              const hoverBorder= isPotion?"1px solid #cc66ff":"1px solid #e8d5a388";
-              const hoverBg    = isPotion?"#180830":"#10101e";
+              const isWeapon = r.type==="weapon" && wTier!=="basic";
+              const glowColor = isPotion?"#7733aa":isWeapon?wTierColor:null;
+              const baseBorder = glowColor?`1px solid ${glowColor}88`:"1px solid #2a2a3a";
+              const baseBg     = isPotion?"#0d0818":isWeapon&&wTier==="epic"?"#0a0015":isWeapon&&wTier==="refined"?"#000d1a":"#08080f";
+              const hoverBorder= glowColor?`1px solid ${glowColor}`:"1px solid #e8d5a388";
+              const hoverBg    = isPotion?"#180830":isWeapon?"#100020":"#10101e";
+              const glowShadow = glowColor?`0 0 18px ${glowColor}66`:"none";
               return (
                 <div key={i} onClick={()=>applyReward(r)}
                   style={{width:200,padding:"22px 20px 24px",textAlign:"center",cursor:"pointer",
                     border:baseBorder,background:baseBg,transition:"all .2s",borderRadius:4,
-                    boxShadow:isPotion?"0 0 18px #7733aa66":"none"}}
-                  onMouseEnter={e=>{e.currentTarget.style.border=hoverBorder;e.currentTarget.style.background=hoverBg;e.currentTarget.style.boxShadow=isPotion?"0 0 30px #aa44ff88":"0 0 14px #e8d5a322";}}
-                  onMouseLeave={e=>{e.currentTarget.style.border=baseBorder;e.currentTarget.style.background=baseBg;e.currentTarget.style.boxShadow=isPotion?"0 0 18px #7733aa66":"none";}}>
-                  {isPotion&&(
-                    <div style={{fontFamily:"Cinzel",fontSize:9,letterSpacing:3,color:"#cc88ff",
-                      background:"#2a0844",padding:"2px 8px",borderRadius:2,
-                      display:"inline-block",marginBottom:10,border:"1px solid #7733aa66"}}>
-                      POTION
+                    boxShadow:glowShadow}}
+                  onMouseEnter={e=>{e.currentTarget.style.border=hoverBorder;e.currentTarget.style.background=hoverBg;e.currentTarget.style.boxShadow=glowColor?`0 0 30px ${glowColor}88`:"0 0 14px #e8d5a322";}}
+                  onMouseLeave={e=>{e.currentTarget.style.border=baseBorder;e.currentTarget.style.background=baseBg;e.currentTarget.style.boxShadow=glowShadow;}}>
+                  {(isPotion||wTierLabel)&&(
+                    <div style={{fontFamily:"Cinzel",fontSize:9,letterSpacing:3,
+                      color:isPotion?"#cc88ff":wTierColor,
+                      background:isPotion?"#2a0844":wTier==="epic"?"#1a0030":wTier==="refined"?"#001433":"#1a1400",
+                      padding:"2px 8px",borderRadius:2,display:"inline-block",marginBottom:10,
+                      border:`1px solid ${isPotion?"#7733aa66":wTierColor+"55"}`}}>
+                      {isPotion?"POTION":wTierLabel.toUpperCase()}
                     </div>
                   )}
                   <div style={{width:60,height:60,margin:"0 auto 12px",display:"flex",alignItems:"center",justifyContent:"center"}}>
                     <Icon type={r.type==="weapon"?r.weaponId:r.type==="potion"?r.potion?.id:r.id==="hp15"?"heal_vial":r.id==="hp30"?"heal_potion":r.id==="str1"?"str_shard":"hp_shard"} size={56}/>
                   </div>
                   <div style={{fontFamily:"Cinzel",fontSize:15,marginBottom:8,letterSpacing:1,
-                    color:isPotion?"#dd99ff":"#e8d5a3"}}>{r.label}</div>
+                    color:isPotion?"#dd99ff":wD?wTierColor:"#e8d5a3"}}>{r.label}</div>
                   <div style={{fontSize:12,opacity:.6,lineHeight:1.5,color:isPotion?"#bb88ee":"inherit"}}>
                     {wD?`${wD.name} (${wD.baseDmg} ATK · ${QTE_LABEL[wD.qteType]})`:r.desc}
                   </div>
