@@ -838,16 +838,16 @@ const sfx = (() => {
   // Build path: HY folder + base name + variant suffix
   const hy = (name, v) => HY + enc(name) + `-00${v}.wav`;
   // Master volume multiplier — scale all sounds down uniformly
-  const MV = 0.42;
+  const MV = 0.35;
   // Play a one-shot audio file — MV scales all volumes globally
   const pf = (url, vol=0.75) => {
     try { const a=new Audio(url); a.volume=Math.min(1,vol*MV); a.play().catch(()=>{}); } catch(_e){}
   };
   // Play random variant (1-n) of a Helton Yan sound
   const rf = (name, n=6, vol=0.75) => pf(hy(name, 1+Math.floor(Math.random()*n)), vol);
-  // Preloaded 4-element pool for rapid-fire sounds — each slot a different variant
+  // Preloaded 4-element pool for rapid-fire sounds — MV applied so pool matches all other sounds
   const mkPool = (name, vol=0.65) => {
-    const pool = [1,2,3,4].map(v=>{ const a=new Audio(hy(name,v)); a.volume=vol; return a; });
+    const pool = [1,2,3,4].map(v=>{ const a=new Audio(hy(name,v)); a.volume=Math.min(1,vol*MV); return a; });
     let i=0; return ()=>{ const a=pool[i++%4]; a.currentTime=0; a.play().catch(()=>{}); };
   };
   // Rune: pitch-escalating crystal tings — each correct key steps up a musical semi-tone
@@ -865,102 +865,100 @@ const sfx = (() => {
   const wa = fn => { try { fn(_ac()); } catch(_e){} };
   return {
     // ── UI / navigation ──────────────────────────────────────────
-    click:        ()=>rf("UIClick_INTERFACE-Metallic Click_HY_PC",   6, 0.50),
-    hover:        ()=>rf("SWSH_MOVEMENT-Tiny Chime_HY_PC",           6, 0.35),
-    bookOpen:     ()=>rf("SWSH_MOVEMENT-Reso Swish_HY_PC",           6, 0.60),
-    select:       ()=>rf("UIClick_INTERFACE-Positive Click_HY_PC",   6, 0.60),
-    mapNode:      ()=>rf("UIClick_INTERFACE-Rattling Click_HY_PC",   6, 0.40),
-    levelUp:      ()=>rf("DSGNSynth_BUFF-Mecha Level Up_HY_PC",      6, 0.80),
-    rest:         ()=>rf("MAGAngl_BUFF-Simple Heal_HY_PC",           6, 0.70),
-    reward:       ()=>rf("DSGNTonl_USABLE-Generic Item_HY_PC",       6, 0.60),
-    rewardWeapon: ()=>rf("DSGNMisc_USABLE-Mecha Weapon Equip_HY_PC", 6, 0.72),
-    rewardHeal:   ()=>rf("MAGAngl_BUFF-Simple Heal_HY_PC",           6, 0.70),
-    rewardStat:   ()=>rf("DSGNSynth_BUFF-Stats Up_HY_PC",            6, 0.65),
-    potionUse:    ()=>rf("MAGAngl_BUFF-Buff Pickup_HY_PC",           6, 0.65),
-    victory:      ()=>rf("DSGNMisc_SKILL IMPACT-Dramatic Finish_HY_PC",6,0.85),
-    gameOver:     ()=>rf("DSGNSynth_BUFF-Mecha Failing_HY_PC",       6, 0.75),
-    portal:       ()=>rf("MAGSpel_CAST-Sphere Up_HY_PC",             6, 0.70),
+    click:        ()=>rf("UIClick_INTERFACE-Metallic Click_HY_PC",   6, 0.45),
+    hover:        ()=>rf("SWSH_MOVEMENT-Tiny Chime_HY_PC",           6, 0.28),
+    bookOpen:     ()=>rf("SWSH_MOVEMENT-Reso Swish_HY_PC",           6, 0.48),
+    select:       ()=>rf("UIClick_INTERFACE-Positive Click_HY_PC",   6, 0.48),
+    mapNode:      ()=>rf("UIClick_INTERFACE-Rattling Click_HY_PC",   6, 0.38),
+    levelUp:      ()=>rf("DSGNSynth_BUFF-Mecha Level Up_HY_PC",      6, 0.62),
+    rest:         ()=>rf("MAGAngl_BUFF-Simple Heal_HY_PC",           6, 0.52),
+    reward:       ()=>rf("DSGNTonl_USABLE-Generic Item_HY_PC",       6, 0.48),
+    rewardWeapon: ()=>rf("DSGNMisc_USABLE-Mecha Weapon Equip_HY_PC", 6, 0.55),
+    rewardHeal:   ()=>rf("MAGAngl_BUFF-Simple Heal_HY_PC",           6, 0.52),
+    rewardStat:   ()=>rf("DSGNSynth_BUFF-Stats Up_HY_PC",            6, 0.50),
+    potionUse:    ()=>rf("MAGAngl_BUFF-Buff Pickup_HY_PC",           6, 0.50),
+    victory:      ()=>rf("DSGNMisc_SKILL IMPACT-Dramatic Finish_HY_PC",6,0.62),
+    gameOver:     ()=>rf("DSGNSynth_BUFF-Mecha Failing_HY_PC",       6, 0.58),
+    portal:       ()=>rf("MAGSpel_CAST-Sphere Up_HY_PC",             6, 0.52),
     // ── Combat ───────────────────────────────────────────────────
-    combatStart:  ()=>rf("DSGNTonl_MELEE-Sword Critical_HY_PC",      6, 0.62),
-    bossStart:    ()=>{ rf("DSGNImpt_EXPLOSION-Mana Bomb_HY_PC",6,0.90); setTimeout(()=>rf("DSGNImpt_EXPLOSION-Eruption_HY_PC",6,0.65),250); },
-    enemyDie:     ()=>rf("DSGNMisc_SKILL IMPACT-Energy Dissipate_HY_PC", 6, 0.55),
-    slimeDeath:   ()=>rf("DSGNMisc_CAST-Slime Ball_HY_PC",           6, 0.82),
+    combatStart:  ()=>rf("DSGNTonl_MELEE-Sword Critical_HY_PC",      6, 0.52),
+    bossStart:    ()=>{ rf("DSGNImpt_EXPLOSION-Mana Bomb_HY_PC",6,0.62); setTimeout(()=>rf("DSGNImpt_EXPLOSION-Eruption_HY_PC",6,0.50),250); },
+    enemyDie:     ()=>rf("DSGNMisc_SKILL IMPACT-Energy Dissipate_HY_PC", 6, 0.50),
+    slimeDeath:   ()=>rf("DSGNMisc_CAST-Slime Ball_HY_PC",           6, 0.58),
     // ── Sword / Beat ─────────────────────────────────────────────
     swordWalk:    ()=>_swordWalkPlay(),
-    swordKey:     ()=>rf("DSGNMisc_MELEE-Sword Slash_HY_PC",         6, 0.48),
-    swordBadKey:  ()=>rf("UIMisc_INTERFACE-Denied_HY_PC",            6, 0.40),
-    swordPerfect: ()=>rf("DSGNMisc_SKILL IMPACT-Critical Strike_HY_PC",6,0.52),
+    swordKey:     ()=>rf("DSGNMisc_MELEE-Sword Slash_HY_PC",         6, 0.45),
+    swordBadKey:  ()=>rf("UIMisc_INTERFACE-Denied_HY_PC",            6, 0.38),
+    swordPerfect: ()=>rf("DSGNMisc_SKILL IMPACT-Critical Strike_HY_PC",6,0.50),
     // ── Hammer / Charge ──────────────────────────────────────────
-    // hammerHold stays synthetic — it's a sustained ramping rumble impossible to replicate with a short file
+    // hammerHold stays synthetic — sustained ramping rumble
     hammerHold: ()=>{
       try {
         const ctx=_ac();
         const o=O(ctx,'sawtooth',55),lp=LP(ctx,500),g=G(ctx,0);
         o.connect(lp); lp.connect(g); g.connect(D(ctx)); o.start();
         const t=ctx.currentTime;
-        g.gain.linearRampToValueAtTime(.04,t+.7); lp.frequency.linearRampToValueAtTime(1600,t+.7);
+        g.gain.linearRampToValueAtTime(.025,t+.7); lp.frequency.linearRampToValueAtTime(1600,t+.7);
         return ()=>{ try{ const t2=ctx.currentTime; g.gain.setValueAtTime(g.gain.value,t2);
           g.gain.exponentialRampToValueAtTime(.0001,t2+.07); o.stop(t2+.08); }catch(_e){} };
       } catch(_e){ return ()=>{}; }
     },
-    hammerPerfect:    ()=>rf("DSGNImpt_EXPLOSION-Thud_HY_PC",               6, 0.52),
-    hammerGood:       ()=>rf("FGHTImpt_HIT-Strong Smack_HY_PC",             6, 0.48),
-    hammerOvercharge: ()=>rf("DSGNImpt_EXPLOSION-Forced Interruption_HY_PC",6, 0.48),
+    hammerPerfect:    ()=>rf("DSGNImpt_EXPLOSION-Thud_HY_PC",               6, 0.50),
+    hammerGood:       ()=>rf("FGHTImpt_HIT-Strong Smack_HY_PC",             6, 0.45),
+    hammerOvercharge: ()=>rf("DSGNImpt_EXPLOSION-Forced Interruption_HY_PC",6, 0.45),
     // ── Daggers / Rapid ──────────────────────────────────────────
     daggerTap:    ()=>_daggerPlay(),
-    daggerFlurry: ()=>rf("DSGNMisc_SKILL RELEASE-Flying Blades_HY_PC",      6, 0.50),
+    daggerFlurry: ()=>rf("DSGNMisc_SKILL RELEASE-Flying Blades_HY_PC",      6, 0.48),
     // ── Sequence / Staff ─────────────────────────────────────────
-    // Each correct rune key plays a crystal ting pitched higher per position in sequence
     runeCorrect: (pos=0) => {
       const rate = RUNE_RATES[Math.min(pos, RUNE_RATES.length-1)];
-      // Layer 1 — crisp crystal ting, pitched up
+      // Layer 1 — crisp crystal ting, pitched up — MV applied
       try {
         const a = new Audio(hy("DSGNTonl_SKILL IMPACT-Energy Crystal_HY_PC", 1+Math.floor(Math.random()*6)));
-        a.volume = 0.78; a.playbackRate = rate; a.play().catch(()=>{});
+        a.volume = Math.min(1, 0.55 * MV); a.playbackRate = rate; a.play().catch(()=>{});
       } catch(_e){}
-      // Layer 2 — sparkle shimmer slightly offset, adds magic shimmer
+      // Layer 2 — sparkle shimmer — MV applied
       setTimeout(()=>{
         try {
           const b = new Audio(hy("DSGNTonl_SKILL IMPACT-Magic Sparkles_HY_PC", 1+Math.floor(Math.random()*6)));
-          b.volume = 0.42; b.playbackRate = rate * 1.08; b.play().catch(()=>{});
+          b.volume = Math.min(1, 0.32 * MV); b.playbackRate = rate * 1.08; b.play().catch(()=>{});
         } catch(_e){}
       }, 22);
     },
     runeWrong: () => {
-      // Punchy two-layer failure: synth thud then UI deny
-      rf("DSGNSynth_BUFF-Failed Buff_HY_PC", 6, 0.72);
-      setTimeout(()=>rf("UIMisc_INTERFACE-Denied_HY_PC", 6, 0.50), 55);
+      rf("DSGNSynth_BUFF-Failed Buff_HY_PC", 6, 0.52);
+      setTimeout(()=>rf("UIMisc_INTERFACE-Denied_HY_PC", 6, 0.42), 55);
     },
     magicBolt: (q) => {
-      rf("MAGSpel_CAST-Panic Energy_HY_PC", 6, 0.72);
-      if(q==="perfect") setTimeout(()=>rf("DSGNMisc_SKILL IMPACT-Critical Strike_HY_PC",6,0.60),260);
+      rf("MAGSpel_CAST-Panic Energy_HY_PC", 6, 0.55);
+      if(q==="perfect") setTimeout(()=>rf("DSGNMisc_SKILL IMPACT-Critical Strike_HY_PC",6,0.50),260);
     },
     // ── Stomp / Boots ────────────────────────────────────────────
-    stompApproach:()=>rf("FEETMisc_STEP-Hard Step_HY_PC",                   6, 0.50),
-    stompLand:    (q)=>rf(q==="perfect"?"DSGNImpt_EXPLOSION-Thud_HY_PC":"DSGNImpt_EXPLOSION-Sand Impact_HY_PC",6, q==="perfect"?0.52:0.45),
-    stompBounce:  ()=>rf("DSGNMisc_MOVEMENT-Pierce Jump_HY_PC",             6, 0.48),
+    stompApproach:()=>rf("FEETMisc_STEP-Hard Step_HY_PC",                   6, 0.45),
+    stompLand:    (q)=>rf(q==="perfect"?"DSGNImpt_EXPLOSION-Thud_HY_PC":"DSGNImpt_EXPLOSION-Sand Impact_HY_PC",6, q==="perfect"?0.50:0.42),
+    stompBounce:  ()=>rf("DSGNMisc_MOVEMENT-Pierce Jump_HY_PC",             6, 0.45),
     // ── Poke / Spear ─────────────────────────────────────────────
     pokeTap:      ()=>_pokePlay(),
     // ── Archery / Bow ────────────────────────────────────────────
     bowDraw:      ()=>(()=>{}),
-    bowRelease:   ()=>rf("SWSH_MOVEMENT-Bamboo Whip_HY_PC",                 6, 0.62),
-    arrowFlight:  ()=>rf("WHSH_MOVEMENT-Wind Shaker_HY_PC",                 6, 0.50),
+    bowRelease:   ()=>rf("SWSH_MOVEMENT-Bamboo Whip_HY_PC",                 6, 0.50),
+    arrowFlight:  ()=>rf("WHSH_MOVEMENT-Wind Shaker_HY_PC",                 6, 0.45),
     arrowHit:     (q)=>{
-      rf("DSGNMisc_HIT-Gore Pierce_HY_PC", 6, q==="perfect"?0.85:0.65);
-      if(q==="perfect") setTimeout(()=>rf("DSGNMisc_SKILL IMPACT-Critical Strike_HY_PC",6,0.50),110);
+      rf("DSGNMisc_HIT-Gore Pierce_HY_PC", 6, q==="perfect"?0.58:0.48);
+      if(q==="perfect") setTimeout(()=>rf("DSGNMisc_SKILL IMPACT-Critical Strike_HY_PC",6,0.48),110);
     },
     // ── RPG / Sequence Reveal ─────────────────────────────────────
-    rpgLaunch:      ()=>rf("DSGNMisc_SKILL RELEASE-Flare Gun_HY_PC",        6, 0.88),
-    rpgImpact:      ()=>{ rf("DSGNImpt_EXPLOSION-Mana Bomb_HY_PC",6,0.95); setTimeout(()=>rf("DSGNImpt_EXPLOSION-Eruption_HY_PC",6,0.80),180); },
-    rpgSequenceKey: ()=>rf("MAGSpel_CAST-Energy Riser_HY_PC",               6, 0.48),
+    rpgLaunch:      ()=>rf("DSGNMisc_SKILL RELEASE-Flare Gun_HY_PC",        6, 0.62),
+    rpgImpact:      ()=>{ rf("DSGNImpt_EXPLOSION-Mana Bomb_HY_PC",6,0.65); setTimeout(()=>rf("DSGNImpt_EXPLOSION-Eruption_HY_PC",6,0.55),180); },
+    rpgSequenceKey: ()=>rf("MAGSpel_CAST-Energy Riser_HY_PC",               6, 0.45),
     // ── Dual Action ──────────────────────────────────────────────
-    dualClick:    ()=>rf("UIClick_INTERFACE-Strong Click 1_HY_PC",          6, 0.70),
-    dualGunshot:  ()=>pf(GN + ".22LR/WAV/22LR%20Single%20Isolated%20WAV.wav", 0.55),
+    dualClick:    ()=>rf("UIClick_INTERFACE-Strong Click 1_HY_PC",          6, 0.52),
+    dualGunshot:  ()=>pf(GN + ".22LR/WAV/22LR%20Single%20Isolated%20WAV.wav", 0.45),
     // ── Defend ───────────────────────────────────────────────────
-    projLaunch:   ()=>rf("DSGNMisc_PROJECTILE-Laser Shot_HY_PC",            6, 0.60),
-    parry:        ()=>rf("DSGNMisc_MELEE-Sword Parry_HY_PC",                6, 0.52),
-    blockHit:     ()=>rf("DSGNMisc_MELEE-Sword Deflect_HY_PC",              6, 0.48),
-    takeDmg:      ()=>rf("FGHTImpt_HIT-Strong Punch_HY_PC",                 6, 0.48),
+    projLaunch:   ()=>rf("DSGNMisc_PROJECTILE-Laser Shot_HY_PC",            6, 0.50),
+    parry:        ()=>rf("DSGNMisc_MELEE-Sword Parry_HY_PC",                6, 0.50),
+    blockHit:     ()=>rf("DSGNMisc_MELEE-Sword Deflect_HY_PC",              6, 0.45),
+    takeDmg:      ()=>rf("FGHTImpt_HIT-Strong Punch_HY_PC",                 6, 0.45),
   };
 })();
 
