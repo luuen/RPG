@@ -312,7 +312,7 @@ function heroReturnHomePos(t, landLeft, landTop) {
 
 // Bounce on enemy head — apex at top, land back at same spot (pogo)
 function heroStompBouncePos(t, landLeft, landTop) {
-  const APEX = -35; // above battlefield
+  const APEX = 8; // near top of battlefield — visible but still shows arc
   if (t <= LAND_FRAC) {
     const s = easeIO(t / LAND_FRAC);
     return { left: landLeft, top: landTop + (APEX - landTop) * s };
@@ -455,11 +455,11 @@ const BOSS_GIF_BASE = ASSET_BASE+"/icons/sprites/boss/boss_demon_slime_FREE_v1.0
 // Boss GIF natural frame size is 288×160. renderW/renderH come from ENEMY_DIMS.dragon × eScale.
 function DemonSlimeSprite({ renderW=238, renderH=132, enemyFlash=false, phase="action", bossAttackPattern=null }) {
   // Priority: dying > hit > charge-attack > cleave-attack > idle
-  const src = phase==="won"                                      ? `${BOSS_GIF_BASE}/05_d_death.gif`
-            : enemyFlash                                         ? `${BOSS_GIF_BASE}/04_d_take_hit.gif`
-            : phase==="enemy_turn"&&bossAttackPattern==="charge" ? `${BOSS_GIF_BASE}/02_d_walk.gif`
-            : phase==="enemy_turn"                               ? `${BOSS_GIF_BASE}/03_d_cleave.gif`
-            : `${BOSS_GIF_BASE}/01_d_idle.gif`;
+  const src = phase==="won"                                      ? `${BOSS_GIF_BASE}/05_d_death.webp`
+            : enemyFlash                                         ? `${BOSS_GIF_BASE}/04_d_take_hit.webp`
+            : phase==="enemy_turn"&&bossAttackPattern==="charge" ? `${BOSS_GIF_BASE}/02_d_walk.webp`
+            : phase==="enemy_turn"                               ? `${BOSS_GIF_BASE}/03_d_cleave.webp`
+            : `${BOSS_GIF_BASE}/01_d_idle.webp`;
   // Key on src so browser reloads/restarts gif when animation changes
   const isCharge = phase==="enemy_turn" && bossAttackPattern==="charge";
   return (
@@ -4034,12 +4034,31 @@ function App() {
                 );
               })()}
 
-              {/* ── RAPID TAP bar (daggers) ── */}
-              {qteAnim?.type==="rapid_tap"&&(
-                <div style={{position:"absolute",top:6,left:BFW/2-150,width:300,height:10,background:"#0a0a1a",borderRadius:5,zIndex:9,border:"1px solid #2a2a3a"}}>
-                  <div style={{height:"100%",borderRadius:5,width:`${((qteAnim.taps||0)/(qteAnim.tapTarget||8))*100}%`,background:"linear-gradient(to right,#ff8844,#ffcc44)",boxShadow:"0 0 8px #ff8844",transition:"width .04s"}}/>
-                </div>
-              )}
+              {/* ── RAPID TAP counter — compact badge above hero head ── */}
+              {qteAnim?.type==="rapid_tap"&&heroPos&&(()=>{
+                const taps = qteAnim.taps||0;
+                const target = qteAnim.tapTarget||8;
+                const pct = Math.min(1, taps/target);
+                const cx = heroPos.left + HSW/2;
+                const W = 56, H = 26;
+                return (
+                  <div style={{position:"absolute", left:cx - W/2, top:heroPos.top - H - 6,
+                    width:W, zIndex:10, pointerEvents:"none", textAlign:"center"}}>
+                    <div style={{fontSize:11,fontFamily:"Cinzel",fontWeight:700,
+                      color:pct>=1?"#44ff88":"#ffcc44",letterSpacing:1,lineHeight:1,
+                      textShadow:"0 0 6px #ff8844",marginBottom:2}}>
+                      {taps}/{target}
+                    </div>
+                    <div style={{height:4,background:"#111",borderRadius:2,overflow:"hidden",
+                      border:"1px solid #333"}}>
+                      <div style={{height:"100%",borderRadius:2,
+                        width:`${pct*100}%`,
+                        background:`linear-gradient(to right,#ff6622,${pct>=1?"#44ff88":"#ffcc44"})`,
+                        boxShadow:"0 0 4px #ff8844",transition:"width .04s"}}/>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* ── SEQUENCE: swirling orbs beam + runes + timer bar ── */}
               {qteAnim?.type==="sequence"&&(()=>{
@@ -4264,9 +4283,8 @@ function App() {
                 filter:cs.enemy.id==="pvp_opp"
                   ?(enemyFlash?"brightness(3) drop-shadow(0 0 18px #ff4400)":"drop-shadow(0 0 14px #4466ffaa)")
                   :cs.enemy.id==="dragon"
-                    ?(enemyFlash?"brightness(2) drop-shadow(0 0 22px #ff4400)":"drop-shadow(0 0 22px #ff6600bb) drop-shadow(0 8px 4px #00000088)")
+                    ?(enemyFlash?"drop-shadow(0 0 28px #ff4400) drop-shadow(0 0 12px #ff6600)":"drop-shadow(0 0 22px #ff6600bb)")
                   :`drop-shadow(0 0 22px ${enemyData.color}bb) drop-shadow(0 8px 4px #00000088)`,
-                mixBlendMode:cs.enemy.id==="dragon"?"screen":undefined,
                 animation:enemyFlash?`hitFlash .35s ease-out, squish .3s ease-out`:"none",
                 transformOrigin:"bottom center",
                 transform:cs.enemy.id==="dragon"?"scaleX(-1)":"none"}}>
