@@ -3665,14 +3665,12 @@ function App() {
                 );
               })()}
 
-              {/* ── CHARGE: compact power bar above hero head ── */}
+              {/* ── CHARGE: compact power bar — fixed above hero landing spot ── */}
               {chargeActive&&(()=>{
-                // Compact bar anchored above the hero's head
+                // Fixed at STRIKE_L (where hero lands) — never moves with the model
                 const mW=160, mH=14;
-                const hcx = (heroPos?.left||HR_L) + HSW/2;
-                const hty = (heroPos?.top||HR_T);
-                const mL  = hcx - mW/2;
-                const mT  = hty - mH - 10;
+                const mL = STRIKE_L + HSW/2 - mW/2;
+                const mT = HR_T - mH - 14;
                 const pct = Math.min(charge*100, 100);
                 const goodLo=50, perfLo=CHARGE_PERFECT_LO*100, perfHi=CHARGE_PERFECT_HI*100;
                 const fillCol = pct>=100?"#ff3311":pct>=perfHi?"#ff2200":pct>=perfLo?"#00ff66":pct>=goodLo?"#ffaa22":"#3388ff";
@@ -3682,7 +3680,7 @@ function App() {
                 const outerGlow = isDanger?"0 0 22px #ff220099":isPerfectZone?"0 0 18px #00ff6699":"0 0 4px #111";
                 return (
                   <>
-                    {/* Track — overflow:hidden keeps zone dividers clipped */}
+                    {/* Track */}
                     <div style={{position:"absolute",left:mL,top:mT,width:mW,height:mH,
                       borderRadius:3,border:`1px solid ${borderCol}`,
                       background:"#060610",zIndex:9,overflow:"hidden",boxShadow:outerGlow}}>
@@ -3694,11 +3692,10 @@ function App() {
                         background:"rgba(0,255,100,.55)",boxShadow:"inset 0 0 8px #00ff6699"}}/>
                       <div style={{position:"absolute",left:`${perfHi}%`,top:0,width:`${100-perfHi}%`,height:"100%",background:"rgba(255,30,0,.40)"}}/>
 
-                      {/* Fill */}
+                      {/* Fill — no transition: instant update = accurate timing */}
                       <div style={{position:"absolute",left:0,top:0,height:"100%",width:`${pct}%`,
                         background:`linear-gradient(to right,${fillCol}bb,${fillCol})`,
-                        boxShadow:`0 0 12px ${fillCol},inset 0 0 6px rgba(255,255,255,.12)`,
-                        transition:"width .015s linear"}}/>
+                        boxShadow:`0 0 12px ${fillCol},inset 0 0 6px rgba(255,255,255,.12)`}}/>
 
                       {/* Zone dividers */}
                       {[{v:goodLo,col:"#ffcc44"},{v:perfLo,col:"#00ff66"},{v:perfHi,col:"#ff2200"}].map(({v,col},i)=>(
@@ -3707,14 +3704,14 @@ function App() {
                           boxShadow:`0 0 4px ${col}`,transform:"translateX(-1px)",zIndex:10}}/>
                       ))}
 
-                      {/* Needle */}
+                      {/* Needle — no transition: must be pixel-accurate */}
                       <div style={{position:"absolute",left:`${pct}%`,top:0,
                         width:2,height:"100%",background:"#fff",borderRadius:1,zIndex:11,
                         boxShadow:`0 0 8px #fff,0 0 14px ${fillCol}`,
-                        transform:"translateX(-1px)",transition:"left .015s linear"}}/>
+                        transform:"translateX(-1px)"}}/>
                     </div>
 
-                    {/* Weapon icon above bar */}
+                    {/* Weapon icon above bar — also fixed */}
                     <div style={{position:"absolute",left:mL+mW/2-9,top:mT-22,
                       zIndex:9,animation:"float .4s ease-in-out infinite",
                       filter:isPerfectZone?"drop-shadow(0 0 10px #00ff66)":isDanger?"drop-shadow(0 0 10px #ff2200)":"none"}}>
