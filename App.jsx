@@ -73,11 +73,11 @@ const STARTER_WEAPONS = {
   staff:      { id:"staff",      name:"Arcane Staff",  emoji:"🪄",  baseDmg:16, speed:1.8, qteType:"sequence",     tier:"basic", seqLength:4,  desc:"Type the 4-letter rune sequence shown. One wrong key = restart!", classEmoji:"🌙", className:"Mage"     },
   bow:        { id:"bow",        name:"Elven Bow",     emoji:"🏹",  baseDmg:8,  speed:1.5, qteType:"archery",      tier:"basic", desc:"3 orbiting dots — press SPACE when each is in the center ring.", classEmoji:"🌿", className:"Ranger"   },
   sword_gun:  { id:"sword_gun",  name:"Sword & Gun",   emoji:"⚔🔫", baseDmg:16, speed:1.8, qteType:"dual_action",  tier:"basic", dotSpeed:1.80, centerWidth:0.20, classEmoji:"🔫", className:"Duelist",  desc:"Hold A+W+D simultaneously, then LEFT CLICK when the dot hits the center zone." },
+  boots:      { id:"boots",      name:"Iron Boots",    emoji:"👟",  baseDmg:8,  speed:1.4, qteType:"stomp",        tier:"basic", classEmoji:"👊", className:"Brawler", desc:"Run to the enemy and jump! Press SPACE at the moment of landing." },
 };
 const ALL_WEAPONS = {
   ...STARTER_WEAPONS,
   // ── BASIC (non-starter) ──
-  boots:          { id:"boots",         name:"Iron Boots",      emoji:"👟",  baseDmg:8,  speed:1.4, qteType:"stomp",        tier:"basic",                                        classEmoji:"👊",  className:"Brawler"     },
   axe:            { id:"axe",           name:"Battle Axe",      emoji:"🪓",  baseDmg:19, speed:1.1, qteType:"hold_release", tier:"basic",                                        classEmoji:"🪓",  className:"Warrior"     },
   spear:          { id:"spear",         name:"Iron Spear",      emoji:"🔱",  baseDmg:15, speed:1.9, qteType:"poke",         tier:"basic",                                        classEmoji:"🔱",  className:"Lancer"      },
   wand:           { id:"wand",          name:"Chaos Wand",      emoji:"✨",  baseDmg:18, speed:2.0, qteType:"sequence",     tier:"basic",  seqLength:3,                          classEmoji:"✨",  className:"Sorcerer"    },
@@ -297,7 +297,7 @@ const HSW = Math.round(48 * 0.85);   // ≈ 41
 const HSH = Math.round(76 * 0.85);   // ≈ 65
 const HRX = 560;
 const HR_L = HRX - HSW / 2;          // ≈ 539
-const HR_T = GNDY - HSH;             // ≈ 163
+const HR_T = GNDY - HSH - 3;         // ≈ 160 — lifted 3px so feet don't clip into ground line
 const ENX = 130;
 const STRIKE_L = 155;                 // hero left edge when touching enemy
 
@@ -375,8 +375,9 @@ function LayeredHeroSprite({ looks, displayW=41, displayH=65, isAttacking=false 
   const fps = 8;
   const [animFrame, setAnimFrame] = React.useState(0);
   React.useEffect(()=>{
+    if (!isAttacking) return; // freeze on current frame during idle — no blink, no drift
+    // Start animating from frame 0 when attacking begins
     setAnimFrame(0);
-    if (!isAttacking) return; // freeze on frame 0 during idle — no positional drift
     const iv = setInterval(()=>setAnimFrame(f=>(f+1)%cols), 1000/fps);
     return ()=>clearInterval(iv);
   },[cols, fps, isAttacking]);
@@ -867,10 +868,13 @@ const sfx = (() => {
   };
   // Play random variant (1-n) of a Helton Yan sound
   const rf = (name, n=6, vol=0.75) => pf(hy(name, 1+Math.floor(Math.random()*n)), vol);
-  // Preloaded 4-element pool for rapid-fire sounds — MV applied so pool matches all other sounds
+  // Lazy 4-element pool for rapid-fire sounds — created on first use, not at module load
   const mkPool = (name, vol=0.65) => {
-    const pool = [1,2,3,4].map(v=>{ const a=new Audio(hy(name,v)); a.volume=Math.min(1,vol*MV); return a; });
-    let i=0; return ()=>{ const a=pool[i++%4]; a.currentTime=0; a.play().catch(()=>{}); };
+    let pool=null, i=0;
+    return ()=>{
+      if(!pool) pool=[1,2,3,4].map(v=>{ const a=new Audio(hy(name,v)); a.volume=Math.min(1,vol*MV); return a; });
+      const a=pool[i++%4]; a.currentTime=0; a.play().catch(()=>{});
+    };
   };
   // Rune: pitch-escalating crystal tings — each correct key steps up a musical semi-tone
   // Ratios follow a pentatonic-ish ladder so keys 0→9 sound increasingly powerful
@@ -2617,8 +2621,15 @@ function App() {
         const ref = qteRef.current;
         if ((qteAnim.bounce||0) > 0)
           return heroStompBouncePos(t, ref.landLeft||0, ref.landTop||0);
-        // Contact 0: approach only — t=0→1 maps to home→enemy (first half of full arc)
-        return heroStompPos(t * LAND_FRAC, ref.landLeft||0, ref.landTop||0);
+        // Contact 0: hero RUNS along ground then jumps up at the last 30% to land on enemy head
+        // This keeps hero visible near ground throughout the approach
+        const lL = ref.landLeft||0, lT = ref.landTop||0;
+        const s  = easeIO(t);
+        const left = HR_L + (lL - HR_L) * s;
+        const JUMP_START = 0.65; // run for 65%, jump for last 35%
+        const jumpT = Math.max(0, (t - JUMP_START) / (1 - JUMP_START));
+        const top  = HR_T - easeIO(jumpT) * (HR_T - lT);
+        return { left, top };
       }
       case "stomp_return": {
         const ref = qteRef.current;
@@ -2668,8 +2679,8 @@ function App() {
         return { left: POKE_L - stab*55, top:HR_T };
       }
       case "archery":
-        // Hero stays in place, winds up bow (slight pull-back)
-        return { left: HR_L + 8, top: HR_T };
+        // Hero stays at home position — no offset to prevent snap at QTE end
+        return { left: HR_L, top: HR_T };
       case "sequence":
         return { left:HR_L, top:HR_T - Math.sin(t*Math.PI*6)*4 };
       case "sequence_reveal":
@@ -3247,7 +3258,7 @@ function App() {
             const vStyle = {position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"50% 10%",zIndex:0,pointerEvents:"none",transition:"opacity .06s linear"};
             return (<>
               <video ref={vidA} src={`${ASSET_BASE}/icons/title/title.mp4`} muted playsInline preload="auto" style={{...vStyle,opacity:1}}/>
-              <video ref={vidB} src={`${ASSET_BASE}/icons/title/title.mp4`} muted playsInline preload="auto" style={{...vStyle,opacity:0}}/>
+              <video ref={vidB} src={`${ASSET_BASE}/icons/title/title.mp4`} muted playsInline preload="none" style={{...vStyle,opacity:0}}/>
             </>);
           })()}
           {/* Dark vignette overlay */}
@@ -4627,7 +4638,7 @@ function App() {
                 animation:"none",
                 filter:qteAnim?.type==="defend"?"drop-shadow(0 0 10px #4488ff)":
                        chargeActive&&cIsPerfect?"drop-shadow(0 0 14px #44ff88)":"none"}}>
-                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={cs?.phase==="attacking"}/>
+                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim||cs?.phase==="attacking"}/>
               </div>
 
               {/* Battlefield status line */}
@@ -5036,7 +5047,7 @@ function App() {
                 left:heroPos?heroPos.left:HR_L, top:heroPos?heroPos.top:HR_T,
                 zIndex:6,transform:"scaleX(1)",
                 animation:"none"}}>
-                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={cs?.phase==="attacking"}/>
+                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim||cs?.phase==="attacking"}/>
               </div>
 
               {/* All existing QTE overlays render here via existing render code — they check qteAnim type */}
