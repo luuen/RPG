@@ -3201,12 +3201,55 @@ function App() {
       {/* ══ TITLE ══ */}
       {screen==="title"&&(
         <div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
-          {/* Title background video */}
-          <video src={`${ASSET_BASE}/icons/title/title.mp4`} muted playsInline
-            onLoadedMetadata={e=>{e.target.currentTime=3;}}
-            onSeeked={e=>{e.target.paused&&e.target.play().catch(()=>{});}}
-            onEnded={e=>{e.target.currentTime=3;}}
-            style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"50% 10%",zIndex:0,pointerEvents:"none"}}/>
+          {/* Title background — dual-video seamless loop:
+              vid A plays; when it's 1.2s from end vid B pre-seeks to LOOP_AT;
+              when A ends, B is already decoded and swaps in instantly; A resets for next cycle. */}
+          {(()=>{
+            const LOOP_AT = 3; // seconds — skip choppy intro on every loop
+            const vidA = React.useRef(null);
+            const vidB = React.useRef(null);
+            const active = React.useRef("A"); // which vid is currently visible
+            const rafRef = React.useRef(null);
+            React.useEffect(()=>{
+              const a = vidA.current, b = vidB.current;
+              if (!a||!b) return;
+              // Prepare both: start B pre-buffered at loop point
+              b.currentTime = LOOP_AT;
+              a.currentTime = LOOP_AT;
+              a.play().catch(()=>{});
+              let swapping = false;
+              const tick = () => {
+                rafRef.current = requestAnimationFrame(tick);
+                const cur = active.current==="A" ? a : b;
+                const nxt = active.current==="A" ? b : a;
+                if (!cur.duration||cur.paused) return;
+                const remaining = cur.duration - cur.currentTime;
+                // Pre-seek standby 1.2s before end so it's decoded and ready
+                if (remaining < 1.2 && !swapping) {
+                  swapping = true;
+                  nxt.currentTime = LOOP_AT;
+                  nxt.play().catch(()=>{});
+                }
+                // At end: instant swap
+                if (remaining <= 0.05) {
+                  cur.pause();
+                  if (active.current==="A") {
+                    a.style.opacity="0"; b.style.opacity="1"; active.current="B";
+                  } else {
+                    b.style.opacity="0"; a.style.opacity="1"; active.current="A";
+                  }
+                  swapping = false;
+                }
+              };
+              rafRef.current = requestAnimationFrame(tick);
+              return ()=>{ cancelAnimationFrame(rafRef.current); a.pause(); b.pause(); };
+            },[]);
+            const vStyle = {position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"50% 10%",zIndex:0,pointerEvents:"none",transition:"opacity .06s linear"};
+            return (<>
+              <video ref={vidA} src={`${ASSET_BASE}/icons/title/title.mp4`} muted playsInline preload="auto" style={{...vStyle,opacity:1}}/>
+              <video ref={vidB} src={`${ASSET_BASE}/icons/title/title.mp4`} muted playsInline preload="auto" style={{...vStyle,opacity:0}}/>
+            </>);
+          })()}
           {/* Dark vignette overlay */}
           <div style={{position:"absolute",inset:0,zIndex:0,
             background:"radial-gradient(ellipse at 50% 45%, rgba(2,2,8,.10) 0%, rgba(2,2,8,.68) 100%)"}}/>
