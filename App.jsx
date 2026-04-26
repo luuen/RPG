@@ -3212,53 +3212,52 @@ function App() {
       {/* ══ TITLE ══ */}
       {screen==="title"&&(
         <div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
-          {/* Title background — dual-video seamless loop:
-              vid A plays; when it's 1.2s from end vid B pre-seeks to LOOP_AT;
-              when A ends, B is already decoded and swaps in instantly; A resets for next cycle. */}
+          {/* Title background — seamless loop via dual-video always-playing:
+              Both videos play simultaneously from LOOP_AT, one visible one hidden.
+              When the visible one ends: instant opacity swap, no seek stall. */}
           {(()=>{
-            const LOOP_AT = 3; // seconds — skip choppy intro on every loop
+            const LOOP_AT = 3; // seconds — skip choppy intro section on every loop
             const vidA = React.useRef(null);
             const vidB = React.useRef(null);
-            const active = React.useRef("A"); // which vid is currently visible
-            const rafRef = React.useRef(null);
+            const active = React.useRef("A");
             React.useEffect(()=>{
               const a = vidA.current, b = vidB.current;
               if (!a||!b) return;
-              // Prepare both: start B pre-buffered at loop point
-              b.currentTime = LOOP_AT;
+              // Both start from loop point; B starts playing immediately too (invisible)
+              // so it's always buffered and decoded — zero-stall swap on ended
               a.currentTime = LOOP_AT;
-              a.play().catch(()=>{});
-              let swapping = false;
-              const tick = () => {
-                rafRef.current = requestAnimationFrame(tick);
-                const cur = active.current==="A" ? a : b;
-                const nxt = active.current==="A" ? b : a;
-                if (!cur.duration||cur.paused) return;
-                const remaining = cur.duration - cur.currentTime;
-                // Pre-seek standby 1.2s before end so it's decoded and ready
-                if (remaining < 1.2 && !swapping) {
-                  swapping = true;
-                  nxt.currentTime = LOOP_AT;
-                  nxt.play().catch(()=>{});
-                }
-                // At end: instant swap
-                if (remaining <= 0.05) {
-                  cur.pause();
-                  if (active.current==="A") {
-                    a.style.opacity="0"; b.style.opacity="1"; active.current="B";
-                  } else {
-                    b.style.opacity="0"; a.style.opacity="1"; active.current="A";
-                  }
-                  swapping = false;
-                }
+              b.currentTime = LOOP_AT;
+              // When vidA ends: show vidB (already playing), restart vidA silently
+              a.onended = () => {
+                a.style.opacity = "0"; b.style.opacity = "1"; active.current = "B";
+                a.currentTime = LOOP_AT; a.play().catch(()=>{});
               };
-              rafRef.current = requestAnimationFrame(tick);
-              return ()=>{ cancelAnimationFrame(rafRef.current); a.pause(); b.pause(); };
+              b.onended = () => {
+                b.style.opacity = "0"; a.style.opacity = "1"; active.current = "A";
+                b.currentTime = LOOP_AT; b.play().catch(()=>{});
+              };
+              // Stagger B by half the loop duration after A starts, so they never end together
+              a.play().catch(()=>{});
+              const staggerTimer = setTimeout(()=>{ b.play().catch(()=>{}); }, 0);
+              // After duration loads, re-stagger B to half-way point so ends don't align
+              const onMeta = () => {
+                if (!a.duration) return;
+                const half = Math.round((a.duration - LOOP_AT) / 2);
+                b.currentTime = LOOP_AT + half;
+              };
+              a.addEventListener("loadedmetadata", onMeta, {once:true});
+              if (a.duration) onMeta(); // already loaded
+              return ()=>{
+                clearTimeout(staggerTimer);
+                a.onended = null; b.onended = null;
+                a.removeEventListener("loadedmetadata", onMeta);
+                a.pause(); b.pause();
+              };
             },[]);
-            const vStyle = {position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"50% 10%",zIndex:0,pointerEvents:"none",transition:"opacity .06s linear"};
+            const vStyle = {position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"50% 10%",zIndex:0,pointerEvents:"none"};
             return (<>
               <video ref={vidA} src={`${ASSET_BASE}/icons/title/title.mp4`} muted playsInline preload="auto" style={{...vStyle,opacity:1}}/>
-              <video ref={vidB} src={`${ASSET_BASE}/icons/title/title.mp4`} muted playsInline preload="none" style={{...vStyle,opacity:0}}/>
+              <video ref={vidB} src={`${ASSET_BASE}/icons/title/title.mp4`} muted playsInline preload="auto" style={{...vStyle,opacity:0}}/>
             </>);
           })()}
           {/* Dark vignette overlay */}
@@ -3403,7 +3402,7 @@ function App() {
           )}
           <h2 style={{fontFamily:"Cinzel",fontSize:30,letterSpacing:5,marginBottom:6}}>CHOOSE YOUR PATH</h2>
           <p style={{opacity:.4,marginBottom:36,fontStyle:"italic",letterSpacing:2}}>Your weapon shapes your destiny</p>
-          <div style={{display:"flex",flexDirection:"row",gap:12,marginBottom:28,flexWrap:"nowrap",zoom:1.35}}>
+          <div style={{display:"flex",flexDirection:"row",gap:12,marginBottom:28,flexWrap:"wrap",justifyContent:"center",zoom:Math.min(1.25,(window.innerWidth-80)/((Object.keys(STARTER_WEAPONS).length*212)-12))}}>
             {Object.values(STARTER_WEAPONS).map(w=>{
               const sel=selectedWeapon===w.id;
               const hov=hoverWeaponId===w.id;
