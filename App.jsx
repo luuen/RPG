@@ -1050,12 +1050,12 @@ function App() {
     // reward screen has no sound — keep focus on combat
   },[screen]);
 
-  // Title background video — slow playback so single loop lasts ~4× longer
+  // Title background video — plays once at normal speed, freezes on last frame
   // Must live here (top-level) — hooks inside the title JSX IIFE caused "fewer hooks" crash on screen change
   useEffect(()=>{
     const v = titleVidRef.current;
     if (!v) return;
-    v.playbackRate = 0.25;
+    v.playbackRate = 1;
     v.play().catch(()=>{});
     return ()=>{ v.pause(); };
   },[screen]); // re-run when screen changes so it starts playing when title mounts
@@ -3224,9 +3224,9 @@ function App() {
       {/* ══ TITLE ══ */}
       {screen==="title"&&(
         <div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
-          {/* Title background — single video at 0.25× speed (effect is top-level to avoid hooks-in-IIFE crash) */}
+          {/* Title background — plays once at normal speed, holds last frame (no loop attr) */}
           <video ref={titleVidRef} src={`${ASSET_BASE}/icons/title/title.mp4`}
-            muted playsInline preload="auto" loop
+            muted playsInline preload="auto"
             style={{position:"absolute",inset:0,width:"100%",height:"100%",
               objectFit:"cover",objectPosition:"50% 10%",zIndex:0,pointerEvents:"none"}}/>
           {/* Dark vignette overlay */}
