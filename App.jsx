@@ -1341,6 +1341,7 @@ function App() {
         color: "#4466ff",
         pvpClass: iWon ? (oppW.className ?? "Knight") : "Demolisher",
         pvpWeapons: [oppW.id],
+        pvpHeroLooks: randomHeroLooks(), // gives opponent a layered sprite (same system as player)
       },
       phase: iWon ? "action" : "enemy_turn",
       log: [`⚔ PvP! ${iWon ? "You won the race — attack first!" : "Rival won the race — defend!"}`],
@@ -4325,9 +4326,11 @@ function App() {
                   :`drop-shadow(0 0 22px ${enemyData.color}bb) drop-shadow(0 8px 4px #00000088)`,
                 animation:enemyFlash?`hitFlash .35s ease-out, squish .3s ease-out`:"none",
                 transformOrigin:"bottom center",
-                transform:cs.enemy.id==="dragon"?"scaleX(-1)":"none"}}>
+                transform:cs.enemy.id==="dragon"||cs.enemy.id==="pvp_opp"?"scaleX(-1)":"none"}}>
                 {cs.enemy.id==="pvp_opp"
-                  ? <HeroSprite className={cs.enemy.pvpClass??'Knight'} scale={eScale} weapons={cs.enemy.pvpWeapons??['sword']}/>
+                  ? <HeroSprite className={cs.enemy.pvpClass??'Knight'} scale={eScale} weapons={cs.enemy.pvpWeapons??['sword']}
+                      heroLooks={cs.enemy.pvpHeroLooks}
+                      isAttacking={qteAnim?.type==="defend"}/>
                   : <EnemySpriteSmall id={cs.enemy.id} scale={eScale} sprite={cs?.enemySprite} enemyFlash={enemyFlash} phase={cs.phase} bossAttackPattern={cs?.bossAttackPattern}/>
                 }
               </div>
