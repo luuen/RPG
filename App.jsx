@@ -529,14 +529,34 @@ function Icon({ type, size=28, color }) {
   switch(type){
     /* ── WEAPONS ── */
     case"sword": case"hammer": case"daggers": case"staff": case"bow":
-    case"boots": case"axe":   case"spear":   case"rpg":   case"wand": {
+    case"axe":   case"spear":   case"rpg":   case"wand": {
       const WICO={sword:"crossed-swords",hammer:"thor-hammer",daggers:"dagger-rose",
-        staff:"crystal-wand",bow:"pocket-bow",boots:"sword-spade",axe:"battle-axe",
+        staff:"crystal-wand",bow:"pocket-bow",axe:"battle-axe",
         spear:"flaming-trident",rpg:"nuclear-bomb",wand:"crystal-wand"};
       return <img src={ASSET_BASE+"/icons/"+WICO[type]+".svg"} width={s} height={s}
         style={{display:"block",objectFit:"contain",imageRendering:"auto",
           filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
     };
+
+    /* ── BOOTS — inline SVG shoe silhouette ── */
+    case"boots":return(
+      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
+        {/* Boot shaft + foot body */}
+        <path d="M5,2 L15,2 L15,14 Q15,17 19,17 L24,17 Q27,17 27,21 Q27,25 23,25 L4,25 Q2,25 2,22 L2,15 Q3,13 5,13 Z"
+          fill={c||"#888"} opacity=".92"/>
+        {/* Thick sole / tread stripe */}
+        <path d="M4,24 L23,24 Q27,24 27,22 Q27,26 23,26 L4,26 Q1,26 1,23 Q1,24 4,24 Z"
+          fill={c||"#666"} opacity=".6"/>
+        {/* Shaft-to-foot cuff line */}
+        <line x1="5" y1="13" x2="15" y2="13" stroke="#fff" strokeWidth="1.2" opacity=".35"/>
+        {/* Toe highlight — gives depth to the shoe front */}
+        <ellipse cx="23" cy="21" rx="3.5" ry="3" fill="#fff" opacity=".10"/>
+        {/* Shaft highlight panel */}
+        <rect x="7" y="4" width="5" height="7" rx="1.5" fill="#fff" opacity=".12"/>
+        {/* Ankle strap / top-of-boot trim */}
+        <rect x="5" y="2" width="10" height="2.5" rx="1" fill="#fff" opacity=".18"/>
+      </svg>
+    );
 
     /* ── MAP NODES ── */
     case"combat":return(
