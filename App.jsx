@@ -1037,6 +1037,7 @@ function App() {
   const pvpModeRef    = useRef(false);
   const pvpAtkCbRef   = useRef(null); // (q, weapon, dmg) => void — after attack QTE
   const pvpDefCbRef   = useRef(null); // (q) => void — after defend QTE
+  const titleVidRef   = useRef(null); // title background video — top-level ref (hooks must not be in IIFE)
   // Multiplayer UI state
   const [mpRoomCode,  setMpRoomCode]  = useState("");
   const [mpJoinInput, setMpJoinInput] = useState("");
@@ -1048,6 +1049,16 @@ function App() {
     if(screen==="gameover") sfx.gameOver();
     // reward screen has no sound — keep focus on combat
   },[screen]);
+
+  // Title background video — slow playback so single loop lasts ~4× longer
+  // Must live here (top-level) — hooks inside the title JSX IIFE caused "fewer hooks" crash on screen change
+  useEffect(()=>{
+    const v = titleVidRef.current;
+    if (!v) return;
+    v.playbackRate = 0.25;
+    v.play().catch(()=>{});
+    return ()=>{ v.pause(); };
+  },[screen]); // re-run when screen changes so it starts playing when title mounts
 
   const [runStartTime,   setRunStartTime]   = useState(null);
   const [finalTime,      setFinalTime]      = useState(null); // locked when run ends
@@ -3212,54 +3223,11 @@ function App() {
       {/* ══ TITLE ══ */}
       {screen==="title"&&(
         <div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
-          {/* Title background — seamless loop via dual-video always-playing:
-              Both videos play simultaneously from LOOP_AT, one visible one hidden.
-              When the visible one ends: instant opacity swap, no seek stall. */}
-          {(()=>{
-            const LOOP_AT = 3; // seconds — skip choppy intro section on every loop
-            const vidA = React.useRef(null);
-            const vidB = React.useRef(null);
-            const active = React.useRef("A");
-            React.useEffect(()=>{
-              const a = vidA.current, b = vidB.current;
-              if (!a||!b) return;
-              // Both start from loop point; B starts playing immediately too (invisible)
-              // so it's always buffered and decoded — zero-stall swap on ended
-              a.currentTime = LOOP_AT;
-              b.currentTime = LOOP_AT;
-              // When vidA ends: show vidB (already playing), restart vidA silently
-              a.onended = () => {
-                a.style.opacity = "0"; b.style.opacity = "1"; active.current = "B";
-                a.currentTime = LOOP_AT; a.play().catch(()=>{});
-              };
-              b.onended = () => {
-                b.style.opacity = "0"; a.style.opacity = "1"; active.current = "A";
-                b.currentTime = LOOP_AT; b.play().catch(()=>{});
-              };
-              // Stagger B by half the loop duration after A starts, so they never end together
-              a.play().catch(()=>{});
-              const staggerTimer = setTimeout(()=>{ b.play().catch(()=>{}); }, 0);
-              // After duration loads, re-stagger B to half-way point so ends don't align
-              const onMeta = () => {
-                if (!a.duration) return;
-                const half = Math.round((a.duration - LOOP_AT) / 2);
-                b.currentTime = LOOP_AT + half;
-              };
-              a.addEventListener("loadedmetadata", onMeta, {once:true});
-              if (a.duration) onMeta(); // already loaded
-              return ()=>{
-                clearTimeout(staggerTimer);
-                a.onended = null; b.onended = null;
-                a.removeEventListener("loadedmetadata", onMeta);
-                a.pause(); b.pause();
-              };
-            },[]);
-            const vStyle = {position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"50% 10%",zIndex:0,pointerEvents:"none"};
-            return (<>
-              <video ref={vidA} src={`${ASSET_BASE}/icons/title/title.mp4`} muted playsInline preload="auto" style={{...vStyle,opacity:1}}/>
-              <video ref={vidB} src={`${ASSET_BASE}/icons/title/title.mp4`} muted playsInline preload="auto" style={{...vStyle,opacity:0}}/>
-            </>);
-          })()}
+          {/* Title background — single video at 0.25× speed (effect is top-level to avoid hooks-in-IIFE crash) */}
+          <video ref={titleVidRef} src={`${ASSET_BASE}/icons/title/title.mp4`}
+            muted playsInline preload="auto" loop
+            style={{position:"absolute",inset:0,width:"100%",height:"100%",
+              objectFit:"cover",objectPosition:"50% 10%",zIndex:0,pointerEvents:"none"}}/>
           {/* Dark vignette overlay */}
           <div style={{position:"absolute",inset:0,zIndex:0,
             background:"radial-gradient(ellipse at 50% 45%, rgba(2,2,8,.10) 0%, rgba(2,2,8,.68) 100%)"}}/>
