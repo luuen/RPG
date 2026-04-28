@@ -4722,35 +4722,30 @@ function App() {
                 <div style={{position:"absolute",left:ENX-30,top:eTop+eH-20,width:60,height:24,borderRadius:"50%",border:"2px solid #ffaa3388",animation:"stompDust .4s ease-out forwards",zIndex:8,pointerEvents:"none"}}/>
               )}
 
-              {/* Hero sprite — position:fixed during stomp so no parent overflow/clip can hide it */}
+              {/* Hero sprite — always position:fixed via viewport coords (immune to any parent clip/zoom/stacking) */}
               {(()=>{
-                const isStomp = qteAnim?.type==="stomp"||qteAnim?.type==="stomp_return";
                 const hL = heroPos?heroPos.left:HR_L;
                 const hT = heroPos?heroPos.top:HR_T;
+                const anchor = particleContainerRef.current;
                 let heroStyle;
-                if (isStomp && particleContainerRef.current) {
-                  const rect = particleContainerRef.current.getBoundingClientRect();
+                if (anchor) {
+                  const rect = anchor.getBoundingClientRect();
                   const zoom = rect.width / BFW;
                   heroStyle = {
                     position:"fixed",
                     left: Math.round(rect.left + hL * zoom),
                     top:  Math.round(rect.top  + hT * zoom),
-                    zIndex:50,
+                    zIndex:20,
                     transform:`scale(${zoom})`,
                     transformOrigin:"top left",
                     animation:"none",
-                    filter:"none",
+                    filter:qteAnim?.type==="defend"?"drop-shadow(0 0 10px #4488ff)":
+                           chargeActive&&cIsPerfect?"drop-shadow(0 0 14px #44ff88)":"none",
                     pointerEvents:"none",
                   };
                 } else {
-                  heroStyle = {
-                    position:"absolute",
-                    left:hL, top:hT,
-                    zIndex:6,
-                    animation:"none",
-                    filter:qteAnim?.type==="defend"?"drop-shadow(0 0 10px #4488ff)":
-                           chargeActive&&cIsPerfect?"drop-shadow(0 0 14px #44ff88)":"none",
-                  };
+                  // Fallback before ref mounts
+                  heroStyle = {position:"absolute",left:hL,top:hT,zIndex:20,animation:"none",filter:"none"};
                 }
                 return (
                   <div style={heroStyle}>
