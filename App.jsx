@@ -72,7 +72,7 @@ const STARTER_WEAPONS = {
   daggers:    { id:"daggers",    name:"Shadow Daggers",emoji:"🗡️",  baseDmg:9,  speed:3.0, qteType:"rapid_tap",    tier:"basic", tapTarget:8,  desc:"Mash A and D alternately 8 times before the timer runs out!", classEmoji:"🐍", className:"Rogue"    },
   staff:      { id:"staff",      name:"Arcane Staff",  emoji:"🪄",  baseDmg:16, speed:1.8, qteType:"sequence",     tier:"basic", seqLength:4,  desc:"Type the 4-letter rune sequence shown. One wrong key = restart!", classEmoji:"🌙", className:"Mage"     },
   bow:        { id:"bow",        name:"Elven Bow",     emoji:"🏹",  baseDmg:8,  speed:1.5, qteType:"archery",      tier:"basic", desc:"3 orbiting dots — press SPACE when each is in the center ring.", classEmoji:"🌿", className:"Ranger"   },
-  sword_gun:  { id:"sword_gun",  name:"Sword & Gun",   emoji:"⚔🔫", baseDmg:16, speed:1.8, qteType:"dual_action",  tier:"basic", dotSpeed:1.80, centerWidth:0.20, classEmoji:"🔫", className:"Duelist",  desc:"Hold A+W+D simultaneously, then LEFT CLICK when the dot hits the center zone." },
+  sword_gun:  { id:"sword_gun",  name:"Sword & Gun",   emoji:"⚔🔫", baseDmg:16, speed:1.8, qteType:"dual_action",  tier:"basic", dotSpeed:1.60, centerWidth:0.22, classEmoji:"🔫", className:"Duelist",  desc:"Hold A+W+D simultaneously, then LEFT CLICK when the dot hits the center zone." },
   boots:      { id:"boots",      name:"Iron Boots",    emoji:"👟",  baseDmg:8,  speed:1.4, qteType:"stomp",        tier:"basic", classEmoji:"👊", className:"Brawler", desc:"Run to the enemy and jump! Press SPACE at the moment of landing." },
 };
 const ALL_WEAPONS = {
@@ -81,7 +81,7 @@ const ALL_WEAPONS = {
   axe:            { id:"axe",           name:"Battle Axe",      emoji:"🪓",  baseDmg:19, speed:1.1, qteType:"hold_release", tier:"basic",                                        classEmoji:"🪓",  className:"Warrior"     },
   spear:          { id:"spear",         name:"Iron Spear",      emoji:"🔱",  baseDmg:15, speed:1.9, qteType:"poke",         tier:"basic",                                        classEmoji:"🔱",  className:"Lancer"      },
   wand:           { id:"wand",          name:"Chaos Wand",      emoji:"✨",  baseDmg:18, speed:2.0, qteType:"sequence",     tier:"basic",  seqLength:3,                          classEmoji:"✨",  className:"Sorcerer"    },
-  knife_shotgun:  { id:"knife_shotgun", name:"Knife & Shotgun", emoji:"🔪💥", baseDmg:24, speed:2.2, qteType:"dual_action", tier:"basic",  dotSpeed:2.60, centerWidth:0.30,      classEmoji:"💥",  className:"Brawgunner", desc:"Fast chaotic dot — wide zone saves you. Hold A+W+D and click." },
+  knife_shotgun:  { id:"knife_shotgun", name:"Knife & Shotgun", emoji:"🔪💥", baseDmg:24, speed:2.2, qteType:"dual_action", tier:"basic",  dotSpeed:2.00, centerWidth:0.25,      classEmoji:"💥",  className:"Brawgunner", desc:"Faster dot — wide zone saves you. Hold A+W+D and click." },
   // ── REFINED (elite drops only — blue) ──
   longsword:      { id:"longsword",     name:"Longsword",       emoji:"🗡️",  baseDmg:22, speed:2.0, qteType:"swing_beat",   tier:"refined", beatTimeout:1500,                                        classEmoji:"⚔️",  className:"Swordmaster", desc:"Faster combo window — A→W→D before time runs out!" },
   great_maul:     { id:"great_maul",    name:"Great Maul",      emoji:"🔨",  baseDmg:32, speed:1.0, qteType:"hold_release", tier:"refined", chargePerfectLo:0.78, chargePerfectHi:0.91,             classEmoji:"💪",  className:"Warlord",     desc:"Narrower perfect zone — hold steady and release at the peak." },
@@ -90,7 +90,7 @@ const ALL_WEAPONS = {
   hunters_bow:    { id:"hunters_bow",   name:"Hunter's Bow",    emoji:"🏹",  baseDmg:18, speed:1.5, qteType:"archery",     tier:"refined", archDur:3200,                                            classEmoji:"🎯",  className:"Hunter",      desc:"Faster orbiting dots — time each shot carefully." },
   iron_stompers:  { id:"iron_stompers", name:"Iron Stompers",   emoji:"👢",  baseDmg:18, speed:1.4, qteType:"stomp",       tier:"refined", stompDur:650,                                            classEmoji:"🦵",  className:"Crusher",     desc:"Faster stomp — hit the timing at peak force!" },
   war_lance:      { id:"war_lance",     name:"War Lance",       emoji:"🔱",  baseDmg:26, speed:2.0, qteType:"poke",        tier:"refined", pokeDur:1800, pokeTarg:18,                               classEmoji:"⚡",  className:"Vanguard",    desc:"18 alternations, less time — rhythm is key." },
-  axe_pistol:     { id:"axe_pistol",    name:"Axe & Pistol",   emoji:"🪓🔫", baseDmg:36, speed:1.5, qteType:"dual_action", tier:"refined", dotSpeed:2.10, centerWidth:0.14,                         classEmoji:"🪓",  className:"Gunslinger",  desc:"Medium speed, punishing zone. Hold A+W+D, click the center." },
+  axe_pistol:     { id:"axe_pistol",    name:"Axe & Pistol",   emoji:"🪓🔫", baseDmg:36, speed:1.5, qteType:"dual_action", tier:"refined", dotSpeed:2.80, centerWidth:0.16,                         classEmoji:"🪓",  className:"Gunslinger",  desc:"Noticeably faster dot — keep your eye on it. Hold A+W+D, click." },
   // ── EPIC (elite drops only — purple) ──
   obsidian_blade: { id:"obsidian_blade",name:"Obsidian Blade",  emoji:"🗡️",  baseDmg:38, speed:2.2, qteType:"swing_beat",  tier:"epic", beatTimeout:900,                                           classEmoji:"🌑",  className:"Darkblade",  desc:"Blink-fast — nail A→W→D in under a second or miss completely." },
   titan_hammer:   { id:"titan_hammer",  name:"Titan's Hammer",  emoji:"🔨",  baseDmg:48, speed:0.9, qteType:"hold_release",tier:"epic", chargePerfectLo:0.84, chargePerfectHi:0.91,               classEmoji:"⚡",  className:"Titan",      desc:"Razor-thin perfect zone — hold steady, release at the peak." },
@@ -99,8 +99,8 @@ const ALL_WEAPONS = {
   darkwood_bow:   { id:"darkwood_bow",  name:"Darkwood Bow",    emoji:"🏹",  baseDmg:32, speed:1.5, qteType:"archery",    tier:"epic", archDur:2500,                                               classEmoji:"🌙",  className:"Shadowshot", desc:"Fast-orbiting dots — lightning reflexes needed." },
   thunder_boots:  { id:"thunder_boots", name:"Thunder Boots",   emoji:"👟",  baseDmg:32, speed:1.4, qteType:"stomp",      tier:"epic", stompDur:530,                                               classEmoji:"⚡",  className:"Thunderfoot",desc:"Blink-fast stomp — the window is tiny." },
   dragon_lance:   { id:"dragon_lance",  name:"Dragon Lance",    emoji:"🔱",  baseDmg:40, speed:2.0, qteType:"poke",       tier:"epic", pokeDur:1400, pokeTarg:22,                                  classEmoji:"🐉",  className:"Dragoon",    desc:"22 rapid alternations — don't break your rhythm." },
-  club_musket:    { id:"club_musket",   name:"Club & Musket",   emoji:"🏏💥", baseDmg:46, speed:1.0, qteType:"dual_action",tier:"epic", dotSpeed:0.70, centerWidth:0.10,                           classEmoji:"💥",  className:"Rifleman",   desc:"Agonisingly slow dot, tiny zone — massive payoff. Hold A+W+D, click." },
-  sniper_spear:   { id:"sniper_spear",  name:"Sniper & Spear",  emoji:"🎯🔱", baseDmg:50, speed:1.0, qteType:"dual_action",tier:"epic", dotSpeed:0.90, centerWidth:0.07,                           classEmoji:"🎯",  className:"Deadeye",    desc:"Slow dot, tiny zone. Nail it for massive damage. Hold A+W+D, click center." },
+  club_musket:    { id:"club_musket",   name:"Club & Musket",   emoji:"🏏💥", baseDmg:46, speed:1.0, qteType:"dual_action",tier:"epic", dotSpeed:3.60, centerWidth:0.12,                           classEmoji:"💥",  className:"Rifleman",   desc:"Blazing dot speed — react fast. Hold A+W+D, click the center." },
+  sniper_spear:   { id:"sniper_spear",  name:"Sniper & Spear",  emoji:"🎯🔱", baseDmg:50, speed:1.0, qteType:"dual_action",tier:"epic", dotSpeed:4.20, centerWidth:0.10,                           classEmoji:"🎯",  className:"Deadeye",    desc:"Fastest dot — pure reflex. Nail it for massive damage. Hold A+W+D, click." },
   // ── LEGENDARY ──
   rpg:            { id:"rpg",           name:"RPG",             emoji:"🚀",  baseDmg:55, speed:1.2, qteType:"sequence_reveal", tier:"legendary", seqLength:10, classEmoji:"💥", className:"Demolisher" },
 };
@@ -134,9 +134,9 @@ const ENEMY_SPRITE_POOL = [
   {variant:"Minotaur_1",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
   {variant:"Minotaur_2",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
   {variant:"Minotaur_3",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
-  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:0},
-  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:0},
-  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:0},
+  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-30},
+  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-30},
+  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-30},
 ];
 
 // Gandalf layered hero sprites — randomized per run
@@ -297,7 +297,7 @@ const HSW = Math.round(48 * 0.85);   // ≈ 41
 const HSH = Math.round(76 * 0.85);   // ≈ 65
 const HRX = 560;
 const HR_L = HRX - HSW / 2;          // ≈ 539
-const HR_T = GNDY - HSH - 3;         // ≈ 160 — lifted 3px so feet don't clip into ground line
+const HR_T = GNDY - HSH - 3;          // ≈ 160 — lifted 3px so feet don't clip into ground line
 const ENX = 130;
 const STRIKE_L = 155;                 // hero left edge when touching enemy
 
@@ -344,7 +344,8 @@ function heroStompBouncePos(t, landLeft, landTop) {
 /* ─── SVG CHARACTER SPRITES ──────────────────────────────────── */
 
 // Animates a horizontal sprite strip — JS-driven frame counter
-function AnimatedSprite({ src, numFrames, fps=8, displayW, displayH, flip=false }) {
+// React.memo prevents re-renders during QTE rAF loops (props stable; only qteAnim.t changes)
+const AnimatedSprite = React.memo(function AnimatedSprite({ src, numFrames, fps=8, displayW, displayH, flip=false }) {
   const [frame, setFrame] = React.useState(0);
   React.useEffect(()=>{
     const iv = setInterval(()=>setFrame(f=>(f+1)%numFrames), 1000/fps);
@@ -360,12 +361,12 @@ function AnimatedSprite({ src, numFrames, fps=8, displayW, displayH, flip=false 
       }}/>
     </div>
   );
-}
+});
 
 // Hero sprite — layered skin + clothing + hair, all same spritesheet layout.
 // Scale by HEIGHT so bottom of frame = bottom of container → feet on ground.
 // Width is center-cropped to displayW.
-function LayeredHeroSprite({ looks, displayW=41, displayH=65, isAttacking=false }) {
+const LayeredHeroSprite = React.memo(function LayeredHeroSprite({ looks, displayW=41, displayH=65, isAttacking=false }) {
   if (!looks) return null;
   const cols      = looks.cols      || 8;
   const totalRows = looks.totalRows || 8;
@@ -411,7 +412,7 @@ function LayeredHeroSprite({ looks, displayW=41, displayH=65, isAttacking=false 
       ))}
     </div>
   );
-}
+}); // LayeredHeroSprite memo
 
 const CLASS_COLORS = {
   // Basic
@@ -442,7 +443,7 @@ const TIER_DMG_MULT = { basic:1.0, refined:1.35, epic:1.75, legendary:2.3 };
 const weaponDmg = (w) => Math.round((w?.baseDmg||0) * (TIER_DMG_MULT[w?.tier||"basic"]||1.0));
 const SKIN = "#e8c47a";
 
-function HeroSprite({ className="Knight", scale=1, weapons=[], heroLooks=null, isAttacking=false }) {
+const HeroSprite = React.memo(function HeroSprite({ className="Knight", scale=1, weapons=[], heroLooks=null, isAttacking=false }) {
   const displayW = Math.round(48 * scale);
   const displayH = Math.round(76 * scale);  // 76 base matches HSH = Math.round(76*0.85)=65
   if (heroLooks) {
@@ -472,19 +473,21 @@ function HeroSprite({ className="Knight", scale=1, weapons=[], heroLooks=null, i
       <line x1="36" y1="40" x2="44" y2="52" stroke={c.body} strokeWidth="6" strokeLinecap="round"/>
     </svg>
   );
-}
+}); // HeroSprite memo
 
 const BOSS_GIF_BASE = ASSET_BASE+"/icons/sprites/boss/boss_demon_slime_FREE_v1.0/gifs";
 // Boss GIF natural frame size is 288×160. renderW/renderH come from ENEMY_DIMS.dragon × eScale.
 function DemonSlimeSprite({ renderW=238, renderH=132, enemyFlash=false, phase="action", bossAttackPattern=null }) {
   // Priority: dying > hit > charge-attack > cleave-attack > idle
-  const src = phase==="won"                                      ? `${BOSS_GIF_BASE}/05_d_death.webp`
-            : enemyFlash                                         ? `${BOSS_GIF_BASE}/04_d_take_hit.webp`
-            : phase==="enemy_turn"&&bossAttackPattern==="charge" ? `${BOSS_GIF_BASE}/02_d_walk.webp`
-            : phase==="enemy_turn"                               ? `${BOSS_GIF_BASE}/03_d_cleave.webp`
+  // "defending" = player's defend QTE — boss mid-attack, keep attack animation playing
+  const isAttacking = phase==="enemy_turn" || phase==="defending";
+  const src = phase==="won"                                   ? `${BOSS_GIF_BASE}/05_d_death.webp`
+            : enemyFlash                                      ? `${BOSS_GIF_BASE}/04_d_take_hit.webp`
+            : isAttacking&&bossAttackPattern==="charge"       ? `${BOSS_GIF_BASE}/02_d_walk.webp`
+            : isAttacking                                     ? `${BOSS_GIF_BASE}/03_d_cleave.webp`
             : `${BOSS_GIF_BASE}/01_d_idle.webp`;
   // Key on src so browser reloads/restarts gif when animation changes
-  const isCharge = phase==="enemy_turn" && bossAttackPattern==="charge";
+  const isCharge = isAttacking && bossAttackPattern==="charge";
   return (
     <div style={{position:"relative",width:renderW,height:renderH}}>
       <img key={src} src={src} width={renderW} height={renderH}
@@ -501,7 +504,7 @@ function DemonSlimeSprite({ renderW=238, renderH=132, enemyFlash=false, phase="a
   );
 }
 
-function EnemySpriteSmall({ id, scale=1, sprite=null, attacking=false, enemyFlash=false, phase="action", bossAttackPattern=null }) {
+const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, sprite=null, attacking=false, enemyFlash=false, phase="action", bossAttackPattern=null }) {
   if (id==="dragon") {
     const bd = ENEMY_DIMS.dragon;
     return <DemonSlimeSprite renderW={Math.round(bd.w*scale)} renderH={Math.round(bd.h*scale)} enemyFlash={enemyFlash} phase={phase} bossAttackPattern={bossAttackPattern}/>;
@@ -521,42 +524,53 @@ function EnemySpriteSmall({ id, scale=1, sprite=null, attacking=false, enemyFlas
   // Fallback — invisible placeholder (shouldn't normally reach here for non-dragon)
   const dims = ENEMY_DIMS[id]||{w:64,h:78};
   return <div style={{width:dims.w*scale,height:dims.h*scale}}/>;
-}
+}); // EnemySpriteSmall memo
 
 /* ─── GAME ICONS — SVG replacements for all emoji ────────────── */
+const WEAPON_ICON_FILE = {
+  // sword line
+  sword:"crossed-swords", longsword:"crossed-swords", obsidian_blade:"crossed-swords",
+  sword_gun:"crossed-swords",
+  // hammer line
+  hammer:"thor-hammer",  great_maul:"thor-hammer",  titan_hammer:"thor-hammer",
+  club_musket:"thor-hammer",
+  // daggers line
+  daggers:"dagger-rose", twin_blades:"dagger-rose",  shadow_fangs:"dagger-rose",
+  knife_shotgun:"dagger-rose",
+  // staff/wand line
+  staff:"crystal-wand",  runic_staff:"crystal-wand", void_scepter:"crystal-wand",
+  wand:"crystal-wand",
+  // bow line
+  bow:"pocket-bow",      hunters_bow:"pocket-bow",   darkwood_bow:"pocket-bow",
+  // axe line
+  axe:"battle-axe",      axe_pistol:"battle-axe",
+  // spear line
+  spear:"flaming-trident", war_lance:"flaming-trident", dragon_lance:"flaming-trident",
+  sniper_spear:"flaming-trident",
+  // legendary
+  rpg:"nuclear-bomb",
+};
+// PNG icons (in subfolders) — full relative path, no extension handled below
+const WEAPON_ICON_PNG = {
+  boots:         "boots/Icon223.png",
+  iron_stompers: "boots/Icon226.png",
+  thunder_boots: "boots/Icon229.png",
+};
 function Icon({ type, size=28, color }) {
   const s=size, c=color;
+  // ── PNG weapon icons (subfoldered pack assets) ──
+  if (WEAPON_ICON_PNG[type]) {
+    return <img src={ASSET_BASE+"/icons/"+WEAPON_ICON_PNG[type]} width={s} height={s}
+      style={{display:"block",objectFit:"contain",imageRendering:"auto",
+        filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.75) saturate(0.5)"}}/>;
+  }
+  // ── SVG weapon file-based icon (covers all tiers) ──
+  if (WEAPON_ICON_FILE[type]) {
+    return <img src={ASSET_BASE+"/icons/"+WEAPON_ICON_FILE[type]+".svg"} width={s} height={s}
+      style={{display:"block",objectFit:"contain",imageRendering:"auto",
+        filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
+  }
   switch(type){
-    /* ── WEAPONS ── */
-    case"sword": case"hammer": case"daggers": case"staff": case"bow":
-    case"axe":   case"spear":   case"rpg":   case"wand": {
-      const WICO={sword:"crossed-swords",hammer:"thor-hammer",daggers:"dagger-rose",
-        staff:"crystal-wand",bow:"pocket-bow",axe:"battle-axe",
-        spear:"flaming-trident",rpg:"nuclear-bomb",wand:"crystal-wand"};
-      return <img src={ASSET_BASE+"/icons/"+WICO[type]+".svg"} width={s} height={s}
-        style={{display:"block",objectFit:"contain",imageRendering:"auto",
-          filter:c?`drop-shadow(0 0 4px ${c})`:"brightness(0.55) saturate(0.4)"}}/>;
-    };
-
-    /* ── BOOTS — inline SVG shoe silhouette ── */
-    case"boots":return(
-      <svg width={s} height={s} viewBox="0 0 28 28" style={{display:"block"}}>
-        {/* Boot shaft + foot body */}
-        <path d="M5,2 L15,2 L15,14 Q15,17 19,17 L24,17 Q27,17 27,21 Q27,25 23,25 L4,25 Q2,25 2,22 L2,15 Q3,13 5,13 Z"
-          fill={c||"#888"} opacity=".92"/>
-        {/* Thick sole / tread stripe */}
-        <path d="M4,24 L23,24 Q27,24 27,22 Q27,26 23,26 L4,26 Q1,26 1,23 Q1,24 4,24 Z"
-          fill={c||"#666"} opacity=".6"/>
-        {/* Shaft-to-foot cuff line */}
-        <line x1="5" y1="13" x2="15" y2="13" stroke="#fff" strokeWidth="1.2" opacity=".35"/>
-        {/* Toe highlight — gives depth to the shoe front */}
-        <ellipse cx="23" cy="21" rx="3.5" ry="3" fill="#fff" opacity=".10"/>
-        {/* Shaft highlight panel */}
-        <rect x="7" y="4" width="5" height="7" rx="1.5" fill="#fff" opacity=".12"/>
-        {/* Ankle strap / top-of-boot trim */}
-        <rect x="5" y="2" width="10" height="2.5" rx="1" fill="#fff" opacity=".18"/>
-      </svg>
-    );
 
     /* ── MAP NODES ── */
     case"combat":return(
@@ -1129,7 +1143,7 @@ function App() {
   // Drive CAST/LAUNCH timer re-renders every 30ms while sequence QTE active
   useEffect(()=>{
     if(qteAnim?.type!=="sequence"&&qteAnim?.type!=="sequence_reveal") return;
-    const id=setInterval(()=>setCastTick(t=>t+1),30);
+    const id=setInterval(()=>setCastTick(t=>t+1),50); // 20fps for timer display — was 30ms (33fps)
     return ()=>clearInterval(id);
   },[qteAnim?.type]);
 
@@ -2170,6 +2184,7 @@ function App() {
     };
     window.addEventListener("keydown",onKey);
 
+    let _archLastRender = 0;
     const tick = ()=>{
       if (ref.done) return;
       const elapsed = performance.now()-ref.startMs;
@@ -2182,7 +2197,12 @@ function App() {
         d.x = r*Math.cos(angle);
         d.y = r*Math.sin(angle);
       });
-      setQteAnim(prev=>prev?{...prev,t,dots:ref.dots.map(d=>({x:d.x,y:d.y}))}:null);
+      // Throttle render updates to ~45fps — dot positions update in ref, render catches up
+      const now2 = performance.now();
+      if (now2-_archLastRender >= 22) {
+        _archLastRender = now2;
+        setQteAnim(prev=>prev?{...prev,t,dots:ref.dots.map(d=>({x:d.x,y:d.y}))}:null);
+      }
       if (t<1) { requestAnimationFrame(tick); return; }
       // Time ran out — lock remaining dots as misses and fire
       while(ref.shotsFired<ARCHERY_DOTS){
@@ -2628,13 +2648,17 @@ function App() {
     };
     window.addEventListener("keydown",onKey);
 
-    ref.projSoundPlayed = false;
+    ref.projSoundPlayed = false; ref._defLastRender = 0;
     const tick = () => {
-      const t = Math.min(1,(performance.now()-ref.startMs)/dur);
+      const now2 = performance.now();
+      const t = Math.min(1,(now2-ref.startMs)/dur);
       const projFrac = t < launch ? 0
         : Math.min(1,(t-launch)/(arrive-launch));
       if(t>=launch&&!ref.projSoundPlayed){ref.projSoundPlayed=true;sfx.projLaunch();}
-      setQteAnim(prev=>prev?{...prev,t,projFrac,arrive}:null);
+      if (now2-ref._defLastRender >= 22) { // ~45fps cap
+        ref._defLastRender = now2;
+        setQteAnim(prev=>prev?{...prev,t,projFrac,arrive}:null);
+      }
       if (t<1) { requestAnimationFrame(tick); return; }
       window.removeEventListener("keydown",onKey);
       const d = ref.pressT!=null ? Math.abs(ref.pressT-arrive) : 99;
@@ -2673,9 +2697,9 @@ function App() {
         const BEAT_L = STRIKE_L + 30; // slightly further than touch
         if (t <= WALK_END)       return { left: HR_L+(BEAT_L-HR_L)*easeIO(t/WALK_END), top:HR_T };
         if (t >= RETURN_START)   return { left: BEAT_L+(HR_L-BEAT_L)*easeIO((t-RETURN_START)/(1-RETURN_START)), top:HR_T };
-        // Wind-up bob during beat phase
+        // Wind-up bob during beat phase — upward only so feet never clip below ground
         const bFrac = (t-WALK_END)/(RETURN_START-WALK_END);
-        const bob = Math.sin(bFrac*Math.PI*6)*5;
+        const bob = Math.sin(bFrac*Math.PI*6)*(-4); // negative = upward
         return { left:BEAT_L, top:HR_T+bob };
       }
       case "hold_release": {
@@ -4338,7 +4362,7 @@ function App() {
               </svg>
 
               {/* Enemy sprite — HeroSprite when PvP opponent */}
-              <div style={{position:"absolute",left:eLeft,top:eTop,zIndex:4,
+              <div style={{position:"absolute",left:eLeft,top:eTop,zIndex:4,willChange:"transform",
                 filter:cs.enemy.id==="pvp_opp"
                   ?(enemyFlash?"brightness(3) drop-shadow(0 0 18px #ff4400)":"drop-shadow(0 0 14px #4466ffaa)")
                   :cs.enemy.id==="dragon"
@@ -4624,11 +4648,12 @@ function App() {
                 left:heroPos?heroPos.left:HR_L,
                 top:heroPos?heroPos.top:HR_T,
                 zIndex:6,
+                willChange:"left, top",
                 transform:"scaleX(1)",
                 animation:"none",
                 filter:qteAnim?.type==="defend"?"drop-shadow(0 0 10px #4488ff)":
                        chargeActive&&cIsPerfect?"drop-shadow(0 0 14px #44ff88)":"none"}}>
-                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim||cs?.phase==="attacking"}/>
+                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim||cs?.phase==="attacking"||cs?.phase==="enemy_turn"||cs?.phase==="defending"}/>
               </div>
 
               {/* Battlefield status line */}
@@ -5037,7 +5062,7 @@ function App() {
                 left:heroPos?heroPos.left:HR_L, top:heroPos?heroPos.top:HR_T,
                 zIndex:6,transform:"scaleX(1)",
                 animation:"none"}}>
-                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim||cs?.phase==="attacking"}/>
+                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim||cs?.phase==="attacking"||cs?.phase==="enemy_turn"||cs?.phase==="defending"}/>
               </div>
 
               {/* All existing QTE overlays render here via existing render code — they check qteAnim type */}
