@@ -1140,8 +1140,10 @@ function App() {
   const qteRef = useRef({});
   // Particle anchor — used to find battlefield screen coords via getBoundingClientRect
   const particleContainerRef = useRef(null);
-  // Tracks whether particleContainerRef has mounted — triggers a re-render so position:fixed hero coords are valid
-  const [bfLayoutReady, setBfLayoutReady] = useState(false);
+  // Hero DOM element ref — positioned via useLayoutEffect (avoids getBoundingClientRect during render)
+  const heroElRef   = useRef(null);
+  // Synced during render so useLayoutEffect can read latest heroPos without re-running heroPos IIFE
+  const heroPosRef  = useRef(null);
   // Cast timer start — useRef so render always reads real performance.now() delta
   const castStartRef = useRef(null);
 
@@ -1216,6 +1218,27 @@ function App() {
       setTimerDisplay(t);
     }
   },[screen]);
+
+  // Hero positioning — runs after every render commit, reads already-computed layout (no forced reflow)
+  useLayoutEffect(()=>{
+    const el = heroElRef.current;
+    const anchor = particleContainerRef.current;
+    if(!el||!anchor) return;
+    const rect = anchor.getBoundingClientRect();
+    if(!rect.width) return;
+    const zoom = rect.width / BFW;
+    const hp = heroPosRef.current;
+    const hL = hp ? hp.left : HR_L;
+    const hT = hp ? hp.top  : HR_T;
+    const qa = qteAnim;
+    const ch = qa?.type==="hold_release"&&!qa.released ? (qa.charge||0) : 0;
+    el.style.left       = Math.round(rect.left + hL * zoom)+"px";
+    el.style.top        = Math.round(rect.top  + hT * zoom)+"px";
+    el.style.transform  = `scale(${zoom})`;
+    el.style.visibility = "visible";
+    el.style.filter     = qa?.type==="defend"?"drop-shadow(0 0 10px #4488ff)":
+      (qa?.type==="hold_release"&&!qa.released&&ch>=0.72&&ch<1.0)?"drop-shadow(0 0 14px #44ff88)":"none";
+  }); // intentionally no dep array — pure DOM writes, zero setState, runs cheap after every commit
 
   // Map legend — injected onto document.body, position:fixed mid-right, screen==="map" only
   useEffect(()=>{
@@ -2846,6 +2869,7 @@ function App() {
         return null;
     }
   })();
+  heroPosRef.current = heroPos; // sync for useLayoutEffect — no setState, no rerender
 
   // Enemy shakes (wind-up) before launching projectile — uses dynamic launch fraction
   const enemyWindUp = (() => {
@@ -3727,7 +3751,7 @@ function App() {
               </div>
 
               {/* Particle container — DOM-injected divs via Web Animations API */}
-              <div ref={node=>{particleContainerRef.current=node;if(node&&!bfLayoutReady)setBfLayoutReady(true);}} style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:30,overflow:"visible"}}/>
+              <div ref={particleContainerRef} style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:30,overflow:"visible"}}/>
 
               {/* Ground */}
               <div style={{position:"absolute",left:0,right:0,top:GNDY,height:2,background:"linear-gradient(to right,transparent,#2a2a40,#2a2a40,transparent)",zIndex:3}}/>
@@ -4736,37 +4760,10 @@ function App() {
                 <div style={{position:"absolute",left:ENX-30,top:eTop+eH-20,width:60,height:24,borderRadius:"50%",border:"2px solid #ffaa3388",animation:"stompDust .4s ease-out forwards",zIndex:8,pointerEvents:"none"}}/>
               )}
 
-              {/* Hero sprite — always position:fixed via viewport coords (immune to any parent clip/zoom/stacking) */}
-              {(()=>{
-                const hL = heroPos?heroPos.left:HR_L;
-                const hT = heroPos?heroPos.top:HR_T;
-                const anchor = particleContainerRef.current;
-                let heroStyle;
-                if (anchor) {
-                  const rect = anchor.getBoundingClientRect();
-                  const zoom = rect.width / BFW;
-                  heroStyle = {
-                    position:"fixed",
-                    left: Math.round(rect.left + hL * zoom),
-                    top:  Math.round(rect.top  + hT * zoom),
-                    zIndex:20,
-                    transform:`scale(${zoom})`,
-                    transformOrigin:"top left",
-                    animation:"none",
-                    filter:qteAnim?.type==="defend"?"drop-shadow(0 0 10px #4488ff)":
-                           chargeActive&&cIsPerfect?"drop-shadow(0 0 14px #44ff88)":"none",
-                    pointerEvents:"none",
-                  };
-                } else {
-                  // Fallback before ref mounts
-                  heroStyle = {position:"absolute",left:hL,top:hT,zIndex:20,animation:"none",filter:"none"};
-                }
-                return (
-                  <div style={heroStyle}>
-                    <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim||cs?.phase==="attacking"||cs?.phase==="enemy_turn"||cs?.phase==="defending"}/>
-                  </div>
-                );
-              })()}
+              {/* Hero sprite — position:fixed, placed by useLayoutEffect after each commit (no getBoundingClientRect during render) */}
+              <div ref={heroElRef} style={{position:"fixed",left:0,top:0,zIndex:20,transformOrigin:"top left",visibility:"hidden",animation:"none",pointerEvents:"none"}}>
+                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim||cs?.phase==="attacking"||cs?.phase==="enemy_turn"||cs?.phase==="defending"}/>
+              </div>
 
               {/* Battlefield status line */}
               <div style={{position:"absolute",top:qteAnim?.type==="swing_beat"||qteAnim?.type==="hold_release"||qteAnim?.type==="poke"?50:qteAnim?.type==="sequence"?30:10,left:"50%",transform:"translateX(-50%)",fontFamily:"Cinzel",fontSize:10,letterSpacing:3,zIndex:9,whiteSpace:"nowrap"}}>
