@@ -4722,16 +4722,42 @@ function App() {
                 <div style={{position:"absolute",left:ENX-30,top:eTop+eH-20,width:60,height:24,borderRadius:"50%",border:"2px solid #ffaa3388",animation:"stompDust .4s ease-out forwards",zIndex:8,pointerEvents:"none"}}/>
               )}
 
-              {/* Hero sprite */}
-              <div style={{position:"absolute",
-                left:heroPos?heroPos.left:HR_L,
-                top:heroPos?heroPos.top:HR_T,
-                zIndex:6,
-                animation:"none",
-                filter:qteAnim?.type==="defend"?"drop-shadow(0 0 10px #4488ff)":
-                       chargeActive&&cIsPerfect?"drop-shadow(0 0 14px #44ff88)":"none"}}>
-                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim||cs?.phase==="attacking"||cs?.phase==="enemy_turn"||cs?.phase==="defending"}/>
-              </div>
+              {/* Hero sprite — position:fixed during stomp so no parent overflow/clip can hide it */}
+              {(()=>{
+                const isStomp = qteAnim?.type==="stomp"||qteAnim?.type==="stomp_return";
+                const hL = heroPos?heroPos.left:HR_L;
+                const hT = heroPos?heroPos.top:HR_T;
+                let heroStyle;
+                if (isStomp && particleContainerRef.current) {
+                  const rect = particleContainerRef.current.getBoundingClientRect();
+                  const zoom = rect.width / BFW;
+                  heroStyle = {
+                    position:"fixed",
+                    left: Math.round(rect.left + hL * zoom),
+                    top:  Math.round(rect.top  + hT * zoom),
+                    zIndex:50,
+                    transform:`scale(${zoom})`,
+                    transformOrigin:"top left",
+                    animation:"none",
+                    filter:"none",
+                    pointerEvents:"none",
+                  };
+                } else {
+                  heroStyle = {
+                    position:"absolute",
+                    left:hL, top:hT,
+                    zIndex:6,
+                    animation:"none",
+                    filter:qteAnim?.type==="defend"?"drop-shadow(0 0 10px #4488ff)":
+                           chargeActive&&cIsPerfect?"drop-shadow(0 0 14px #44ff88)":"none",
+                  };
+                }
+                return (
+                  <div style={heroStyle}>
+                    <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim||cs?.phase==="attacking"||cs?.phase==="enemy_turn"||cs?.phase==="defending"}/>
+                  </div>
+                );
+              })()}
 
               {/* Battlefield status line */}
               <div style={{position:"absolute",top:qteAnim?.type==="swing_beat"||qteAnim?.type==="hold_release"||qteAnim?.type==="poke"?50:qteAnim?.type==="sequence"?30:10,left:"50%",transform:"translateX(-50%)",fontFamily:"Cinzel",fontSize:10,letterSpacing:3,zIndex:9,whiteSpace:"nowrap"}}>
