@@ -1235,7 +1235,6 @@ function App() {
     el.style.left       = Math.round(rect.left + hL * zoom)+"px";
     el.style.top        = Math.round(rect.top  + hT * zoom)+"px";
     el.style.transform  = `scale(${zoom})`;
-    el.style.visibility = "visible";
     el.style.filter     = qa?.type==="defend"?"drop-shadow(0 0 10px #4488ff)":
       (qa?.type==="hold_release"&&!qa.released&&ch>=0.72&&ch<1.0)?"drop-shadow(0 0 14px #44ff88)":"none";
   }); // intentionally no dep array — pure DOM writes, zero setState, runs cheap after every commit
@@ -4761,7 +4760,7 @@ function App() {
               )}
 
               {/* Hero sprite — position:fixed, placed by useLayoutEffect after each commit (no getBoundingClientRect during render) */}
-              <div ref={heroElRef} style={{position:"fixed",left:0,top:0,zIndex:20,transformOrigin:"top left",visibility:"hidden",animation:"none",pointerEvents:"none"}}>
+              <div ref={heroElRef} style={{position:"fixed",left:0,top:0,zIndex:20,transformOrigin:"top left",animation:"none",pointerEvents:"none"}}>
                 <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim||cs?.phase==="attacking"||cs?.phase==="enemy_turn"||cs?.phase==="defending"}/>
               </div>
 
