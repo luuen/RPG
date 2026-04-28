@@ -134,39 +134,116 @@ const ENEMY_SPRITE_POOL = [
   {variant:"Minotaur_1",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
   {variant:"Minotaur_2",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
   {variant:"Minotaur_3",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
-  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-30},
-  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-30},
-  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-30},
+  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-10},
+  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-10},
+  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-10},
 ];
 
 // Gandalf layered hero sprites — randomized per run
-const BASE = ASSET_BASE+"/icons/sprites/GandalfHardcore Character Asset Pack";
+// Path helpers
+const _G  = (p) => `${ASSET_BASE}/icons/sprites/GandalfHardcore Character Asset Pack/${p}`;
+const _G58 = (g,p) => `${ASSET_BASE}/icons/sprites/GandalfHardcore 58x Hair/GandalfHardcore 58x Hair/${g}/${p}`;
+const _G43F = (p)  => `${ASSET_BASE}/icons/sprites/GandalfHardcore 43x Female Clothing/GandalfHardcore 43x Female Clothing/${p}`;
+const _G14  = (g,p)=> `${ASSET_BASE}/icons/sprites/GandalfHardcore 14x Arm Layers/GandalfHardcore Arm Layers/${g}/${p}`;
+const _G10  = (g,p)=> `${ASSET_BASE}/icons/sprites/GandalfHardcore 10x Elven ears/${g}/${p}`;
+
 const HERO_LAYERS = {
   male: {
-    skins:    ["Male Skin1.png","Male Skin2.png","Male Skin3.png","Male Skin4.png","Male Skin5.png"],
-    clothing: ["Blue Pants.png","Blue Shirt v2.png","Boots.png","Green Pants.png","Green Shirt v2.png",
-               "Orange Pants.png","Pants.png","Purple Pants.png","Purple Shirt v2.png","Shirt.png","Shoes.png"],
-    hair:     ["Male Hair1.png","Male Hair2.png","Male Hair3.png","Male Hair4.png","Male Hair5.png"],
-    hand:     ["Male Sword.png"],
-    skinDir:  `${BASE}/Character skin colors`,
-    clothDir: `${BASE}/Male Clothing`,
-    hairDir:  `${BASE}/Male Hair`,
-    handDir:  `${BASE}/Male Hand`,
-    frameW:100, frameH:56, totalRows:8,  // measured: 800×448, 8 cols × 8 rows
-    cols:8, idleRow:0, atkRow:4,
+    skins: [1,2,3,4,5].map(i=>_G(`Character skin colors/Male Skin${i}.png`)),
+    clothing: [
+      _G("Male Clothing/Blue Pants.png"),    _G("Male Clothing/Blue Shirt v2.png"),
+      _G("Male Clothing/Green Pants.png"),   _G("Male Clothing/Green Shirt v2.png"),
+      _G("Male Clothing/Green Underwear.png"),_G("Male Clothing/Orange Pants.png"),
+      _G("Male Clothing/Orange Underwear.png"),_G("Male Clothing/Pants.png"),
+      _G("Male Clothing/Purple Pants.png"),  _G("Male Clothing/Purple Shirt v2.png"),
+      _G("Male Clothing/Purple Underwear.png"),_G("Male Clothing/Red Underwear.png"),
+      _G("Male Clothing/Shirt v2.png"),      _G("Male Clothing/Shirt.png"),
+      _G("Male Clothing/Skyblue Underwear.png"),_G("Male Clothing/Underwear.png"),
+      _G("Male Clothing/orange Shirt v2.png"),
+    ],
+    boots: [
+      _G("Male Clothing/Boots.png"), _G("Male Clothing/Boots.png"),  // 2x weight
+      _G("Male Clothing/Shoes.png"),
+    ],
+    arms: [
+      null, null,  // ~22% no arms
+      _G14("Male","Gloves.png"),       _G14("Male","Glove blue.png"),
+      _G14("Male","Glove green.png"),  _G14("Male","Glove orange.png"),
+      _G14("Male","Glove purple.png"), _G14("Male","Glove red.png"),
+      _G14("Male","Glove white.png"),
+    ],
+    hair: [
+      ...[1,2,3,4,5].map(i=>_G(`Male Hair/Male Hair${i}.png`)),
+      ...[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30].map(i=>_G58("28x Male Hair",`Male Hair${i}.png`)),
+      _G58("28x Male Hair","Fancy Hair.png"),
+      _G58("28x Male Hair","Queen hair.png"),
+      _G58("28x Male Hair","Shield Maiden hair.png"),
+    ],
+    ears: [
+      null,null,null,null,null,null,null,  // ~58% no ears
+      ...[1,2,3,4,5].map(i=>_G10("Male Ears",`Elven Ears${i}.png`)),
+    ],
+    hand: [_G("Male Hand/Male Sword.png")],
+    frameW:100, frameH:56, totalRows:8, cols:8, idleRow:0, atkRow:4,
   },
   female: {
-    skins:    ["Female Skin1.png","Female Skin2.png","Female Skin3.png","Female Skin4.png","Female Skin5.png"],
-    clothing: ["Blue Corset.png","Blue Corset v2.png","Boots.png","Corset.png","Green Corset.png",
-               "Orange Corset.png","Purple Corset.png","Skirt.png","Socks.png"],
-    hair:     ["Female Hair1.png","Female Hair2.png","Female Hair3.png","Female Hair4.png","Female Hair5.png"],
-    hand:     ["Female Sword.png"],
-    skinDir:  `${BASE}/Character skin colors`,
-    clothDir: `${BASE}/Female Clothing`,
-    hairDir:  `${BASE}/Female Hair`,
-    handDir:  `${BASE}/Female Hand`,
-    frameW:100, frameH:56, totalRows:8,
-    cols:8, idleRow:0, atkRow:4,
+    skins: [1,2,3,4,5].map(i=>_G(`Character skin colors/Female Skin${i}.png`)),
+    clothing: [
+      _G("Female Clothing/Blue Corset.png"),   _G("Female Clothing/Blue Corset v2.png"),
+      _G("Female Clothing/Corset.png"),         _G("Female Clothing/Corset v2.png"),
+      _G("Female Clothing/Green Corset.png"),   _G("Female Clothing/Green Corset v2.png"),
+      _G("Female Clothing/Orange Corset.png"),  _G("Female Clothing/Orange Corset v2.png"),
+      _G("Female Clothing/Purple Corset.png"),  _G("Female Clothing/Purple Corset v2.png"),
+      _G("Female Clothing/Skirt.png"),
+      _G("Female Clothing/Blue Panties and Bra.png"),   _G("Female Clothing/Green Panties and Bra.png"),
+      _G("Female Clothing/Orange Panties and Bra.png"), _G("Female Clothing/Purple Panties and Bra.png"),
+      _G("Female Clothing/Red Panties and Bra.png"),    _G("Female Clothing/Skyblue Panties and Bra.png"),
+      // 43x extended pack
+      _G43F("Armored Corset.png"),
+      _G43F("Blue Bodice Long Sleeves.png"),   _G43F("Blue Bodice Mid Sleeves.png"), _G43F("Blue Bodice.png"),
+      _G43F("Blue Corset Long Sleeves.png"),   _G43F("Blue Corset v2 Long Sleeves.png"),
+      _G43F("Blue bikini.png"),  _G43F("Blue dress.png"),
+      _G43F("Corset Long Sleeves.png"),        _G43F("Corset v2 Long Sleeves.png"),
+      _G43F("Fancy Blue Dress.png"),
+      _G43F("Green Bodice Long Sleeves.png"),  _G43F("Green Bodice Mid Sleeves.png"), _G43F("Green Bodice.png"),
+      _G43F("Green Corset Long Sleeves.png"),  _G43F("Green Corset v2 Long Sleeves.png"),
+      _G43F("Green bikini.png"),
+      _G43F("Long dress blue.png"), _G43F("Long dress green.png"), _G43F("Long dress orange.png"),
+      _G43F("Long dress purple.png"), _G43F("Long dress red.png"),
+      _G43F("Orange Bodice Long Sleeves.png"), _G43F("Orange Bodice Mid Sleeves.png"), _G43F("Orange Bodice.png"),
+      _G43F("Orange Corset Long Sleeves.png"), _G43F("Orange Corset v2 Long Sleeves.png"),
+      _G43F("Orange bikini.png"),
+      _G43F("Purple Bodice Long Sleeves.png"), _G43F("Purple Bodice Mid Sleeves.png"), _G43F("Purple Bodice.png"),
+      _G43F("Purple Corset Long Sleeves.png"), _G43F("Purple Corset v2 Long Sleeves.png"),
+      _G43F("Purple bikini.png"),  _G43F("Queen Dress.png"),
+      _G43F("Red Bodice Long Sleeves.png"),    _G43F("Red Bodice Mid Sleeves.png"), _G43F("Red Bodice.png"),
+      _G43F("Red bikini.png"),     _G43F("Short Skirt.png"),
+    ],
+    boots: [
+      _G("Female Clothing/Boots.png"), _G("Female Clothing/Boots.png"),  // 2x weight
+      _G("Female Clothing/Socks.png"),          _G("Female Clothing/Green Socks.png"),
+      _G("Female Clothing/Orange Socks.png"),   _G("Female Clothing/Purple Socks.png"),
+      _G("Female Clothing/Red Socks.png"),      _G("Female Clothing/Skyblue Socks.png"),
+      _G43F("Black Thigh-High Boots.png"),  _G43F("Brown Thigh-High Boots.png"),
+      _G43F("Pink Thigh-High Boots.png"),   _G43F("Red Thigh-High Boots.png"),
+    ],
+    arms: [
+      null, null,  // ~22% no arms
+      _G14("Female","Opera Gloves.png"),       _G14("Female","Opera Gloves blue.png"),
+      _G14("Female","Opera Gloves brown.png"), _G14("Female","Opera Gloves green.png"),
+      _G14("Female","Opera Gloves orange.png"),_G14("Female","Opera Gloves purple.png"),
+      _G14("Female","Opera Gloves red.png"),
+    ],
+    hair: [
+      ...[1,2,3,4,5].map(i=>_G(`Female Hair/Female Hair${i}.png`)),
+      ...[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35].map(i=>_G58("30x Female Hair",`Female Hair${i}.png`)),
+    ],
+    ears: [
+      null,null,null,null,null,null,null,  // ~58% no ears
+      ...[1,2,3,4,5].map(i=>_G10("Female Ears",`Elven Ears${i}.png`)),
+    ],
+    hand: [_G("Female Hand/Female Sword.png")],
+    frameW:100, frameH:56, totalRows:8, cols:8, idleRow:0, atkRow:4,
   },
 };
 const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
@@ -175,10 +252,13 @@ const randomHeroLooks = () => {
   const g = HERO_LAYERS[gender];
   return {
     gender,
-    skin:     `${g.skinDir}/${pick(g.skins)}`,
-    clothing: `${g.clothDir}/${pick(g.clothing)}`,
-    hair:     `${g.hairDir}/${pick(g.hair)}`,
-    hand:     `${g.handDir}/${pick(g.hand)}`,
+    skin:     pick(g.skins),
+    clothing: pick(g.clothing),
+    boots:    pick(g.boots),
+    arms:     pick(g.arms),    // may be null → no arm layer
+    hair:     pick(g.hair),
+    ears:     pick(g.ears),    // may be null → no ear layer
+    hand:     pick(g.hand),
     frameW:   g.frameW,
     frameH:   g.frameH,
     cols:     g.cols,
@@ -397,8 +477,8 @@ const LayeredHeroSprite = React.memo(function LayeredHeroSprite({ looks, display
     imageRendering:"pixelated",
   };
   const toUrl = s => `url("${s.replace(/\\/g,"/").replace(/ /g,"%20")}")`;
-  // Layers: skin base, then clothing, then hair — all same spritesheet layout
-  const layers = [looks.skin, looks.clothing, looks.hair].filter(Boolean);
+  // Layers: skin → clothing → boots → arms → hair → ears (all same spritesheet layout)
+  const layers = [looks.skin, looks.clothing, looks.boots, looks.arms, looks.hair, looks.ears].filter(Boolean);
   return (
     <div style={{width:displayW, height:displayH, position:"relative", overflow:"hidden", imageRendering:"pixelated"}}>
       {layers.map((src, i) => (
@@ -2314,7 +2394,7 @@ function App() {
     const dims = cs?.enemySprite ? {w:cs.enemySprite.frameW, h:cs.enemySprite.frameH} : (ENEMY_DIMS[cs?.enemy?.id]||{w:55,h:70});
     const eScaledH = dims.h*1.1;
     const stompGroundPad = cs?.enemySprite?.groundPad || 0;
-    const landTop  = GNDY - eScaledH - HSH + stompGroundPad;
+    const landTop  = Math.max(5, GNDY - eScaledH - HSH + stompGroundPad);
     const landLeft = ENX - HSW/2;
     const ref = qteRef.current;
     ref.landLeft = landLeft; ref.landTop = landTop;
@@ -3617,7 +3697,7 @@ function App() {
             })()}
 
             {/* ─── BATTLEFIELD — fills most of screen ──────── */}
-            <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+            <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
             <div style={{position:"relative",width:BFW,height:BFH,flexShrink:0,overflow:"visible",zoom:bfZoom}}>
 
               {/* Sky */}
@@ -3688,12 +3768,11 @@ function App() {
                 );
               })()}
 
-              {/* ── CHARGE: compact power bar — fixed above hero landing spot ── */}
+              {/* ── CHARGE: compact power bar — tracks hero position ── */}
               {chargeActive&&(()=>{
-                // Fixed at STRIKE_L (where hero lands) — never moves with the model
                 const mW=160, mH=14;
-                const mL = STRIKE_L + HSW/2 - mW/2;
-                const mT = HR_T - mH - 14;
+                const mL = (heroPos?.left??HR_L) + HSW/2 - mW/2;
+                const mT = (heroPos?.top ??HR_T) - mH - 14;
                 const pct = Math.min(charge*100, 100);
                 const goodLo=50, perfLo=CHARGE_PERFECT_LO*100, perfHi=CHARGE_PERFECT_HI*100;
                 const fillCol = pct>=100?"#ff3311":pct>=perfHi?"#ff2200":pct>=perfLo?"#00ff66":pct>=goodLo?"#ffaa22":"#3388ff";
@@ -4648,8 +4727,6 @@ function App() {
                 left:heroPos?heroPos.left:HR_L,
                 top:heroPos?heroPos.top:HR_T,
                 zIndex:6,
-                willChange:"left, top",
-                transform:"scaleX(1)",
                 animation:"none",
                 filter:qteAnim?.type==="defend"?"drop-shadow(0 0 10px #4488ff)":
                        chargeActive&&cIsPerfect?"drop-shadow(0 0 14px #44ff88)":"none"}}>
