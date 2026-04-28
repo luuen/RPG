@@ -1099,6 +1099,18 @@ const sfx = (() => {
     parry:        ()=>rf("DSGNMisc_MELEE-Sword Parry_HY_PC",                6, 0.50),
     blockHit:     ()=>rf("DSGNMisc_MELEE-Sword Deflect_HY_PC",              6, 0.45),
     takeDmg:      ()=>rf("FGHTImpt_HIT-Strong Punch_HY_PC",                 6, 0.45),
+    // ── Weapon select hover — short metallic clink ────────────────
+    metalClink: ()=>wa(ctx=>{
+      const t=ctx.currentTime;
+      // High-freq metal ping
+      const o1=ctx.createOscillator(); o1.type="triangle"; o1.frequency.setValueAtTime(2200,t); o1.frequency.exponentialRampToValueAtTime(900,t+0.07);
+      const g1=ctx.createGain(); g1.gain.setValueAtTime(0.18*MV,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.11);
+      o1.connect(g1); g1.connect(ctx.destination); o1.start(t); o1.stop(t+0.11);
+      // Lower harmonic body
+      const o2=ctx.createOscillator(); o2.type="sawtooth"; o2.frequency.setValueAtTime(440,t); o2.frequency.exponentialRampToValueAtTime(220,t+0.05);
+      const g2=ctx.createGain(); g2.gain.setValueAtTime(0.09*MV,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.07);
+      o2.connect(g2); g2.connect(ctx.destination); o2.start(t); o2.stop(t+0.07);
+    }),
   };
 })();
 
@@ -1128,6 +1140,8 @@ function App() {
   const qteRef = useRef({});
   // Particle anchor — used to find battlefield screen coords via getBoundingClientRect
   const particleContainerRef = useRef(null);
+  // Tracks whether particleContainerRef has mounted — triggers a re-render so position:fixed hero coords are valid
+  const [bfLayoutReady, setBfLayoutReady] = useState(false);
   // Cast timer start — useRef so render always reads real performance.now() delta
   const castStartRef = useRef(null);
 
@@ -3503,7 +3517,7 @@ function App() {
               return (
                 <div key={w.id}
                   onClick={()=>setSelectedWeapon(w.id)}
-                  onMouseEnter={()=>setHoverWeaponId(w.id)}
+                  onMouseEnter={()=>{setHoverWeaponId(w.id);sfx.metalClink();}}
                   onMouseLeave={()=>setHoverWeaponId(null)}
                   style={{width:200,padding:"28px 18px",textAlign:"center",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",border:`2px solid ${sel?"#e8d5a3":hov?"#6677aa":"#2a2a3a"}`,background:sel?"#14142a":hov?"#0c0c1e":"#09090f",boxShadow:sel?"0 0 32px rgba(232,213,163,.2)":hov?"0 0 16px rgba(100,120,200,.15)":"none",transition:"all .2s",position:"relative"}}>
                   <div style={{width:80,height:80,marginBottom:16,display:"flex",alignItems:"center",justifyContent:"center",filter:sel?"drop-shadow(0 0 14px #e8d5a388)":hov?"drop-shadow(0 0 10px #6677aaaa)":"none",transition:"filter .2s"}}>
@@ -3713,7 +3727,7 @@ function App() {
               </div>
 
               {/* Particle container — DOM-injected divs via Web Animations API */}
-              <div ref={particleContainerRef} style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:30,overflow:"visible"}}/>
+              <div ref={node=>{particleContainerRef.current=node;if(node&&!bfLayoutReady)setBfLayoutReady(true);}} style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:30,overflow:"visible"}}/>
 
               {/* Ground */}
               <div style={{position:"absolute",left:0,right:0,top:GNDY,height:2,background:"linear-gradient(to right,transparent,#2a2a40,#2a2a40,transparent)",zIndex:3}}/>
