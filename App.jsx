@@ -4741,7 +4741,7 @@ function App() {
                 zIndex:20, animation:"none", pointerEvents:"none",
                 filter: qteAnim?.type==="defend" ? "drop-shadow(0 0 10px #4488ff)" :
                         chargeActive&&cIsPerfect  ? "drop-shadow(0 0 14px #44ff88)" : "none"}}>
-                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim||cs?.phase==="attacking"||cs?.phase==="enemy_turn"||cs?.phase==="defending"}/>
+                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim}/>
               </div>
 
               {/* Battlefield status line */}
@@ -5150,7 +5150,7 @@ function App() {
                 left:heroPos?heroPos.left:HR_L, top:heroPos?heroPos.top:HR_T,
                 zIndex:6,transform:"scaleX(1)",
                 animation:"none"}}>
-                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim||cs?.phase==="attacking"||cs?.phase==="enemy_turn"||cs?.phase==="defending"}/>
+                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim}/>
               </div>
 
               {/* All existing QTE overlays render here via existing render code — they check qteAnim type */}
