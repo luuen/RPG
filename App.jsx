@@ -468,7 +468,8 @@ const LayeredHeroSprite = React.memo(function LayeredHeroSprite({ looks, display
   const scaledFW = Math.round(frameW * vScale);
   const bgW      = cols      * scaledFW;
   const bgH      = totalRows * displayH;
-  const bpX      = -(animFrame * scaledFW + Math.round((scaledFW - displayW) / 2));
+  const displayFrame = isAttacking ? animFrame : 0; // force frame 0 when idle — Gandalf sheets have blank cols 4-7
+  const bpX      = -(displayFrame * scaledFW + Math.round((scaledFW - displayW) / 2));
   const bpY      = -(idleRow * displayH);
   const bgStyle  = {
     backgroundRepeat:"no-repeat",
