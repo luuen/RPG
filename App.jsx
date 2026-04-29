@@ -263,6 +263,7 @@ const randomHeroLooks = () => {
     frameH:   g.frameH,
     cols:     g.cols,
     idleRow:  g.idleRow,
+    atkRow:   g.atkRow,
   };
 };
 
@@ -469,8 +470,9 @@ const LayeredHeroSprite = React.memo(function LayeredHeroSprite({ looks, display
   const bgW      = cols      * scaledFW;
   const bgH      = totalRows * displayH;
   const displayFrame = isAttacking ? animFrame : 0; // force frame 0 when idle — Gandalf sheets have blank cols 4-7
+  const activeRow = isAttacking ? (looks.atkRow ?? idleRow) : idleRow; // use attack row when attacking — idle row has blank frames 4-7
   const bpX      = -(displayFrame * scaledFW + Math.round((scaledFW - displayW) / 2));
-  const bpY      = -(idleRow * displayH);
+  const bpY      = -(activeRow * displayH);
   const bgStyle  = {
     backgroundRepeat:"no-repeat",
     backgroundSize:`${bgW}px ${bgH}px`,
