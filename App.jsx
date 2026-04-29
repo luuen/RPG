@@ -456,7 +456,7 @@ const LayeredHeroSprite = React.memo(function LayeredHeroSprite({ looks, display
   const fps = 8;
   const [animFrame, setAnimFrame] = React.useState(0);
   React.useEffect(()=>{
-    if (!isAttacking) return; // freeze on current frame during idle — no blink, no drift
+    if (!isAttacking) { setAnimFrame(0); return; } // reset to frame 0 on idle — blank frames 4-7 cause invisible hero
     // Start animating from frame 0 when attacking begins
     setAnimFrame(0);
     const iv = setInterval(()=>setAnimFrame(f=>(f+1)%cols), 1000/fps);
