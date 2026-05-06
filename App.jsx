@@ -127,16 +127,18 @@ const ENEMY_DIMS = {
 };
 
 // Enemy sprite pool — 9 variants randomized per encounter (dragon excluded)
+// headPad: transparent px at top of frame before actual character head (raw frame coords).
+// Used to push hero feet down to true contact point during stomp.
 const ENEMY_SPRITE_POOL = [
-  {variant:"Gorgon_1",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16},
-  {variant:"Gorgon_2",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16},
-  {variant:"Gorgon_3",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16},
-  {variant:"Minotaur_1",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
-  {variant:"Minotaur_2",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
-  {variant:"Minotaur_3",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5 },
-  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-10},
-  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-10},
-  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-10},
+  {variant:"Gorgon_1",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16, headPad:22},
+  {variant:"Gorgon_2",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16, headPad:22},
+  {variant:"Gorgon_3",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16, headPad:22},
+  {variant:"Minotaur_1",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5,  headPad:18},
+  {variant:"Minotaur_2",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5,  headPad:18},
+  {variant:"Minotaur_3",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5,  headPad:18},
+  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-10, headPad:24},
+  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-10, headPad:24},
+  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-10, headPad:24},
 ];
 
 // Gandalf layered hero sprites — randomized per run
@@ -162,8 +164,11 @@ const HERO_LAYERS = {
       _G("Male Clothing/orange Shirt v2.png"),
     ],
     boots: [
-      _G("Male Clothing/Boots.png"), _G("Male Clothing/Boots.png"),  // 2x weight
-      _G("Male Clothing/Shoes.png"),
+      // Shoes.png is near-fully transparent — removed. Boots.png only.
+      // bootsIdleRow:7 = last row, both feet planted (row 0 is empty for base-pack)
+      {src:_G("Male Clothing/Boots.png"), bootsIdleRow:7, bootsYOffset:8},
+      {src:_G("Male Clothing/Boots.png"), bootsIdleRow:7, bootsYOffset:8},
+      {src:_G("Male Clothing/Boots.png"), bootsIdleRow:7, bootsYOffset:8},
     ],
     arms: [
       null, null,  // ~22% no arms
@@ -184,48 +189,40 @@ const HERO_LAYERS = {
       ...[1,2,3,4,5].map(i=>_G10("Male Ears",`Elven Ears${i}.png`)),
     ],
     hand: [_G("Male Hand/Male Sword.png")],
-    frameW:100, frameH:56, totalRows:8, cols:8, idleRow:0, atkRow:4,
+    frameW:100, frameH:56, totalRows:8, cols:8, idleRow:0, idleCols:4, atkRow:4, atkCols:4, atkXCrop:16,
   },
   female: {
     skins: [1,2,3,4,5].map(i=>_G(`Character skin colors/Female Skin${i}.png`)),
+    // G43F clothing removed — incompatible pack origin/scale with base LPC skin
+    // (renders as misaligned color blocks, same root cause as G43F boots removal)
     clothing: [
       _G("Female Clothing/Blue Corset.png"),   _G("Female Clothing/Blue Corset v2.png"),
       _G("Female Clothing/Corset.png"),         _G("Female Clothing/Corset v2.png"),
       _G("Female Clothing/Green Corset.png"),   _G("Female Clothing/Green Corset v2.png"),
       _G("Female Clothing/Orange Corset.png"),  _G("Female Clothing/Orange Corset v2.png"),
       _G("Female Clothing/Purple Corset.png"),  _G("Female Clothing/Purple Corset v2.png"),
-      _G("Female Clothing/Skirt.png"),
       _G("Female Clothing/Blue Panties and Bra.png"),   _G("Female Clothing/Green Panties and Bra.png"),
       _G("Female Clothing/Orange Panties and Bra.png"), _G("Female Clothing/Purple Panties and Bra.png"),
       _G("Female Clothing/Red Panties and Bra.png"),    _G("Female Clothing/Skyblue Panties and Bra.png"),
-      // 43x extended pack
-      _G43F("Armored Corset.png"),
-      _G43F("Blue Bodice Long Sleeves.png"),   _G43F("Blue Bodice Mid Sleeves.png"), _G43F("Blue Bodice.png"),
-      _G43F("Blue Corset Long Sleeves.png"),   _G43F("Blue Corset v2 Long Sleeves.png"),
-      _G43F("Blue bikini.png"),  _G43F("Blue dress.png"),
-      _G43F("Corset Long Sleeves.png"),        _G43F("Corset v2 Long Sleeves.png"),
-      _G43F("Fancy Blue Dress.png"),
-      _G43F("Green Bodice Long Sleeves.png"),  _G43F("Green Bodice Mid Sleeves.png"), _G43F("Green Bodice.png"),
-      _G43F("Green Corset Long Sleeves.png"),  _G43F("Green Corset v2 Long Sleeves.png"),
-      _G43F("Green bikini.png"),
-      _G43F("Long dress blue.png"), _G43F("Long dress green.png"), _G43F("Long dress orange.png"),
-      _G43F("Long dress purple.png"), _G43F("Long dress red.png"),
-      _G43F("Orange Bodice Long Sleeves.png"), _G43F("Orange Bodice Mid Sleeves.png"), _G43F("Orange Bodice.png"),
-      _G43F("Orange Corset Long Sleeves.png"), _G43F("Orange Corset v2 Long Sleeves.png"),
-      _G43F("Orange bikini.png"),
-      _G43F("Purple Bodice Long Sleeves.png"), _G43F("Purple Bodice Mid Sleeves.png"), _G43F("Purple Bodice.png"),
-      _G43F("Purple Corset Long Sleeves.png"), _G43F("Purple Corset v2 Long Sleeves.png"),
-      _G43F("Purple bikini.png"),  _G43F("Queen Dress.png"),
-      _G43F("Red Bodice Long Sleeves.png"),    _G43F("Red Bodice Mid Sleeves.png"), _G43F("Red Bodice.png"),
-      _G43F("Red bikini.png"),     _G43F("Short Skirt.png"),
+    ],
+    // legs layer: sits between skin and clothing, fills hip/thigh area
+    // base-pack has no pants for female — Skirt.png is best available leg coverage
+    legs: [
+      _G("Female Clothing/Skirt.png"),
+      _G("Female Clothing/Skirt.png"),
+      _G("Female Clothing/Skirt.png"),
     ],
     boots: [
-      _G("Female Clothing/Boots.png"), _G("Female Clothing/Boots.png"),  // 2x weight
-      _G("Female Clothing/Socks.png"),          _G("Female Clothing/Green Socks.png"),
-      _G("Female Clothing/Orange Socks.png"),   _G("Female Clothing/Purple Socks.png"),
-      _G("Female Clothing/Red Socks.png"),      _G("Female Clothing/Skyblue Socks.png"),
-      _G43F("Black Thigh-High Boots.png"),  _G43F("Brown Thigh-High Boots.png"),
-      _G43F("Pink Thigh-High Boots.png"),   _G43F("Red Thigh-High Boots.png"),
+      // base-pack: row 0 empty → use row 7 (standing foot Y=49-55) for idle
+      {src:_G("Female Clothing/Boots.png"),        bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
+      {src:_G("Female Clothing/Boots.png"),        bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
+      {src:_G("Female Clothing/Socks.png"),        bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
+      {src:_G("Female Clothing/Green Socks.png"),  bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
+      {src:_G("Female Clothing/Orange Socks.png"), bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
+      {src:_G("Female Clothing/Purple Socks.png"), bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
+      {src:_G("Female Clothing/Red Socks.png"),    bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
+      {src:_G("Female Clothing/Skyblue Socks.png"),bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
+      // G43F thigh-high boots removed — incompatible pack origin/scale with base LPC skin
     ],
     arms: [
       null, null,  // ~22% no arms
@@ -243,27 +240,34 @@ const HERO_LAYERS = {
       ...[1,2,3,4,5].map(i=>_G10("Female Ears",`Elven Ears${i}.png`)),
     ],
     hand: [_G("Female Hand/Female Sword.png")],
-    frameW:100, frameH:56, totalRows:8, cols:8, idleRow:0, atkRow:4,
+    frameW:100, frameH:56, totalRows:8, cols:8, idleRow:0, idleCols:4, atkRow:4, atkCols:4, atkXCrop:16,
   },
 };
 const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
 const randomHeroLooks = () => {
   const gender = Math.random()<0.5?"male":"female";
   const g = HERO_LAYERS[gender];
+  const bootPick = pick(g.boots); // {src, bootsIdleRow} object
   return {
     gender,
-    skin:     pick(g.skins),
-    clothing: pick(g.clothing),
-    boots:    pick(g.boots),
-    arms:     pick(g.arms),    // may be null → no arm layer
-    hair:     pick(g.hair),
-    ears:     pick(g.ears),    // may be null → no ear layer
-    hand:     pick(g.hand),
-    frameW:   g.frameW,
-    frameH:   g.frameH,
-    cols:     g.cols,
-    idleRow:  g.idleRow,
-    atkRow:   g.atkRow,
+    skin:         pick(g.skins),
+    legs:         g.legs ? pick(g.legs) : null, // female only: skirt/leggings between skin + clothing
+    clothing:     pick(g.clothing),
+    boots:        bootPick.src,         // path string
+    bootsIdleRow: bootPick.bootsIdleRow ?? 0, // which sprite row to show when idle
+    bootsYOffset: bootPick.bootsYOffset  ?? 0, // translateY(px) to fine-tune boot alignment
+    arms:         pick(g.arms),         // may be null → no arm layer
+    hair:         pick(g.hair),
+    ears:         pick(g.ears),         // may be null → no ear layer
+    hand:         pick(g.hand),
+    frameW:       g.frameW,
+    frameH:       g.frameH,
+    cols:         g.cols,
+    idleRow:      g.idleRow,
+    idleCols:     g.idleCols,
+    atkRow:       g.atkRow,
+    atkCols:      g.atkCols,
+    atkXCrop:     g.atkXCrop,
   };
 };
 
@@ -424,6 +428,32 @@ function heroStompBouncePos(t, landLeft, landTop) {
 
 /* ─── SVG CHARACTER SPRITES ──────────────────────────────────── */
 
+// Weapon-orbit keyframes — injected once
+if (!document.getElementById('__weaponOrbitKF')) {
+  const _s = document.createElement('style');
+  _s.id = '__weaponOrbitKF';
+  _s.textContent = `
+    @keyframes weaponOrbit        { from{transform:rotate(0deg)}   to{transform:rotate(360deg)}  }
+    @keyframes weaponOrbitCounter { from{transform:rotate(0deg)}   to{transform:rotate(-360deg)} }
+    @keyframes weaponOrbitPulse   { 0%,100%{opacity:.85;transform:rotate(-360deg) scale(1)}  50%{opacity:1;transform:rotate(-180deg) scale(1.2)} }
+  `;
+  document.head.appendChild(_s);
+}
+
+// Stomp impact burst keyframes — injected once
+if (!document.getElementById('__stompImpactKF')) {
+  const _si = document.createElement('style');
+  _si.id = '__stompImpactKF';
+  _si.textContent = `
+    @keyframes siFlash  { 0%{transform:scale(0.15);opacity:1} 55%{transform:scale(1.6);opacity:.9} 100%{transform:scale(2.4);opacity:0} }
+    @keyframes siSpike  { 0%{transform:scaleX(0.05);opacity:1} 60%{transform:scaleX(1);opacity:1} 100%{transform:scaleX(1.35);opacity:0} }
+    @keyframes siDebris { 0%{opacity:1;transform:translate(0,0) scale(1)} 100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0.4)} }
+    @keyframes siLabel  { 0%{opacity:1;transform:translateX(-50%) scale(0.6) translateY(0px)} 40%{opacity:1;transform:translateX(-50%) scale(1.15) translateY(-10px)} 100%{opacity:0;transform:translateX(-50%) scale(1) translateY(-22px)} }
+    @keyframes siRing   { 0%{transform:scale(0.1);opacity:.9;border-width:6px} 100%{transform:scale(2.8);opacity:0;border-width:1px} }
+  `;
+  document.head.appendChild(_si);
+}
+
 // Animates a horizontal sprite strip — JS-driven frame counter
 // React.memo prevents re-renders during QTE rAF loops (props stable; only qteAnim.t changes)
 const AnimatedSprite = React.memo(function AnimatedSprite({ src, numFrames, fps=8, displayW, displayH, flip=false }) {
@@ -454,45 +484,53 @@ const LayeredHeroSprite = React.memo(function LayeredHeroSprite({ looks, display
   const idleRow   = looks.idleRow   || 0;
   const frameW    = looks.frameW    || 100;
   const frameH    = looks.frameH    || 56;
-  const fps = 8;
-  const [animFrame, setAnimFrame] = React.useState(0);
-  React.useEffect(()=>{
-    if (!isAttacking) { setAnimFrame(0); return; } // reset to frame 0 on idle — blank frames 4-7 cause invisible hero
-    // Start animating from frame 0 when attacking begins
-    setAnimFrame(0);
-    const iv = setInterval(()=>setAnimFrame(f=>(f+1)%cols), 1000/fps);
-    return ()=>clearInterval(iv);
-  },[cols, fps, isAttacking]);
   if (!looks.skin) return null;
+
   // Scale so frame HEIGHT fills displayH exactly — frame width > displayW so we center-crop
   const vScale   = displayH / frameH;
   const scaledFW = Math.round(frameW * vScale);
   const bgW      = cols      * scaledFW;
   const bgH      = totalRows * displayH;
-  const displayFrame = isAttacking ? animFrame : 0; // force frame 0 when idle — Gandalf sheets have blank cols 4-7
-  const activeRow = isAttacking ? (looks.atkRow ?? idleRow) : idleRow; // use attack row when attacking — idle row has blank frames 4-7
-  const bpX      = -(displayFrame * scaledFW + Math.round((scaledFW - displayW) / 2));
-  const bpY      = -(activeRow * displayH);
-  const bgStyle  = {
-    backgroundRepeat:"no-repeat",
-    backgroundSize:`${bgW}px ${bgH}px`,
-    backgroundPosition:`${bpX}px ${bpY}px`,
-    imageRendering:"pixelated",
-  };
+  // Always frame 0 — LPC sheet has walk cycles, not idle frames; cycling looks broken
+  const activeRow  = isAttacking ? (looks.atkRow ?? idleRow) : idleRow;
+  const centerCrop = Math.round((scaledFW - displayW) / 2); // 38px
+  const bpX        = isAttacking ? -(looks.atkXCrop ?? 20) : -centerCrop;
+  // Boots: base-pack row 0 empty → use bootsIdleRow (row 7 = standing feet)
+  const bootsIdleRow = looks.bootsIdleRow ?? idleRow;
+  const bootsYOffset = looks.bootsYOffset ?? 0; // translateY px to align boot with skin feet
+  const bootsNudgeX  = looks.bootsNudgeX  ?? -1; // translateX px per-entry override
   const toUrl = s => `url("${s.replace(/\\/g,"/").replace(/ /g,"%20")}")`;
-  // Layers: skin → clothing → boots → arms → hair → ears (all same spritesheet layout)
-  const layers = [looks.skin, looks.clothing, looks.boots, looks.arms, looks.hair, looks.ears].filter(Boolean);
+  // Layers: skin → clothing (top) → legs (skirt, renders over clothing hip) → boots → arms → hair → ears
+  const layers = [looks.skin, looks.clothing, looks.legs, looks.boots, looks.arms, looks.hair, looks.ears].filter(Boolean);
   return (
-    <div style={{width:displayW, height:displayH, position:"relative", overflow:"hidden", imageRendering:"pixelated"}}>
-      {layers.map((src, i) => (
-        <div key={i} style={{
-          position: i===0 ? "relative" : "absolute",
-          inset: 0,
-          width: displayW, height: displayH,
-          backgroundImage: toUrl(src),
-          ...bgStyle,
-        }}/>
-      ))}
+    <div style={{width:displayW, height:displayH, position:"relative", overflow:"visible", imageRendering:"pixelated"}}>
+      {layers.map((src, i) => {
+        // Boots: always row 7 (feet y=56-64). Attack row 4 wrongly puts boots at thigh.
+        // Legs/skirt: always row 6 (skirt y=35-55), so hem ends at y=55 — boots at y=57 sit just below.
+        const isBootsLayer = src === looks.boots;
+        const isLegsLayer  = looks.legs && src === looks.legs;
+        const LEGS_ROW = 6; // skirt row 6 ends at display y=55; socks row 7 starts at y=57
+        const rowForLayer  = isBootsLayer ? bootsIdleRow : isLegsLayer ? LEGS_ROW : activeRow;
+        const layerBpY     = -(rowForLayer * displayH);
+        const layerBpX     = bpX;
+        const yShift = isBootsLayer ? `translateX(${bootsNudgeX}px) translateY(${bootsYOffset}px)` : undefined;
+        // Clip legs layer to waist-down so dress/skirt upper-body pixels don't overlap clothing top
+        const legsClip = isLegsLayer ? {clipPath:"inset(28px 0 0 0)"} : {};
+        return (
+          <div key={i} style={{
+            position: i===0 ? "relative" : "absolute",
+            inset: 0,
+            width: displayW, height: displayH,
+            backgroundImage: toUrl(src),
+            backgroundRepeat:"no-repeat",
+            backgroundSize:`${bgW}px ${bgH}px`,
+            backgroundPosition:`${layerBpX}px ${layerBpY}px`,
+            imageRendering:"pixelated",
+            ...(yShift ? {transform:yShift} : {}),
+            ...legsClip,
+          }}/>
+        );
+      })}
     </div>
   );
 }); // LayeredHeroSprite memo
@@ -1129,6 +1167,7 @@ function App() {
   const [enemyFlash,     setEnemyFlash]     = useState(false);
   const [hitResult,      setHitResult]      = useState(null);
   const [impactFlash,    setImpactFlash]    = useState(0); // 0=off, 1=white hit, 2=enemy hit
+  const [stompImpact,    setStompImpact]    = useState(null); // {x,y,quality,id} — contact burst
   const [parryFlash,     setParryFlash]     = useState(false); // perfect parry screen flash
   const [castTick,       setCastTick]       = useState(0);    // interval counter to drive CAST timer
 
@@ -2407,10 +2446,15 @@ function App() {
     const stompApproachEff = Math.round(stompDurEff * LAND_FRAC);
     // Use pool sprite frame height if available — pool sprites are 128×128, not ENEMY_DIMS
     const dims = cs?.enemySprite ? {w:cs.enemySprite.frameW, h:cs.enemySprite.frameH} : (ENEMY_DIMS[cs?.enemy?.id]||{w:55,h:70});
-    const eScaledH = dims.h*1.1;
+    const eScale = 1.1;
+    const eScaledH = dims.h * eScale;
     const stompGroundPad = cs?.enemySprite?.groundPad || 0;
-    const landTop  = Math.max(5, GNDY - eScaledH - HSH + stompGroundPad);
-    const landLeft = ENX - HSW/2;
+    // headPad: transparent px at frame top before the actual character head (raw coords → scale up)
+    const headPad = cs?.enemySprite ? ((cs.enemySprite.headPad || 0) * eScale) : 0;
+    // landTop: hero overlaps enemy body — sinks in so models appear close together
+    const STOMP_OVERLAP = 30; // px hero sinks below enemy head for visual contact
+    const landTop  = Math.max(5, GNDY - eScaledH + headPad - HSH + stompGroundPad + STOMP_OVERLAP);
+    const landLeft = ENX - HSW/2 + Math.round((cs?.enemySprite?.centerOffsetX||0) * eScale);
     const ref = qteRef.current;
     ref.landLeft = landLeft; ref.landTop = landTop;
     let totalDmg = 0;
@@ -2449,6 +2493,10 @@ function App() {
         if (t>=flashAt&&!ref.flashDone) {
           ref.flashDone=true;
           triggerImpact(1);
+          // Fire contact burst particles at enemy head
+          const sid = Date.now();
+          setStompImpact({ x: ENX, y: (ref.landTop||0) + HSH, quality:"hit", id: sid });
+          setTimeout(()=>setStompImpact(s=>s?.id===sid?null:s), 550);
         }
         if (t<1) { requestAnimationFrame(tick); return; }
         window.removeEventListener("keydown",onKey);
@@ -2476,6 +2524,10 @@ function App() {
         totalDmg += dmgFor(q2);
         const best = [q1,q2].includes("perfect")?"perfect":"good";
         triggerImpact(best==="perfect"?2:1);
+        // Final quality burst — overrides the hit burst with larger perfect explosion
+        const sid2 = Date.now();
+        setStompImpact({ x: ENX, y: (ref.landTop||0) + HSH, quality: best, id: sid2 });
+        setTimeout(()=>setStompImpact(s=>s?.id===sid2?null:s), best==="perfect"?900:650);
         showHit(best==="perfect"?`PERFECT! −${totalDmg}`:`GOOD! −${totalDmg}`, best==="perfect"?"#44ff88":"#ffcc44");
         returnHome(()=>resolveAttack(best,weapon,totalDmg));
       });
@@ -2772,14 +2824,15 @@ function App() {
         const ref = qteRef.current;
         if ((qteAnim.bounce||0) > 0)
           return heroStompBouncePos(t, ref.landLeft||0, ref.landTop||0);
-        // Contact 0: hero RUNS along ground then jumps up at the last 30% to land on enemy head
-        // This keeps hero visible near ground throughout the approach
+        // Paper Mario arc: full quadratic bezier from hero home → apex → enemy head
         const lL = ref.landLeft||0, lT = ref.landTop||0;
-        const s  = easeIO(t);
-        const left = HR_L + (lL - HR_L) * s;
-        const JUMP_START = 0.65; // run for 65%, jump for last 35%
-        const jumpT = Math.max(0, (t - JUMP_START) / (1 - JUMP_START));
-        const top  = HR_T - easeIO(jumpT) * (HR_T - lT);
+        const left = HR_L + (lL - HR_L) * easeIO(t);
+        // Control point: high above midpoint for dramatic arc
+        const APEX_H = 140; // px above straight-line midpoint
+        const midY   = (HR_T + lT) / 2;
+        const P1     = midY - APEX_H;
+        // Quadratic bezier: (1-t)²·P0 + 2(1-t)t·P1 + t²·P2
+        const top    = (1-t)*(1-t)*HR_T + 2*(1-t)*t*P1 + t*t*lT;
         return { left, top };
       }
       case "stomp_return": {
@@ -3664,7 +3717,8 @@ function App() {
           : (ENEMY_DIMS[cs.enemy.id]||{w:55,h:70});
         const eScale    = 1.1;
         const eW        = eDims.w*eScale, eH = eDims.h*eScale;
-        const eLeft     = ENX - eW/2 + enemyWindUp;
+        const eCenterOffX = Math.round((cs.enemySprite?.centerOffsetX||0) * eScale);
+        const eLeft     = ENX - eW/2 + enemyWindUp + eCenterOffX;
         const groundPad = cs.enemySprite?.groundPad || 0; // per-sprite vertical offset
         const eTop      = GNDY - eH + groundPad;
 
@@ -4736,15 +4790,84 @@ function App() {
                 <div style={{position:"absolute",left:ENX-30,top:eTop+eH-20,width:60,height:24,borderRadius:"50%",border:"2px solid #ffaa3388",animation:"stompDust .4s ease-out forwards",zIndex:8,pointerEvents:"none"}}/>
               )}
 
+              {/* Stomp impact — subtle dust puffs at enemy head contact point */}
+              {stompImpact&&(()=>{
+                const { x, y, id } = stompImpact;
+                // 6 small dust particles drifting up and outward
+                const dusts = [
+                  { dx:-14, dy:-18, delay:0,   size:5 },
+                  { dx: 12, dy:-16, delay:30,  size:4 },
+                  { dx:-22, dy:-10, delay:15,  size:3 },
+                  { dx: 20, dy:-12, delay:45,  size:4 },
+                  { dx: -8, dy:-22, delay:60,  size:3 },
+                  { dx: 16, dy:-20, delay:20,  size:3 },
+                ];
+                return (
+                  <div key={id} style={{position:"absolute",left:x,top:y,width:0,height:0,zIndex:26,pointerEvents:"none"}}>
+                    {dusts.map((d,i)=>(
+                      <div key={i} style={{
+                        position:"absolute",
+                        width:d.size, height:d.size,
+                        left:-d.size/2, top:-d.size/2,
+                        borderRadius:"50%",
+                        background:"rgba(210,190,160,0.75)",
+                        "--dx":d.dx+"px", "--dy":d.dy+"px",
+                        animation:`siDebris .55s ease-out ${d.delay}ms forwards`,
+                      }}/>
+                    ))}
+                  </div>
+                );
+              })()}
+
               {/* Hero sprite — position:absolute in zoomed battlefield (outer wrapper has no overflow:hidden) */}
-              <div style={{position:"absolute",
-                left: heroPos ? heroPos.left : HR_L,
-                top:  heroPos ? heroPos.top  : HR_T,
-                zIndex:20, animation:"none", pointerEvents:"none",
-                filter: qteAnim?.type==="defend" ? "drop-shadow(0 0 10px #4488ff)" :
-                        chargeActive&&cIsPerfect  ? "drop-shadow(0 0 14px #44ff88)" : "none"}}>
-                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim}/>
-              </div>
+              {(()=>{
+                // Stomp uses idle pose throughout — arc/jump IS the visual, pose swap causes bpX artifact
+                const heroIsAtk = !!qteAnim && qteAnim.type!=="defend"
+                                            && qteAnim.type!=="stomp"
+                                            && qteAnim.type!=="stomp_return";
+                return (
+                  <div style={{position:"absolute",
+                    left: heroPos ? heroPos.left : HR_L,
+                    top:  heroPos ? heroPos.top  : HR_T,
+                    zIndex:20, animation:"none", pointerEvents:"none",
+                    filter: qteAnim?.type==="defend"   ? "drop-shadow(0 0 10px #4488ff)" :
+                            chargeActive&&cIsPerfect   ? "drop-shadow(0 0 14px #44ff88)" : "none"}}>
+                    <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={heroIsAtk}/>
+                  </div>
+                );
+              })()}
+
+              {/* Orbiting weapon icons — Mega Man style, one per held weapon */}
+              {(player.weapons||[]).map((wid, i, arr) => {
+                const wData = ALL_WEAPONS[wid];
+                if (!wData) return null;
+                const ORBIT_R   = 38;          // px from hero center
+                const ORBIT_DUR = 3.2;          // seconds per full revolution
+                const delay     = -(i / arr.length) * ORBIT_DUR; // phase-offset each weapon evenly
+                const hcx = (heroPos ? heroPos.left : HR_L) + HSW / 2; // hero center x
+                const hcy = (heroPos ? heroPos.top  : HR_T) + HSH / 2; // hero center y
+                return (
+                  <div key={wid} style={{
+                    position:"absolute", left:hcx, top:hcy,
+                    width:0, height:0, zIndex:22, pointerEvents:"none",
+                    animation:`weaponOrbit ${ORBIT_DUR}s linear ${delay}s infinite`,
+                    transformOrigin:"0 0",
+                  }}>
+                    <div style={{
+                      position:"absolute",
+                      left: ORBIT_R - 11, top: -11,
+                      width:22, height:22,
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      fontSize:15,
+                      background:"rgba(0,0,0,0.55)",
+                      borderRadius:"50%",
+                      border:"1px solid rgba(255,200,80,0.5)",
+                      boxShadow:"0 0 6px rgba(255,180,40,0.4)",
+                      animation:`weaponOrbitCounter ${ORBIT_DUR}s linear ${delay}s infinite`,
+                    }}>{wData.emoji}</div>
+                  </div>
+                );
+              })}
 
               {/* Battlefield status line */}
               <div style={{position:"absolute",top:qteAnim?.type==="swing_beat"||qteAnim?.type==="hold_release"||qteAnim?.type==="poke"?50:qteAnim?.type==="sequence"?30:10,left:"50%",transform:"translateX(-50%)",fontFamily:"Cinzel",fontSize:10,letterSpacing:3,zIndex:9,whiteSpace:"nowrap"}}>

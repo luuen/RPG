@@ -12,19 +12,33 @@ my $d = HTTP::Daemon->new(LocalPort => $port, LocalAddr => '127.0.0.1', ReuseAdd
 print "Server ready at http://127.0.0.1:$port\n";
 STDOUT->flush();
 
+# Reap zombie children
+$SIG{CHLD} = 'IGNORE';
+
 while (my $c = $d->accept) {
+    my $pid = fork();
+    if (!defined $pid) { $c->close; next; }  # fork failed
+    if ($pid) { $c->close; next; }            # parent: close and loop
+
+    # Child: handle the connection
+    $d->close;  # child doesn't need the listen socket
     while (my $r = $c->get_request) {
         my $path = $r->url->path;
+        # URL-decode %XX sequences so file paths with spaces work
+        $path =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
         $path = '/index.html' if $path eq '/';
         # Prevent directory traversal
         $path =~ s|/\.\./|/|g;
-        my $file = '/c/Users/freak/Desktop/Claude' . $path;
+        my $file = '/c/Users/freak/Desktop/Claude/RPG' . $path;
 
         if (-f $file) {
             my $ct = 'text/html; charset=utf-8';
             $ct = 'application/javascript; charset=utf-8' if $file =~ /\.(js|jsx|mjs)$/i;
             $ct = 'text/css; charset=utf-8'               if $file =~ /\.css$/i;
             $ct = 'image/png'                              if $file =~ /\.png$/i;
+            $ct = 'image/gif'                              if $file =~ /\.gif$/i;
+            $ct = 'audio/mpeg'                             if $file =~ /\.mp3$/i;
+            $ct = 'audio/wav'                              if $file =~ /\.wav$/i;
 
             open(my $fh, '<:raw', $file) or do { $c->send_error(RC_INTERNAL_SERVER_ERROR); next };
             local $/;
@@ -42,5 +56,5 @@ while (my $c = $d->accept) {
         }
     }
     $c->close;
-    undef $c;
+    exit 0;  # child exits
 }
