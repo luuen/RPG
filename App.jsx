@@ -68,13 +68,13 @@ body{background:#020205;overflow:hidden;user-select:none;color:#e8d5a3;font-fami
 
 /* ─── WEAPON DATA ────────────────────────────────────────────── */
 const STARTER_WEAPONS = {
-  sword:      { id:"sword",      name:"Iron Sword",    emoji:"⚔️",  baseDmg:12, speed:2.2, qteType:"swing_beat",    tier:"basic", desc:"Press A→W→D in sequence. Hit the beat!", classEmoji:"🛡️", className:"Knight"   },
-  hammer:     { id:"hammer",     name:"War Hammer",    emoji:"🔨",  baseDmg:22, speed:1.0, qteType:"hold_release",  tier:"basic", desc:"Hold SPACE to charge. Release in the GREEN zone — too long = OVERCHARGE!", classEmoji:"⚒️", className:"Berserker"},
-  daggers:    { id:"daggers",    name:"Shadow Daggers",emoji:"🗡️",  baseDmg:9,  speed:3.0, qteType:"rapid_tap",    tier:"basic", tapTarget:8,  desc:"Mash A and D alternately 8 times before the timer runs out!", classEmoji:"🐍", className:"Rogue"    },
-  staff:      { id:"staff",      name:"Arcane Staff",  emoji:"🪄",  baseDmg:16, speed:1.8, qteType:"sequence",     tier:"basic", seqLength:4,  desc:"Type the 4-letter rune sequence shown. One wrong key = restart!", classEmoji:"🌙", className:"Mage"     },
+  sword:      { id:"sword",      name:"Iron Sword",    emoji:"⚔️",  baseDmg:15, speed:2.2, qteType:"swing_beat",    tier:"basic", desc:"Press A→W→D in sequence. Hit the beat!", classEmoji:"🛡️", className:"Knight"   },
+  hammer:     { id:"hammer",     name:"War Hammer",    emoji:"🔨",  baseDmg:15, speed:1.0, qteType:"hold_release",  tier:"basic", desc:"Hold SPACE to charge. Release in the GREEN zone — too long = OVERCHARGE!", classEmoji:"⚒️", className:"Berserker"},
+  daggers:    { id:"daggers",    name:"Shadow Daggers",emoji:"🗡️",  baseDmg:15, speed:3.0, qteType:"rapid_tap",    tier:"basic", tapTarget:8, rapidDur:1200, desc:"Mash A and D alternately 8 times before the timer runs out!", classEmoji:"🐍", className:"Rogue"    },
+  staff:      { id:"staff",      name:"Arcane Staff",  emoji:"🪄",  baseDmg:11, speed:1.8, qteType:"sequence",     tier:"basic", seqLength:8,  desc:"Type the 8-rune sequence — wrong keys reduce damage. Hit all 8 for maximum power!", classEmoji:"🌙", className:"Mage"     },
   bow:        { id:"bow",        name:"Elven Bow",     emoji:"🏹",  baseDmg:8,  speed:1.5, qteType:"archery",      tier:"basic", desc:"3 orbiting dots — press SPACE when each is in the center ring.", classEmoji:"🌿", className:"Ranger"   },
-  sword_gun:  { id:"sword_gun",  name:"Sword & Gun",   emoji:"⚔🔫", baseDmg:16, speed:1.8, qteType:"dual_action",  tier:"basic", dotSpeed:1.60, centerWidth:0.22, classEmoji:"🔫", className:"Duelist",  desc:"Hold A+W+D simultaneously, then LEFT CLICK when the dot hits the center zone." },
-  boots:      { id:"boots",      name:"Iron Boots",    emoji:"👟",  baseDmg:8,  speed:1.4, qteType:"stomp",        tier:"basic", classEmoji:"👊", className:"Brawler", desc:"Run to the enemy and jump! Press SPACE at the moment of landing." },
+  sword_gun:  { id:"sword_gun",  name:"Sword & Gun",   emoji:"⚔🔫", baseDmg:11, speed:1.8, qteType:"dual_action",  tier:"basic", dotSpeed:1.60, centerWidth:0.22, classEmoji:"🔫", className:"Duelist",  desc:"Hold A+W+D simultaneously, then LEFT CLICK when the dot hits the center zone." },
+  boots:      { id:"boots",      name:"Iron Boots",    emoji:"👟",  baseDmg:11, speed:1.4, qteType:"stomp",        tier:"basic", classEmoji:"👊", className:"Brawler", desc:"Run to the enemy and jump! Press SPACE at the moment of landing." },
 };
 const ALL_WEAPONS = {
   ...STARTER_WEAPONS,
@@ -2521,7 +2521,9 @@ function App() {
         clearTimeout(ref.seqTimer);
         const ratio = ref.correctCount / seq.length;
         const q = ratio>=.75?"perfect":ratio>=.45?"good":"miss";
-        const dmg = Math.max(1,Math.floor((weaponDmg(weapon)+(player?.str||0))*ratio*2.2));
+        // Tiered mult: all correct=2x, 60-99%=1.75x, 1-59%=1.15x, 0=0.30x
+        const seqMult = ratio>=1.0?2.0:ratio>=0.60?1.75:ratio>=0.10?1.15:0.30;
+        const dmg = Math.max(1,Math.floor((weaponDmg(weapon)+(player?.str||0))*seqMult));
         fireMagicBolt(q, dmg, weapon);
       } else {
         setQteAnim(prev=>prev?{...prev,input:ref.input,correctCount:ref.correctCount,badKey:!correct}:null);
@@ -2536,7 +2538,8 @@ function App() {
         window.removeEventListener("keydown",onKey);
         const ratio = ref.correctCount / seq.length;
         const q = ratio>=.75?"perfect":ratio>=.45?"good":"miss";
-        const dmg = Math.max(1,Math.floor((weaponDmg(weapon)+(player?.str||0))*ratio*2.2));
+        const seqMult = ratio>=1.0?2.0:ratio>=0.60?1.75:ratio>=0.10?1.15:0.30;
+        const dmg = Math.max(1,Math.floor((weaponDmg(weapon)+(player?.str||0))*seqMult));
         fireMagicBolt(q, dmg, weapon);
       }
     }, seqDurEff);
@@ -2629,7 +2632,7 @@ function App() {
       requestAnimationFrame(tick);
     };
 
-    const dmgFor = q => Math.floor((weaponDmg(weapon)+(player?.str||0))*(q==="perfect"?1.5:q==="good"?1.0:0.25));
+    const dmgFor = q => Math.floor((weaponDmg(weapon)+(player?.str||0))*(q==="perfect"?2.0:q==="good"?1.0:0.25));
 
     doContact(0, q1 => {
       sfx.stompLand(q1);
@@ -2787,7 +2790,7 @@ function App() {
       const dist = Math.abs(clickPos - 0.5);
       const half = centerW / 2;
       const q = dist < half*0.32 ? "perfect" : dist < half ? "good" : "miss";
-      const base = (weapon.baseDmg + (player?.str||0)) * (q==="perfect"?1.5:q==="good"?1.0:0.3);
+      const base = (weapon.baseDmg + (player?.str||0)) * (q==="perfect"?2.0:q==="good"?1.0:0.3);
       const dmg  = Math.max(1, Math.floor(base * Math.max(0.3, 1 - ref.dropCount*0.18)));
       setQteAnim(null);
       resolveAttack(q, weapon, dmg);
