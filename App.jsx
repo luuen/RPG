@@ -21,6 +21,7 @@ body{background:#020205;overflow:hidden;user-select:none;color:#e8d5a3;font-fami
 @keyframes scaleIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
 @keyframes squish{0%{transform:scaleX(1)scaleY(1)}40%{transform:scaleX(1.45)scaleY(.55)}100%{transform:scaleX(1)scaleY(1)}}
 @keyframes actionCmd{0%{transform:scale(0) translateY(8px);opacity:0}50%{transform:scale(1.3) translateY(0);opacity:1}70%{transform:scale(1) translateY(0);opacity:1}100%{transform:scale(1) translateY(0);opacity:1}}
+@keyframes breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
 @keyframes stompDust{0%{transform:scale(0);opacity:.7}100%{transform:scale(2.8);opacity:0}}
 @keyframes beamPulse{0%,100%{opacity:.35;filter:blur(1px)}50%{opacity:.85;filter:blur(0)}}
 @keyframes ringPulse{0%,100%{box-shadow:0 0 12px currentColor}50%{box-shadow:0 0 32px currentColor,0 0 60px currentColor}}
@@ -79,7 +80,7 @@ const ALL_WEAPONS = {
   ...STARTER_WEAPONS,
   // ── BASIC (non-starter) ──
   axe:            { id:"axe",           name:"Battle Axe",      emoji:"🪓",  baseDmg:19, speed:1.1, qteType:"hold_release", tier:"basic",                                        classEmoji:"🪓",  className:"Warrior"     },
-  spear:          { id:"spear",         name:"Iron Spear",      emoji:"🔱",  baseDmg:15, speed:1.9, qteType:"poke",         tier:"basic",                                        classEmoji:"🔱",  className:"Lancer"      },
+  spear:          { id:"spear",         name:"Iron Spear",      emoji:"🔱",  baseDmg:15, speed:1.9, qteType:"poke",         tier:"basic",                                        classEmoji:"🔱",  className:"Lancer",     desc:"Spam ANY keys as fast as you can — full keyboard, go wild!" },
   wand:           { id:"wand",          name:"Chaos Wand",      emoji:"✨",  baseDmg:18, speed:2.0, qteType:"sequence",     tier:"basic",  seqLength:3,                          classEmoji:"✨",  className:"Sorcerer"    },
   knife_shotgun:  { id:"knife_shotgun", name:"Knife & Shotgun", emoji:"🔪💥", baseDmg:24, speed:2.2, qteType:"dual_action", tier:"basic",  dotSpeed:2.00, centerWidth:0.25,      classEmoji:"💥",  className:"Brawgunner", desc:"Faster dot — wide zone saves you. Hold A+W+D and click." },
   // ── REFINED (elite drops only — blue) ──
@@ -89,7 +90,7 @@ const ALL_WEAPONS = {
   runic_staff:    { id:"runic_staff",   name:"Runic Staff",     emoji:"🪄",  baseDmg:28, speed:1.6, qteType:"sequence",    tier:"refined", seqLength:5, seqDur:3200,                                classEmoji:"📖",  className:"Runekeeper",  desc:"5-rune sequence, tighter window — one mistake restarts!" },
   hunters_bow:    { id:"hunters_bow",   name:"Hunter's Bow",    emoji:"🏹",  baseDmg:18, speed:1.5, qteType:"archery",     tier:"refined", archDur:3200,                                            classEmoji:"🎯",  className:"Hunter",      desc:"Faster orbiting dots — time each shot carefully." },
   iron_stompers:  { id:"iron_stompers", name:"Iron Stompers",   emoji:"👢",  baseDmg:18, speed:1.4, qteType:"stomp",       tier:"refined", stompDur:650,                                            classEmoji:"🦵",  className:"Crusher",     desc:"Faster stomp — hit the timing at peak force!" },
-  war_lance:      { id:"war_lance",     name:"War Lance",       emoji:"🔱",  baseDmg:26, speed:2.0, qteType:"poke",        tier:"refined", pokeDur:1800, pokeTarg:18,                               classEmoji:"⚡",  className:"Vanguard",    desc:"18 alternations, less time — rhythm is key." },
+  war_lance:      { id:"war_lance",     name:"War Lance",       emoji:"🔱",  baseDmg:26, speed:2.0, qteType:"poke",        tier:"refined", pokeDur:1800, pokeTarg:28,                               classEmoji:"⚡",  className:"Vanguard",    desc:"28 keypresses in less time — hammer the entire keyboard!" },
   axe_pistol:     { id:"axe_pistol",    name:"Axe & Pistol",   emoji:"🪓🔫", baseDmg:36, speed:1.5, qteType:"dual_action", tier:"refined", dotSpeed:2.80, centerWidth:0.16,                         classEmoji:"🪓",  className:"Gunslinger",  desc:"Noticeably faster dot — keep your eye on it. Hold A+W+D, click." },
   // ── EPIC (elite drops only — purple) ──
   obsidian_blade: { id:"obsidian_blade",name:"Obsidian Blade",  emoji:"🗡️",  baseDmg:38, speed:2.2, qteType:"swing_beat",  tier:"epic", beatTimeout:900,                                           classEmoji:"🌑",  className:"Darkblade",  desc:"Blink-fast — nail A→W→D in under a second or miss completely." },
@@ -98,7 +99,7 @@ const ALL_WEAPONS = {
   void_scepter:   { id:"void_scepter",  name:"Void Scepter",    emoji:"✨",  baseDmg:42, speed:1.8, qteType:"sequence",   tier:"epic", seqLength:6, seqDur:2600,                                   classEmoji:"🌌",  className:"Arcanist",   desc:"6 runes in 2.6 seconds — one mistake and you restart." },
   darkwood_bow:   { id:"darkwood_bow",  name:"Darkwood Bow",    emoji:"🏹",  baseDmg:32, speed:1.5, qteType:"archery",    tier:"epic", archDur:2500,                                               classEmoji:"🌙",  className:"Shadowshot", desc:"Fast-orbiting dots — lightning reflexes needed." },
   thunder_boots:  { id:"thunder_boots", name:"Thunder Boots",   emoji:"👟",  baseDmg:32, speed:1.4, qteType:"stomp",      tier:"epic", stompDur:530,                                               classEmoji:"⚡",  className:"Thunderfoot",desc:"Blink-fast stomp — the window is tiny." },
-  dragon_lance:   { id:"dragon_lance",  name:"Dragon Lance",    emoji:"🔱",  baseDmg:40, speed:2.0, qteType:"poke",       tier:"epic", pokeDur:1400, pokeTarg:22,                                  classEmoji:"🐉",  className:"Dragoon",    desc:"22 rapid alternations — don't break your rhythm." },
+  dragon_lance:   { id:"dragon_lance",  name:"Dragon Lance",    emoji:"🔱",  baseDmg:40, speed:2.0, qteType:"poke",       tier:"epic", pokeDur:1400, pokeTarg:36,                                  classEmoji:"🐉",  className:"Dragoon",    desc:"36 keypresses — blazing speed, use every finger." },
   club_musket:    { id:"club_musket",   name:"Club & Musket",   emoji:"🏏💥", baseDmg:46, speed:1.0, qteType:"dual_action",tier:"epic", dotSpeed:3.60, centerWidth:0.12,                           classEmoji:"💥",  className:"Rifleman",   desc:"Blazing dot speed — react fast. Hold A+W+D, click the center." },
   sniper_spear:   { id:"sniper_spear",  name:"Sniper & Spear",  emoji:"🎯🔱", baseDmg:50, speed:1.0, qteType:"dual_action",tier:"epic", dotSpeed:4.20, centerWidth:0.10,                           classEmoji:"🎯",  className:"Deadeye",    desc:"Fastest dot — pure reflex. Nail it for massive damage. Hold A+W+D, click." },
   // ── LEGENDARY ──
@@ -136,9 +137,9 @@ const ENEMY_SPRITE_POOL = [
   {variant:"Minotaur_1",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5,  headPad:18},
   {variant:"Minotaur_2",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5,  headPad:18},
   {variant:"Minotaur_3",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5,  headPad:18},
-  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-10, headPad:24},
-  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-10, headPad:24},
-  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:-10, headPad:24},
+  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:10, headPad:24},
+  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:10, headPad:24},
+  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:10, headPad:24},
 ];
 
 // Gandalf layered hero sprites — randomized per run
@@ -147,7 +148,6 @@ const _G  = (p) => `${ASSET_BASE}/icons/sprites/GandalfHardcore Character Asset 
 const _G58 = (g,p) => `${ASSET_BASE}/icons/sprites/GandalfHardcore 58x Hair/GandalfHardcore 58x Hair/${g}/${p}`;
 const _G43F = (p)  => `${ASSET_BASE}/icons/sprites/GandalfHardcore 43x Female Clothing/GandalfHardcore 43x Female Clothing/${p}`;
 const _G14  = (g,p)=> `${ASSET_BASE}/icons/sprites/GandalfHardcore 14x Arm Layers/GandalfHardcore Arm Layers/${g}/${p}`;
-const _G10  = (g,p)=> `${ASSET_BASE}/icons/sprites/GandalfHardcore 10x Elven ears/${g}/${p}`;
 
 const HERO_LAYERS = {
   male: {
@@ -165,10 +165,10 @@ const HERO_LAYERS = {
     ],
     boots: [
       // Shoes.png is near-fully transparent — removed. Boots.png only.
-      // bootsIdleRow:7 = last row, both feet planted (row 0 is empty for base-pack)
-      {src:_G("Male Clothing/Boots.png"), bootsIdleRow:7, bootsYOffset:8},
-      {src:_G("Male Clothing/Boots.png"), bootsIdleRow:7, bootsYOffset:8},
-      {src:_G("Male Clothing/Boots.png"), bootsIdleRow:7, bootsYOffset:8},
+      // bootsIdleRow:0 = idle row (same as all other layers)
+      {src:_G("Male Clothing/Boots.png"), bootsIdleRow:0, bootsYOffset:8},
+      {src:_G("Male Clothing/Boots.png"), bootsIdleRow:0, bootsYOffset:8},
+      {src:_G("Male Clothing/Boots.png"), bootsIdleRow:0, bootsYOffset:8},
     ],
     arms: [
       null, null,  // ~22% no arms
@@ -184,12 +184,13 @@ const HERO_LAYERS = {
       _G58("28x Male Hair","Queen hair.png"),
       _G58("28x Male Hair","Shield Maiden hair.png"),
     ],
-    ears: [
-      null,null,null,null,null,null,null,  // ~58% no ears
-      ...[1,2,3,4,5].map(i=>_G10("Male Ears",`Elven Ears${i}.png`)),
-    ],
     hand: [_G("Male Hand/Male Sword.png")],
-    frameW:100, frameH:56, totalRows:8, cols:8, idleRow:0, idleCols:4, atkRow:4, atkCols:4, atkXCrop:16,
+    frameW:80, frameH:64, totalRows:7, cols:10,
+    srcXOffset:0, srcYOffset:0, contentW:76,
+    idleRow:0, idleCols:5, walkRow:1, walkCols:8,
+    runRow:2,  runCols:8,  jumpRow:3, jumpCols:4,
+    fallRow:4, fallCols:4, atkRow:5,  atkCols:6,
+    deathRow:6,deathCols:8,
   },
   female: {
     skins: [1,2,3,4,5].map(i=>_G(`Character skin colors/Female Skin${i}.png`)),
@@ -214,14 +215,14 @@ const HERO_LAYERS = {
     ],
     boots: [
       // base-pack: row 0 empty → use row 7 (standing foot Y=49-55) for idle
-      {src:_G("Female Clothing/Boots.png"),        bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
-      {src:_G("Female Clothing/Boots.png"),        bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
-      {src:_G("Female Clothing/Socks.png"),        bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
-      {src:_G("Female Clothing/Green Socks.png"),  bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
-      {src:_G("Female Clothing/Orange Socks.png"), bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
-      {src:_G("Female Clothing/Purple Socks.png"), bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
-      {src:_G("Female Clothing/Red Socks.png"),    bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
-      {src:_G("Female Clothing/Skyblue Socks.png"),bootsIdleRow:7, bootsYOffset:0, bootsNudgeX:0},
+      {src:_G("Female Clothing/Boots.png"),        bootsIdleRow:0, bootsYOffset:0, bootsNudgeX:0},
+      {src:_G("Female Clothing/Boots.png"),        bootsIdleRow:0, bootsYOffset:0, bootsNudgeX:0},
+      {src:_G("Female Clothing/Socks.png"),        bootsIdleRow:0, bootsYOffset:0, bootsNudgeX:0},
+      {src:_G("Female Clothing/Green Socks.png"),  bootsIdleRow:0, bootsYOffset:0, bootsNudgeX:0},
+      {src:_G("Female Clothing/Orange Socks.png"), bootsIdleRow:0, bootsYOffset:0, bootsNudgeX:0},
+      {src:_G("Female Clothing/Purple Socks.png"), bootsIdleRow:0, bootsYOffset:0, bootsNudgeX:0},
+      {src:_G("Female Clothing/Red Socks.png"),    bootsIdleRow:0, bootsYOffset:0, bootsNudgeX:0},
+      {src:_G("Female Clothing/Skyblue Socks.png"),bootsIdleRow:0, bootsYOffset:0, bootsNudgeX:0},
       // G43F thigh-high boots removed — incompatible pack origin/scale with base LPC skin
     ],
     arms: [
@@ -235,12 +236,13 @@ const HERO_LAYERS = {
       ...[1,2,3,4,5].map(i=>_G(`Female Hair/Female Hair${i}.png`)),
       ...[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35].map(i=>_G58("30x Female Hair",`Female Hair${i}.png`)),
     ],
-    ears: [
-      null,null,null,null,null,null,null,  // ~58% no ears
-      ...[1,2,3,4,5].map(i=>_G10("Female Ears",`Elven Ears${i}.png`)),
-    ],
     hand: [_G("Female Hand/Female Sword.png")],
-    frameW:100, frameH:56, totalRows:8, cols:8, idleRow:0, idleCols:4, atkRow:4, atkCols:4, atkXCrop:16,
+    frameW:80, frameH:64, totalRows:7, cols:10,
+    srcXOffset:0, srcYOffset:0, contentW:76,
+    idleRow:0, idleCols:5, walkRow:1, walkCols:8,
+    runRow:2,  runCols:8,  jumpRow:3, jumpCols:4,
+    fallRow:4, fallCols:4, atkRow:5,  atkCols:6,
+    deathRow:6,deathCols:8,
   },
 };
 const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
@@ -256,18 +258,25 @@ const randomHeroLooks = () => {
     boots:        bootPick.src,         // path string
     bootsIdleRow: bootPick.bootsIdleRow ?? 0, // which sprite row to show when idle
     bootsYOffset: bootPick.bootsYOffset  ?? 0, // translateY(px) to fine-tune boot alignment
+    bootsNudgeX:  bootPick.bootsNudgeX  ?? -1, // translateX(px) per-entry override
     arms:         pick(g.arms),         // may be null → no arm layer
     hair:         pick(g.hair),
-    ears:         pick(g.ears),         // may be null → no ear layer
+    ears:         null,
     hand:         pick(g.hand),
     frameW:       g.frameW,
     frameH:       g.frameH,
+    totalRows:    g.totalRows,
     cols:         g.cols,
-    idleRow:      g.idleRow,
-    idleCols:     g.idleCols,
-    atkRow:       g.atkRow,
-    atkCols:      g.atkCols,
-    atkXCrop:     g.atkXCrop,
+    srcXOffset:   g.srcXOffset ?? 0,
+    srcYOffset:   g.srcYOffset ?? 0,
+    contentW:     g.contentW   ?? g.frameW,
+    idleRow:  g.idleRow,  idleCols:  g.idleCols,
+    walkRow:  g.walkRow,  walkCols:  g.walkCols,
+    runRow:   g.runRow,   runCols:   g.runCols,
+    jumpRow:  g.jumpRow,  jumpCols:  g.jumpCols,
+    fallRow:  g.fallRow,  fallCols:  g.fallCols,
+    atkRow:   g.atkRow,   atkCols:   g.atkCols,
+    deathRow: g.deathRow, deathCols: g.deathCols,
   };
 };
 
@@ -475,63 +484,152 @@ const AnimatedSprite = React.memo(function AnimatedSprite({ src, numFrames, fps=
 });
 
 // Hero sprite — layered skin + clothing + hair, all same spritesheet layout.
-// Scale by HEIGHT so bottom of frame = bottom of container → feet on ground.
-// Width is center-cropped to displayW.
-const LayeredHeroSprite = React.memo(function LayeredHeroSprite({ looks, displayW=41, displayH=65, isAttacking=false }) {
-  if (!looks) return null;
-  const cols      = looks.cols      || 8;
-  const totalRows = looks.totalRows || 8;
-  const idleRow   = looks.idleRow   || 0;
-  const frameW    = looks.frameW    || 100;
-  const frameH    = looks.frameH    || 56;
-  if (!looks.skin) return null;
+// ── Global image cache — loaded once, reused forever ──────────────────────────
+const _heroImgEl = {};
+const _heroImgP  = {};
+const _loadHeroImg = (src) => {
+  if (!src) return Promise.resolve(null);
+  if (_heroImgEl[src] !== undefined) return Promise.resolve(_heroImgEl[src]);
+  if (_heroImgP[src])  return _heroImgP[src];
+  return (_heroImgP[src] = new Promise(res => {
+    const img = new Image();
+    img.onload  = () => { _heroImgEl[src] = img;  res(img);  };
+    img.onerror = () => { _heroImgEl[src] = null; res(null); };
+    img.src = src;
+  }));
+};
 
-  // Scale so frame HEIGHT fills displayH exactly — frame width > displayW so we center-crop
-  const vScale   = displayH / frameH;
-  const scaledFW = Math.round(frameW * vScale);
-  const bgW      = cols      * scaledFW;
-  const bgH      = totalRows * displayH;
-  // Always frame 0 — LPC sheet has walk cycles, not idle frames; cycling looks broken
-  const activeRow  = isAttacking ? (looks.atkRow ?? idleRow) : idleRow;
-  const centerCrop = Math.round((scaledFW - displayW) / 2); // 38px
-  const bpX        = isAttacking ? -(looks.atkXCrop ?? 20) : -centerCrop;
-  // Boots: base-pack row 0 empty → use bootsIdleRow (row 7 = standing feet)
+// ── Baked sprite sheet cache — key → dataURL string | Promise<string> ─────────
+// Composites every layer at every [row][col] into one PNG once per hero look set.
+// All dress/boots special-case logic is burned in here so runtime is a plain CSS sprite.
+const _bakedSheets = {};
+const _bakeKey = (looks, dW, dH) =>
+  `${dW}x${dH}|${[looks.skin,looks.clothing,looks.boots,looks.legs,looks.arms,looks.hair].join('|')}`;
+
+const _bakeHeroSheet = (looks, displayW, displayH) => {
+  const cols       = looks.cols       || 10;
+  const totalRows  = looks.totalRows  || 7;
+  const idleRow    = looks.idleRow    ?? 0;
+  const frameW     = looks.frameW     || 80;
+  const frameH     = looks.frameH     || 64;
+  const srcXOffset = looks.srcXOffset ?? 0;
+  const srcYOffset = looks.srcYOffset ?? 0;
+  const contentW   = looks.contentW   ?? frameW;
   const bootsIdleRow = looks.bootsIdleRow ?? idleRow;
-  const bootsYOffset = looks.bootsYOffset ?? 0; // translateY px to align boot with skin feet
-  const bootsNudgeX  = looks.bootsNudgeX  ?? -1; // translateX px per-entry override
-  const toUrl = s => `url("${s.replace(/\\/g,"/").replace(/ /g,"%20")}")`;
-  // Layers: skin → clothing (top) → legs (skirt, renders over clothing hip) → boots → arms → hair → ears
-  const layers = [looks.skin, looks.clothing, looks.legs, looks.boots, looks.arms, looks.hair, looks.ears].filter(Boolean);
+  const bootsYOffset = looks.bootsYOffset ?? 0;
+  const bootsNudgeX  = looks.bootsNudgeX  ?? -1;
+  const hasDress     = !!looks.legs;
+
+  const vScale         = displayH / frameH;
+  const scaledFW       = Math.round(frameW * vScale);
+  const bgW            = cols      * scaledFW;
+  const bgH            = totalRows * displayH;
+  const scaledSrcX     = Math.round(srcXOffset * vScale);
+  const scaledSrcY     = Math.round(srcYOffset * vScale);
+  const scaledContentW = Math.round(contentW   * vScale);
+  const centerCrop     = scaledSrcX + Math.round((scaledContentW - displayW) / 2);
+
+  const layerSrcs = (hasDress
+    ? [looks.skin, looks.clothing, looks.boots, looks.legs, looks.arms, looks.hair]
+    : [looks.skin, looks.clothing, looks.boots, looks.arms, looks.hair]
+  ).filter(Boolean);
+
+  return Promise.all(layerSrcs.map(_loadHeroImg)).then(imgs => {
+    const canvas = document.createElement('canvas');
+    canvas.width  = cols * displayW;
+    canvas.height = totalRows * displayH;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+
+    for (let row = 0; row < totalRows; row++) {
+      const isIdle = row === idleRow;
+      for (let col = 0; col < cols; col++) {
+        const cellX = col * displayW;
+        const cellY = row * displayH;
+
+        imgs.forEach((img, i) => {
+          if (!img) return;
+          const src = layerSrcs[i];
+          const isBootsLayer = src === looks.boots;
+          const isLegsLayer  = !!(looks.legs && src === looks.legs);
+
+          const nw = img.naturalWidth, nh = img.naturalHeight;
+          const nScaleY = nh / bgH;
+
+          // Per-layer X: use each layer's own natural frame width
+          const layerNFW      = Math.round(nw / cols);
+          const layerScaledFW = Math.round(layerNFW * vScale);   // display-scaled frame width
+          const layerBgW      = cols * layerScaledFW;
+          const layerNScaleX  = nw / layerBgW;
+          const layerCropX    = (layerNFW === frameW)
+            ? centerCrop   // main-layer: respect srcXOffset + contentW crop
+            : Math.max(0, Math.round((layerScaledFW - displayW) / 2)); // clamp: avoid negative when layer narrower than displayW
+
+          // All layers use their own animation row — every sheet has 7 rows
+          const rowForLayer = row;
+
+          const bpX = -(layerCropX + col * layerScaledFW);
+          const bpY = -(rowForLayer * displayH + scaledSrcY);
+          const srcX = Math.round(-bpX * layerNScaleX);
+          const srcY = Math.round(-bpY * nScaleY);
+          const srcW = Math.min(Math.round(displayW * layerNScaleX), layerNFW); // don't read past layer's own frame boundary
+          const srcH = Math.round(displayH * nScaleY);
+
+          const dstX = cellX + (isBootsLayer ? bootsNudgeX : 0);
+          const dstY = cellY + (isBootsLayer ? bootsYOffset : 0);
+
+          // Clip to cell boundary — prevents offset layers bleeding into adjacent cells
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(cellX, cellY, displayW, displayH);
+          ctx.clip();
+          ctx.drawImage(img, srcX, srcY, srcW, srcH, dstX, dstY, displayW, displayH);
+          ctx.restore();
+        });
+      }
+    }
+    return canvas.toDataURL('image/png');
+  });
+};
+
+// ── LayeredHeroSprite — bakes once, then renders as a single CSS sprite div ───
+const LayeredHeroSprite = React.memo(function LayeredHeroSprite({ looks, displayW=41, displayH=65, animRow=null, animFrame=0 }) {
+  const [bakedUrl, setBakedUrl] = React.useState(null);
+
+  useEffect(() => {
+    if (!looks?.skin) return;
+    const key = _bakeKey(looks, displayW, displayH);
+    // Already baked
+    if (typeof _bakedSheets[key] === 'string') { setBakedUrl(_bakedSheets[key]); return; }
+    // Already baking — wait on existing promise
+    let alive = true;
+    const p = _bakedSheets[key] || (_bakedSheets[key] = _bakeHeroSheet(looks, displayW, displayH));
+    p.then(url => {
+      _bakedSheets[key] = url; // replace promise with resolved string
+      if (alive) setBakedUrl(url);
+    });
+    return () => { alive = false; };
+  }, [looks, displayW, displayH]);
+
+  if (!bakedUrl) return null; // invisible while baking (first render only)
+
+  const cols      = looks.cols      || 10;
+  const totalRows = looks.totalRows || 7;
+  const activeRow = animRow ?? (looks.idleRow ?? 0);
+  const bgW       = cols      * displayW;
+  const bgH       = totalRows * displayH;
+  const bpX       = -(animFrame * displayW);
+  const bpY       = -(activeRow * displayH);
+
   return (
-    <div style={{width:displayW, height:displayH, position:"relative", overflow:"visible", imageRendering:"pixelated"}}>
-      {layers.map((src, i) => {
-        // Boots: always row 7 (feet y=56-64). Attack row 4 wrongly puts boots at thigh.
-        // Legs/skirt: always row 6 (skirt y=35-55), so hem ends at y=55 — boots at y=57 sit just below.
-        const isBootsLayer = src === looks.boots;
-        const isLegsLayer  = looks.legs && src === looks.legs;
-        const LEGS_ROW = 6; // skirt row 6 ends at display y=55; socks row 7 starts at y=57
-        const rowForLayer  = isBootsLayer ? bootsIdleRow : isLegsLayer ? LEGS_ROW : activeRow;
-        const layerBpY     = -(rowForLayer * displayH);
-        const layerBpX     = bpX;
-        const yShift = isBootsLayer ? `translateX(${bootsNudgeX}px) translateY(${bootsYOffset}px)` : undefined;
-        // Clip legs layer to waist-down so dress/skirt upper-body pixels don't overlap clothing top
-        const legsClip = isLegsLayer ? {clipPath:"inset(28px 0 0 0)"} : {};
-        return (
-          <div key={i} style={{
-            position: i===0 ? "relative" : "absolute",
-            inset: 0,
-            width: displayW, height: displayH,
-            backgroundImage: toUrl(src),
-            backgroundRepeat:"no-repeat",
-            backgroundSize:`${bgW}px ${bgH}px`,
-            backgroundPosition:`${layerBpX}px ${layerBpY}px`,
-            imageRendering:"pixelated",
-            ...(yShift ? {transform:yShift} : {}),
-            ...legsClip,
-          }}/>
-        );
-      })}
-    </div>
+    <div style={{
+      width: displayW, height: displayH,
+      backgroundImage: `url("${bakedUrl}")`,
+      backgroundRepeat: 'no-repeat',
+      backgroundSize: `${bgW}px ${bgH}px`,
+      backgroundPosition: `${bpX}px ${bpY}px`,
+      imageRendering: 'pixelated',
+    }}/>
   );
 }); // LayeredHeroSprite memo
 
@@ -564,11 +662,11 @@ const TIER_DMG_MULT = { basic:1.0, refined:1.35, epic:1.75, legendary:2.3 };
 const weaponDmg = (w) => Math.round((w?.baseDmg||0) * (TIER_DMG_MULT[w?.tier||"basic"]||1.0));
 const SKIN = "#e8c47a";
 
-const HeroSprite = React.memo(function HeroSprite({ className="Knight", scale=1, weapons=[], heroLooks=null, isAttacking=false }) {
+const HeroSprite = React.memo(function HeroSprite({ className="Knight", scale=1, weapons=[], heroLooks=null, animRow=null, animFrame=0 }) {
   const displayW = Math.round(48 * scale);
   const displayH = Math.round(76 * scale);  // 76 base matches HSH = Math.round(76*0.85)=65
   if (heroLooks) {
-    return <LayeredHeroSprite looks={heroLooks} displayW={displayW} displayH={displayH} isAttacking={isAttacking}/>;
+    return <LayeredHeroSprite looks={heroLooks} displayW={displayW} displayH={displayH} animRow={animRow} animFrame={animFrame}/>;
   }
   // Fallback SVG hero (when no heroLooks — e.g. opponent in PvP)
   const c = CLASS_COLORS[className] || CLASS_COLORS.Knight;
@@ -1162,6 +1260,10 @@ function App() {
   const [player,         setPlayer]         = useState(null);
   const [cs,             setCs]             = useState(null);
   const [qteAnim,        setQteAnim]        = useState(null); // all in-scene QTE state
+  React.useEffect(()=>{ window.__setQteAnim = setQteAnim; window.__setScreen = setScreen; window.__setPlayer = setPlayer; window.__setCs = setCs; window.__randomHeroLooks = randomHeroLooks; },[]); // dev debug hook
+  // Frame ticker for sprite animation cycling (120ms per frame ≈ ~8fps sprite anim)
+  const [frameTick, setFrameTick] = React.useState(0);
+  React.useEffect(()=>{ const id=setInterval(()=>setFrameTick(t=>(t+1)%1000),120); return ()=>clearInterval(id); },[]);
   const [levelUpPending, setLevelUpPending] = useState(false);
   const [rewards,        setRewards]        = useState(null);
   const [enemyFlash,     setEnemyFlash]     = useState(false);
@@ -1857,8 +1959,13 @@ function App() {
         }, 1100);
         return {...prev, enemy:{...prev.enemy,hp:0}, phase:"won", log:[...prev.log,logMsg]};
       }
-      setTimeout(()=>startDefendQTE(bossAtk), cs?.enemy?.id==="dragon" ? 300 : 880);
-      return {...prev, enemy:{...prev.enemy,hp:newHp}, phase:"enemy_turn", bossAttackPattern:bossAtk, log:[...prev.log,logMsg]};
+      if (!qteRef.current.debugMode) {
+        const _defDelay = cs?.enemy?.id==="dragon" ? 300 : 880;
+        qteRef.current.defendTimer = setTimeout(()=>startDefendQTE(bossAtk), _defDelay);
+      }
+      // In debug mode stay in "action" so the panel can re-launch immediately
+      const nextPhase = qteRef.current.debugMode ? "action" : "enemy_turn";
+      return {...prev, enemy:{...prev.enemy,hp:newHp}, phase:nextPhase, bossAttackPattern:qteRef.current.debugMode?null:bossAtk, log:[...prev.log,logMsg]};
     });
   };
 
@@ -1973,6 +2080,7 @@ function App() {
   const startSwingBeatQTE = (weapon) => {
     const beatTimeout = weapon.beatTimeout ?? BEAT_TIMEOUT;
     const ref = qteRef.current;
+    ref.gen = (ref.gen||0)+1; const myGen = ref.gen; // generation stamp — stale closures bail out
     ref.done         = false;
     ref.step         = 0;          // index of next expected key (0-2)
     ref.results      = [null,null,null]; // null | "hit" | "miss" per key
@@ -1983,7 +2091,7 @@ function App() {
     setQteAnim({ type:"swing_beat", weapon, t:0, step:0, results:[null,null,null], qteOpenMs:null });
 
     setTimeout(() => {
-      if (ref.done) return;
+      if (ref.done || ref.gen !== myGen) return;
       ref.qteOpenMs = performance.now();
 
       const finishCombo = () => {
@@ -2016,7 +2124,7 @@ function App() {
       };
 
       const onKey = (e) => {
-        if (ref.done) return;
+        if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown", onKey); return; }
         const k = e.key.toUpperCase();
         // Only react to the 3 combo keys
         if (!["A","W","D"].includes(k)) return;
@@ -2039,7 +2147,7 @@ function App() {
       window.addEventListener("keydown", onKey);
 
       ref.beatTimer = setTimeout(()=>{
-        if (ref.done) return;
+        if (ref.done || ref.gen !== myGen) return;
         ref.done = true;
         window.removeEventListener("keydown", onKey);
         const dmg = Math.max(1, Math.floor((weaponDmg(weapon)+(player?.str||0))*0.30));
@@ -2072,10 +2180,12 @@ function App() {
     const cplo = weapon.chargePerfectLo ?? CHARGE_PERFECT_LO;
     const cphi = weapon.chargePerfectHi ?? CHARGE_PERFECT_HI;
     const ref = qteRef.current;
+    ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
     ref.holdStart = null; ref.released = false; ref.releaseCharge = 0;
     setQteAnim({ type:"hold_release", weapon, charge:0, released:false, releaseT:0 });
 
     const onDown = (e) => {
+      if (ref.gen !== myGen) { window.removeEventListener("keydown",onDown); window.removeEventListener("keyup",onUp); return; }
       if (e.code!=="Space"||ref.holdStart!==null||ref.released) return;
       e.preventDefault(); ref.holdStart = performance.now();
       ref.sfxStopHammer = sfx.hammerHold();
@@ -2111,6 +2221,7 @@ function App() {
       requestAnimationFrame(lunge);
     };
     const onUp = (e) => {
+      if (ref.gen !== myGen) { window.removeEventListener("keydown",onDown); window.removeEventListener("keyup",onUp); return; }
       if (e.code!=="Space"||ref.holdStart===null||ref.released) return;
       resolve(Math.min(1,(performance.now()-ref.holdStart)/CHARGE_MAX_MS));
     };
@@ -2119,7 +2230,7 @@ function App() {
 
     // Live bar update
     const tick = () => {
-      if (ref.released) return;
+      if (ref.released || ref.gen !== myGen) { window.removeEventListener("keydown",onDown); window.removeEventListener("keyup",onUp); return; }
       const charge = ref.holdStart ? Math.min(1,(performance.now()-ref.holdStart)/CHARGE_MAX_MS) : 0;
       setQteAnim(prev=>prev?{...prev,charge}:null);
       if (charge >= 1) { resolve(1); return; } // auto overcharge
@@ -2133,13 +2244,14 @@ function App() {
   const startRapidTapQTE = (weapon) => {
     const rapidDurEff = weapon.rapidDur ?? RAPID_DUR;
     const ref = qteRef.current;
+    ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
     const tapTarget = weapon.tapTarget||8;
     ref.startMs = performance.now(); ref.taps = 0; ref.done = false; ref.lastKey = null;
     setQteAnim({ type:"rapid_tap", weapon, t:0, taps:0, tapTarget });
 
     // A/D alternation — press A then D then A... as fast as possible
     const onKey = (e) => {
-      if (ref.done) return;
+      if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown", onKey); return; }
       const k = e.code;
       if (k!=="KeyA"&&k!=="KeyD") return;
       e.preventDefault();
@@ -2160,7 +2272,7 @@ function App() {
     window.addEventListener("keydown",onKey);
 
     const tick = () => {
-      if (ref.done) return;
+      if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown",onKey); return; }
       const t = Math.min(1,(performance.now()-ref.startMs)/rapidDurEff);
       setQteAnim(prev=>prev?{...prev,t}:null);
       if (t<1) { requestAnimationFrame(tick); return; }
@@ -2176,55 +2288,55 @@ function App() {
     requestAnimationFrame(tick);
   };
 
-  // ── POKE: charge at enemy, alternate A/D rapidly ──
+  // ── POKE: charge at enemy, spam ANY key as fast as possible ──
   const POKE_DUR = 2200;
-  const POKE_TARGET = 14;
+  const POKE_TARGET = 22;
+  // Keys to ignore (non-character / navigation keys)
+  const POKE_IGNORE = new Set(["Escape","Tab","CapsLock","Shift","Control","Alt","Meta",
+    "Enter","Backspace","Delete","Insert","Home","End","PageUp","PageDown",
+    "ArrowUp","ArrowDown","ArrowLeft","ArrowRight","ContextMenu","NumLock","ScrollLock","Pause"]);
   const startPokeQTE = (weapon) => {
     const pokeDurEff  = weapon.pokeDur  ?? POKE_DUR;
     const pokeTargEff = weapon.pokeTarg ?? POKE_TARGET;
     const ref = qteRef.current;
+    ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
     ref.startMs = performance.now();
     ref.inputs = 0; ref.done = false; ref.lastKey = null;
     setQteAnim({ type:"poke", weapon, t:0, inputs:0, tapTarget:pokeTargEff });
 
     const onKey = (e) => {
-      if (ref.done) return;
-      const k = e.key.toUpperCase();
-      if (k!=="A"&&k!=="D") return;
+      if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown",onKey); return; }
+      if (e.repeat) return;
+      if (POKE_IGNORE.has(e.key) || e.key.startsWith("F")) return;
       e.preventDefault();
-      if (k!==ref.lastKey) { // must alternate
-        sfx.pokeTap(ref.inputs);
-        ref.inputs++;
-        ref.lastKey=k;
-        setQteAnim(prev=>prev?{...prev,inputs:ref.inputs,lastKey:k}:null);
-        if (ref.inputs>=pokeTargEff) {
-          ref.done=true;
-          window.removeEventListener("keydown",onKey);
-          clearTimeout(ref.pokeTimer);
-          showHit("PERFECT!", "#44ff88");
-          setQteAnim(null);
-          setTimeout(()=>resolveAttack("perfect",weapon),80);
-        }
+      sfx.pokeTap(ref.inputs);
+      ref.inputs++;
+      ref.lastKey = e.key.length === 1 ? e.key.toUpperCase() : e.code.replace("Key","");
+      setQteAnim(prev=>prev?{...prev,inputs:ref.inputs,lastKey:ref.lastKey}:null);
+      if (ref.inputs>=pokeTargEff) {
+        ref.done=true;
+        window.removeEventListener("keydown",onKey);
+        clearTimeout(ref.pokeTimer);
+        setQteAnim(null);
+        setTimeout(()=>resolveAttack("perfect",weapon),80);
       }
     };
     window.addEventListener("keydown",onKey);
 
     ref.pokeTimer = setTimeout(()=>{
-      if (!ref.done) {
+      if (!ref.done && ref.gen === myGen) {
         ref.done=true;
         window.removeEventListener("keydown",onKey);
         const ratio = ref.inputs/pokeTargEff;
         const q = ratio>=.85?"perfect":ratio>=.5?"good":"miss";
         const dmg = Math.max(1,Math.floor((weaponDmg(weapon)+(player?.str||0))*ratio*1.8));
-        showHit(q==="perfect"?"PERFECT!":q==="good"?`GOOD! ${ref.inputs}/${pokeTargEff}`:`WEAK! ${ref.inputs}/${pokeTargEff}`,
-                q==="perfect"?"#44ff88":q==="good"?"#ffcc44":"#666");
         setQteAnim(null);
         setTimeout(()=>resolveAttack(q,weapon,Math.max(1,dmg)),80);
       }
     },pokeDurEff);
 
     const tick = ()=>{
-      if (ref.done) return;
+      if (ref.done || ref.gen !== myGen) return;
       const t = Math.min(1,(performance.now()-ref.startMs)/pokeDurEff);
       setQteAnim(prev=>prev?{...prev,t}:null);
       if (t<1) requestAnimationFrame(tick);
@@ -2238,6 +2350,7 @@ function App() {
   const startArcheryQTE = (weapon) => {
     const archeryDurEff = weapon.archDur ?? ARCHERY_DUR;
     const ref = qteRef.current;
+    ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
     ref.startMs = performance.now();
     ref.shotsFired = 0; // how many SPACE presses done (0-3)
     ref.lockedDots = []; // [{x,y,q,dmg}] per locked dot
@@ -2261,7 +2374,8 @@ function App() {
     setQteAnim({ type:"archery", weapon, t:0, dots:ref.dots.map(d=>({x:0,y:0})), lockedDots:[], shotsFired:0, dotParams:DOT_PARAMS.map(p=>({...p})) });
 
     const onKey = (e) => {
-      if (e.code!=="Space"||ref.done) return;
+      if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown",onKey); return; }
+      if (e.code!=="Space") return;
       e.preventDefault();
       const idx = ref.shotsFired;
       if (idx >= ARCHERY_DOTS) return;
@@ -2320,7 +2434,7 @@ function App() {
 
     let _archLastRender = 0;
     const tick = ()=>{
-      if (ref.done) return;
+      if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown",onKey); return; }
       const elapsed = performance.now()-ref.startMs;
       const t = Math.min(1,elapsed/archeryDurEff);
       const tSec = elapsed/1000;
@@ -2383,6 +2497,7 @@ function App() {
   const startSequenceQTE = (weapon) => {
     const seqDurEff = weapon.seqDur ?? SEQ_DUR;
     const ref = qteRef.current;
+    ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
     const len = Math.max(8, weapon.seqLength||8);
     const seq = Array.from({length:len},()=>ALL_KEYS[Math.floor(Math.random()*ALL_KEYS.length)]);
     ref.seq = seq; ref.input = []; ref.correctCount = 0; ref.done = false; ref.startMs = performance.now();
@@ -2391,7 +2506,7 @@ function App() {
     setQteAnim({ type:"sequence", weapon, t:0, seq, input:[], correctCount:0, badKey:false });
 
     const onKey = (e) => {
-      if (ref.done) return;
+      if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown",onKey); return; }
       const k = e.key.toUpperCase();
       if (!/^[A-Z]$/.test(k)) return;
       e.preventDefault();
@@ -2416,7 +2531,7 @@ function App() {
     window.addEventListener("keydown",onKey);
 
     ref.seqTimer = setTimeout(()=>{
-      if (!ref.done) {
+      if (!ref.done && ref.gen === myGen) {
         ref.done=true;
         window.removeEventListener("keydown",onKey);
         const ratio = ref.correctCount / seq.length;
@@ -2427,7 +2542,7 @@ function App() {
     }, seqDurEff);
 
     const tick = () => {
-      if (ref.done) return;
+      if (ref.done || ref.gen !== myGen) return;
       const t = Math.min(1,(performance.now()-ref.startMs)/seqDurEff);
       setQteAnim(prev=>prev?{...prev,t}:null);
       requestAnimationFrame(tick);
@@ -2456,13 +2571,16 @@ function App() {
     const landTop  = Math.max(5, GNDY - eScaledH + headPad - HSH + stompGroundPad + STOMP_OVERLAP);
     const landLeft = ENX - HSW/2 + Math.round((cs?.enemySprite?.centerOffsetX||0) * eScale);
     const ref = qteRef.current;
+    ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
     ref.landLeft = landLeft; ref.landTop = landTop;
     let totalDmg = 0;
 
     const returnHome = (cb) => {
+      if (ref.gen !== myGen) return;
       const start = performance.now();
       setQteAnim({ type:"stomp_return", weapon, t:0 });
       const tick = () => {
+        if (ref.gen !== myGen) { setQteAnim(null); return; }
         const rt = Math.min(1,(performance.now()-start)/300);
         setQteAnim(prev=>prev?{...prev,t:rt}:null);
         if (rt<1) { requestAnimationFrame(tick); return; }
@@ -2472,6 +2590,7 @@ function App() {
     };
 
     const doContact = (contactNum, onDone) => {
+      if (ref.gen !== myGen) return;
       const jumpStart = performance.now();
       ref.pressMs = null; ref.flashDone = false;
       // Contact 0 = approach only (short); contact 1 = full bounce arc
@@ -2480,12 +2599,14 @@ function App() {
       setQteAnim({ type:"stomp", weapon, t:0, bounce:contactNum });
 
       const onKey = (e) => {
+        if (ref.gen !== myGen) { window.removeEventListener("keydown",onKey); return; }
         if (e.code!=="Space"||ref.pressMs!==null) return;
         e.preventDefault(); ref.pressMs = performance.now();
       };
       window.addEventListener("keydown",onKey);
 
       const tick = () => {
+        if (ref.gen !== myGen) { window.removeEventListener("keydown",onKey); return; }
         const t = Math.min(1,(performance.now()-jumpStart)/dur);
         setQteAnim(prev=>prev?{...prev,t,bounce:contactNum}:null);
         // Flash just before landing (t~0.92 for both contacts)
@@ -2559,14 +2680,14 @@ function App() {
     requestAnimationFrame(tick);
   };
 
-  // ── SEQUENCE REVEAL (RPG): 10 slots, yellow outline jumps randomly after each correct press ──
-  // Max 200 dmg. -5% per wrong press or incomplete slot. Min 30% (60 dmg floor).
+  // ── SEQUENCE REVEAL (RPG): 2×5 grid — target jumps & ALL remaining keys reshuffle on each correct press ──
+  // The reshuffle prevents the player reading ahead. Max 200 dmg. -5% per miss/incomplete. Min 30%.
   const startRPGQTE = (weapon) => {
     const ref = qteRef.current;
+    ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
     const len = weapon.seqLength || 10;
     const genKey = () => ALL_KEYS[Math.floor(Math.random()*ALL_KEYS.length)];
     const seq = Array.from({length:len}, genKey);
-    // Pick random starting target
     const firstTarget = Math.floor(Math.random()*len);
     ref.seq = [...seq];
     ref.done = false;
@@ -2579,7 +2700,7 @@ function App() {
     setQteAnim({ type:"sequence_reveal", weapon, t:0, seq:[...seq], targetIdx:firstTarget, doneIndices:[], missCount:0, badKey:false });
 
     const onKey = (e) => {
-      if (ref.done) return;
+      if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown", onKey); return; }
       const k = e.key.toUpperCase();
       if (!/^[A-Z]$/.test(k)) return;
       e.preventDefault();
@@ -2588,18 +2709,22 @@ function App() {
         sfx.rpgSequenceKey();
         ref.doneSet.add(ref.targetIdx);
         if (ref.doneSet.size >= len) {
-          // All done — perfect
           ref.done = true;
           window.removeEventListener("keydown", onKey);
           clearTimeout(ref.rpgTimer);
           const dmg = Math.round(200 * Math.max(0.30, 1 - ref.missCount * 0.05));
           fireRPGRocket("perfect", dmg, weapon);
         } else {
-          // Jump to a random remaining (undone) slot
+          // Pick new random target from remaining slots
           const remaining = [];
           for (let i=0; i<len; i++) if (!ref.doneSet.has(i)) remaining.push(i);
           ref.targetIdx = remaining[Math.floor(Math.random()*remaining.length)];
-          setQteAnim(prev=>prev?{...prev, targetIdx:ref.targetIdx, doneIndices:[...ref.doneSet], badKey:false}:null);
+          // Reshuffle ALL remaining (non-done) slots so player can't read ahead
+          for (const i of remaining) ref.seq[i] = genKey();
+          // Make sure the new target's key isn't the same as whatever the player just pressed
+          if (ref.seq[ref.targetIdx] === k) ref.seq[ref.targetIdx] = genKey();
+          setQteAnim(prev=>prev?{...prev,
+            seq:[...ref.seq], targetIdx:ref.targetIdx, doneIndices:[...ref.doneSet], badKey:false}:null);
         }
       } else {
         sfx.runeWrong();
@@ -2611,7 +2736,7 @@ function App() {
     window.addEventListener("keydown", onKey);
 
     ref.rpgTimer = setTimeout(()=>{
-      if (!ref.done) {
+      if (!ref.done && ref.gen === myGen) {
         ref.done = true;
         window.removeEventListener("keydown", onKey);
         const incomplete = len - ref.doneSet.size;
@@ -2622,7 +2747,7 @@ function App() {
     }, SEQ_DUR);
 
     const tick = () => {
-      if (ref.done) return;
+      if (ref.done || ref.gen !== myGen) return;
       const t = Math.min(1,(performance.now()-ref.startMs)/SEQ_DUR);
       setQteAnim(prev=>prev?{...prev,t}:null);
       requestAnimationFrame(tick);
@@ -2634,6 +2759,7 @@ function App() {
   const DUAL_DUR = 3500; // ms total window
   const startDualActionQTE = (weapon) => {
     const ref = qteRef.current;
+    ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
     ref.done = false;
     ref.keysHeld = { a:false, w:false, d:false };
     ref.dotPos   = 0;          // 0–1, left→right
@@ -2668,7 +2794,7 @@ function App() {
     };
 
     const onKeyDown = (e) => {
-      if (ref.done) return;
+      if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown",onKeyDown); window.removeEventListener("keyup",onKeyUp); return; }
       const k = {a:"a",A:"a",w:"w",W:"w",d:"d",D:"d"}[e.key];
       if (!k) return;
       e.preventDefault();
@@ -2676,7 +2802,7 @@ function App() {
     };
 
     const onKeyUp = (e) => {
-      if (ref.done) return;
+      if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown",onKeyDown); window.removeEventListener("keyup",onKeyUp); return; }
       const k = {a:"a",A:"a",w:"w",W:"w",d:"d",D:"d"}[e.key];
       if (!k) return;
       const wasAllHeld = ref.keysHeld.a && ref.keysHeld.w && ref.keysHeld.d;
@@ -2691,14 +2817,14 @@ function App() {
     };
 
     const onClick = (e) => {
-      if (e.button !== 0 || ref.done) return;
+      if (e.button !== 0 || ref.done || ref.gen !== myGen) return;
       e.preventDefault();
       sfx.dualClick();
       resolve(ref.dotPos);
     };
 
     const tick = () => {
-      if (ref.done) return;
+      if (ref.done || ref.gen !== myGen) { cleanup(); return; }
       const now = performance.now();
       const dt  = (now - lastNow) / 1000;
       lastNow = now;
@@ -2765,6 +2891,7 @@ function App() {
   };
   const startDefendQTE = (bossAtkPattern = null) => {
     const ref = qteRef.current;
+    ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
     const isPvp = cs?.pvpMode && cs?.enemy?.id === "pvp_opp";
     let prof, projType;
     if (isPvp) {
@@ -2779,13 +2906,14 @@ function App() {
       projType = null; // use legacy enemy-id sprite
     }
     const { dur, launch, arrive } = prof;
-    ref.startMs = performance.now(); ref.pressT = null;
+    ref.startMs = performance.now(); ref.pressT = null; ref.done = false;
     ref.defendArrive = arrive; // store so showDefendCue can use it
     setCs(prev=>prev?{...prev,phase:"defending"}:prev);
     setQteAnim({ type:"defend", t:0, projFrac:0, arrive, projPath: prof.projPath||"straight", projType, bossAttackPattern: bossAtkPattern });
     triggerEnemyWindUp();
 
     const onKey = (e) => {
+      if (ref.gen !== myGen) { window.removeEventListener("keydown",onKey); return; }
       if (e.code!=="Space"||ref.pressT!==null) return;
       e.preventDefault();
       ref.pressT = (performance.now()-ref.startMs)/dur;
@@ -2797,6 +2925,7 @@ function App() {
 
     ref.projSoundPlayed = false; ref._defLastRender = 0;
     const tick = () => {
+      if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown",onKey); return; } // cancelled externally
       const now2 = performance.now();
       const t = Math.min(1,(now2-ref.startMs)/dur);
       const projFrac = t < launch ? 0
@@ -2868,9 +2997,19 @@ function App() {
         }
       }
       case "rapid_tap": {
-        const cycles = 5;
-        const lunge = (1-Math.cos(t*Math.PI*cycles*2))/2;
-        return { left:HR_L+(STRIKE_L-HR_L)*lunge, top:HR_T };
+        // Phase 1 (0→0.18): run up to enemy
+        const RT_APPROACH = 0.18;
+        const RT_X = STRIKE_L + 8;
+        if (t <= RT_APPROACH) {
+          return { left: HR_L + (RT_X - HR_L) * easeIO(t / RT_APPROACH), top: HR_T };
+        }
+        // Phase 2: vibrate up/down at enemy — amplitude grows with tap progress
+        const taps = qteAnim.taps || 0;
+        const tapTarget = qteAnim.tapTarget || 8;
+        const vibFrac = (t - RT_APPROACH) / (1 - RT_APPROACH);
+        const amp = 2 + Math.min(taps / tapTarget, 1) * 7; // 2px → 9px as taps fill
+        const vibY = Math.sin(vibFrac * Math.PI * 20) * amp;
+        return { left: RT_X, top: HR_T + vibY };
       }
       case "poke": {
         // Hero starts far right (HR_L), charges to close range, then oscillates rapidly
@@ -3929,33 +4068,40 @@ function App() {
                 );
               })()}
 
-              {/* ── POKE: A/D keys above hero + fill bar ── */}
+              {/* ── POKE: any-key spam prompt above hero + fill bar ── */}
               {qteAnim?.type==="poke"&&qteAnim.t>=0.21&&(()=>{
                 const inputs = qteAnim.inputs||0;
                 const target = qteAnim.tapTarget||POKE_TARGET;
-                const lk = qteAnim.lastKey; // last pressed key
-                const nextKey = lk==="A"?"D":"A"; // next expected
-                const hL = heroPos?.left||HR_L;
-                const hT = heroPos?.top||HR_T;
+                const pct    = Math.min(1, inputs/target);
+                const lk     = qteAnim.lastKey||"";
+                const hL     = heroPos?.left||HR_L;
+                const hT     = heroPos?.top||HR_T;
                 return (
                   <>
-                    {/* A/D keys above hero head */}
-                    <div style={{position:"absolute",left:hL+HSW/2-26,top:hT-44,display:"flex",gap:6,zIndex:9}}>
-                      {["A","D"].map(k=>(
-                        <div key={k} style={{width:24,height:24,display:"flex",alignItems:"center",justifyContent:"center",
-                          fontFamily:"Cinzel",fontWeight:700,fontSize:13,borderRadius:4,
-                          background:nextKey===k?"#1a1a2a":"#0a0a12",
-                          border:`2px solid ${nextKey===k?"#ffcc44":"#2a2a3a"}`,
-                          color:nextKey===k?"#ffcc44":"#333",
-                          boxShadow:nextKey===k?"0 0 10px #ffcc4488":"none",
-                          transform:nextKey===k?"scale(1.2)":"scale(1)",transition:"all .06s"}}>{k}</div>
-                      ))}
+                    {/* Last key flash + SPAM label above hero */}
+                    <div style={{position:"absolute",left:hL+HSW/2,top:hT-52,
+                      transform:"translateX(-50%)",zIndex:9,textAlign:"center",pointerEvents:"none"}}>
+                      {lk && (
+                        <div key={inputs} style={{fontFamily:"Cinzel",fontWeight:900,fontSize:18,
+                          color:"#ffcc44",textShadow:"0 0 12px #ff8844",lineHeight:1,
+                          animation:"actionCmd .18s ease-out forwards"}}>
+                          {lk}
+                        </div>
+                      )}
+                      <div style={{fontFamily:"Cinzel",fontSize:9,letterSpacing:2,
+                        color:"#ff8844aa",marginTop:2}}>SPAM KEYS</div>
                     </div>
                     {/* Fill bar */}
-                    <div style={{position:"absolute",top:12,left:BFW/2-150,width:300,height:12,background:"#0a0a18",border:"1px solid #2a2a44",borderRadius:6,zIndex:9}}>
-                      <div style={{height:"100%",borderRadius:6,width:`${(inputs/target)*100}%`,
-                        background:"linear-gradient(to right,#cc4411,#ffcc44)",
+                    <div style={{position:"absolute",top:12,left:BFW/2-150,width:300,height:12,
+                      background:"#0a0a18",border:"1px solid #2a2a44",borderRadius:6,zIndex:9}}>
+                      <div style={{height:"100%",borderRadius:6,width:`${pct*100}%`,
+                        background:`linear-gradient(to right,#cc4411,${pct>0.85?"#44ff88":"#ffcc44"})`,
                         boxShadow:"0 0 8px #ff8844",transition:"width .04s"}}/>
+                    </div>
+                    {/* Count */}
+                    <div style={{position:"absolute",top:30,left:BFW/2,transform:"translateX(-50%)",
+                      fontFamily:"Cinzel",fontSize:10,color:"#ff8844aa",letterSpacing:1,zIndex:9}}>
+                      {inputs}/{target}
                     </div>
                   </>
                 );
@@ -4315,23 +4461,20 @@ function App() {
               })()}
               {/* ── SEQUENCE REVEAL beam (RPG targeting lock) ── */}
               {qteAnim?.type==="sequence_reveal"&&(()=>{
-                const t = qteAnim.t||0;
-                const step = qteAnim.step||0;
-                const len  = (qteAnim.seq||[]).length;
+                const t    = qteAnim.t||0;
+                const done = (qteAnim.doneIndices||[]).length;
+                const len  = (qteAnim.seq||[]).length||10;
                 return (
                   <svg style={{position:"absolute",left:0,top:0,zIndex:4,pointerEvents:"none",overflow:"visible"}} width={BFW} height={BFH}>
-                    {/* Lock reticle at enemy */}
                     <circle cx={ENX} cy={eTop+eH*0.45} r={18+Math.sin(t*8)*3}
                       fill="none" stroke="#ff6622" strokeWidth="1.5" opacity=".55"
                       strokeDasharray="6 4"/>
                     <circle cx={ENX} cy={eTop+eH*0.45} r={8}
                       fill="none" stroke="#ffcc44" strokeWidth="1" opacity=".4"/>
-                    {/* Progress arcs showing sequence progress */}
-                    {step>0&&<circle cx={ENX} cy={eTop+eH*0.45} r={24}
+                    {done>0&&<circle cx={ENX} cy={eTop+eH*0.45} r={24}
                       fill="none" stroke="#ff6622" strokeWidth="2.5"
-                      strokeDasharray={`${step/len*150} 150`} opacity=".7"
+                      strokeDasharray={`${done/len*150} 150`} opacity=".7"
                       style={{filter:"drop-shadow(0 0 6px #ff6622)"}}/>}
-                    {/* Targeting line */}
                     <line x1={HR_L+HSW/2} y1={HR_T+HSH/2} x2={ENX} y2={eTop+eH*0.45}
                       stroke="#ff6622" strokeWidth="1.5" opacity=".12" strokeDasharray="8 6"/>
                   </svg>
@@ -4402,26 +4545,25 @@ function App() {
                 );
               })()}
 
-              {/* ── SEQUENCE REVEAL (RPG): 2×5 grid, yellow outline jumps randomly ── */}
+              {/* ── SEQUENCE REVEAL (RPG): 2×5 grid — all remaining keys reshuffle after each correct press ── */}
               {qteAnim?.type==="sequence_reveal"&&qteAnim.seq&&(
                 <div style={{position:"absolute",top:12,left:"50%",transform:"translateX(-50%)",
                   display:"flex",flexDirection:"column",gap:7,zIndex:9,alignItems:"center"}}>
-                  {/* Title */}
                   <div style={{fontFamily:"Cinzel",fontSize:10,letterSpacing:3,color:"#886644",
                     textShadow:"0 0 8px #886644",marginBottom:2}}>
                     🚀 RPG — PRESS THE GLOWING KEY
                   </div>
-                  {/* 2 rows × 5 cols */}
                   {[0,1].map(row=>(
                     <div key={row} style={{display:"flex",gap:7}}>
                       {[0,1,2,3,4].map(col=>{
-                        const i = row*5+col;
-                        const k = qteAnim.seq[i];
+                        const i   = row*5+col;
+                        const k   = qteAnim.seq[i];
                         const done = (qteAnim.doneIndices||[]).includes(i);
                         const cur  = i===qteAnim.targetIdx;
                         const bad  = cur&&qteAnim.badKey;
                         return (
-                          <div key={i} style={{
+                          // key=k+i forces re-mount (and runeIn animation) whenever the letter changes
+                          <div key={done?`d${i}`:`${k}${i}`} style={{
                             width:44,height:44,display:"flex",alignItems:"center",justifyContent:"center",
                             fontFamily:"Cinzel",fontWeight:700,fontSize:19,borderRadius:8,
                             border:`2.5px solid ${done?"#1a1a24":cur?(bad?"#ff4422":"#ffdd00"):"#252535"}`,
@@ -4431,7 +4573,7 @@ function App() {
                             transform:cur&&!bad?"scale(1.22)":"scale(1)",
                             opacity:done?0.20:cur?1:0.50,
                             transition:"transform .07s, box-shadow .07s, border-color .07s",
-                            animation:cur&&!bad?"runeIn .12s ease-out":"none",
+                            animation:!done?"runeIn .12s ease-out":"none",
                           }}>
                             {done?"✓":k}
                           </div>
@@ -4439,7 +4581,6 @@ function App() {
                       })}
                     </div>
                   ))}
-                  {/* Miss / damage preview */}
                   <div style={{display:"flex",gap:14,marginTop:2,fontFamily:"Cinzel",fontSize:9,letterSpacing:1}}>
                     {(qteAnim.missCount||0)>0&&(
                       <span style={{color:"#ff4422",textShadow:"0 0 8px #ff4422"}}>
@@ -4502,8 +4643,6 @@ function App() {
               })()}
 
               {/* Enemy shadow on ground */}
-              <ellipse cx={ENX} cy={GNDY+4} rx={eW*0.42} ry={5} fill="#000" opacity=".35"
-                style={{position:"absolute"}} transform={`translate(0,0)`}/>
               <svg style={{position:"absolute",left:0,top:0,pointerEvents:"none",overflow:"visible",zIndex:3}} width={BFW} height={BFH}>
                 <ellipse cx={ENX} cy={GNDY+4} rx={eW*0.42} ry={5} fill="#000" opacity=".35"/>
               </svg>
@@ -4521,7 +4660,8 @@ function App() {
                 {cs.enemy.id==="pvp_opp"
                   ? <HeroSprite className={cs.enemy.pvpClass??'Knight'} scale={eScale} weapons={cs.enemy.pvpWeapons??['sword']}
                       heroLooks={cs.enemy.pvpHeroLooks}
-                      isAttacking={qteAnim?.type==="defend"}/>
+                      animRow={qteAnim?.type==="defend" ? (cs.enemy.pvpHeroLooks?.atkRow??5) : (cs.enemy.pvpHeroLooks?.idleRow??0)}
+                      animFrame={frameTick%4}/>
                   : <EnemySpriteSmall id={cs.enemy.id} scale={eScale} sprite={cs?.enemySprite} enemyFlash={enemyFlash} phase={cs.phase} bossAttackPattern={cs?.bossAttackPattern}/>
                 }
               </div>
@@ -4819,12 +4959,35 @@ function App() {
                 );
               })()}
 
-              {/* Hero sprite — position:absolute in zoomed battlefield (outer wrapper has no overflow:hidden) */}
+              {/* Hero sprite — position:absolute in zoomed battlefield */}
               {(()=>{
-                // Stomp uses idle pose throughout — arc/jump IS the visual, pose swap causes bpX artifact
-                const heroIsAtk = !!qteAnim && qteAnim.type!=="defend"
-                                            && qteAnim.type!=="stomp"
-                                            && qteAnim.type!=="stomp_return";
+                const looks = player?.heroLooks;
+                // Compute animation row + frame based on game state
+                const { aRow, aFrame } = (()=>{
+                  const iRow = looks?.idleRow ?? 0;
+                  const tick = frameTick;
+                  // Dead
+                  if ((player?.hp??1)<=0) return {aRow:looks?.deathRow??6, aFrame:tick%(looks?.deathCols??4)};
+                  // No QTE → idle (cycle sprite frames)
+                  if (!qteAnim) return {aRow:iRow, aFrame:tick%(looks?.idleCols??4)};
+                  const type=qteAnim.type, t=qteAnim.t??0.5;
+                  // Defend → idle (cycle sprite frames)
+                  if (type==='defend') return {aRow:iRow, aFrame:tick%(looks?.idleCols??4)};
+                  // Stomp: jump up (t<LAND_FRAC) then fall down
+                  if (type==='stomp'||type==='stomp_return'){
+                    if (t<LAND_FRAC) return {aRow:looks?.jumpRow??3, aFrame:tick%(looks?.jumpCols??4)};
+                    return {aRow:looks?.fallRow??4, aFrame:tick%(looks?.fallCols??4)};
+                  }
+                  // Archery → attack animation (hero stays at home, not walking)
+                  if (type==='archery') return {aRow:looks?.atkRow??5, aFrame:tick%(looks?.atkCols??4)};
+                  // Past midpoint toward enemy → attack; still approaching → run
+                  if (heroPos!==null) {
+                    const atEnemy = heroPos.left < (HR_L + STRIKE_L) / 2;
+                    if (atEnemy) return {aRow:looks?.atkRow??5, aFrame:tick%(looks?.atkCols??4)};
+                    return {aRow:looks?.runRow??2, aFrame:tick%(looks?.runCols??4)};
+                  }
+                  return {aRow:looks?.atkRow??5, aFrame:tick%(looks?.atkCols??4)};
+                })();
                 return (
                   <div style={{position:"absolute",
                     left: heroPos ? heroPos.left : HR_L,
@@ -4832,7 +4995,7 @@ function App() {
                     zIndex:20, animation:"none", pointerEvents:"none",
                     filter: qteAnim?.type==="defend"   ? "drop-shadow(0 0 10px #4488ff)" :
                             chargeActive&&cIsPerfect   ? "drop-shadow(0 0 14px #44ff88)" : "none"}}>
-                    <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={heroIsAtk}/>
+                    <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={looks} animRow={aRow} animFrame={aFrame}/>
                   </div>
                 );
               })()}
@@ -5271,12 +5434,26 @@ function App() {
               </div>
 
               {/* My hero (right side) */}
-              <div style={{position:"absolute",
-                left:heroPos?heroPos.left:HR_L, top:heroPos?heroPos.top:HR_T,
-                zIndex:6,transform:"scaleX(1)",
-                animation:"none"}}>
-                <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={player?.heroLooks} isAttacking={!!qteAnim}/>
-              </div>
+              {(()=>{
+                const looks=player?.heroLooks;
+                const iRow=looks?.idleRow??0;
+                const tick=frameTick;
+                let aRow=iRow, aFrame=tick%(looks?.idleCols??4);
+                if((player?.hp??1)<=0){aRow=looks?.deathRow??6;aFrame=tick%(looks?.deathCols??4);}
+                else if(qteAnim){
+                  const type=qteAnim.type,t=qteAnim.t??0.5;
+                  if(type==='stomp'||type==='stomp_return'){aRow=t<LAND_FRAC?(looks?.jumpRow??3):(looks?.fallRow??4);aFrame=tick%4;}
+                  else if(type==='defend'){aRow=iRow;aFrame=tick%(looks?.idleCols??4);}
+                  else if(type==='archery'){aRow=looks?.atkRow??5;aFrame=tick%(looks?.atkCols??4);}
+                  else if(heroPos!==null){const atEnemy=heroPos.left<(HR_L+STRIKE_L)/2;aRow=atEnemy?(looks?.atkRow??5):(looks?.runRow??2);aFrame=tick%(atEnemy?(looks?.atkCols??4):(looks?.runCols??4));}
+                  else{aRow=looks?.atkRow??5;aFrame=tick%(looks?.atkCols??4);}
+                }
+                return(
+                  <div style={{position:"absolute",left:heroPos?heroPos.left:HR_L,top:heroPos?heroPos.top:HR_T,zIndex:6,animation:"none"}}>
+                    <HeroSprite className={player.class} scale={0.85} weapons={player.weapons||[]} heroLooks={looks} animRow={aRow} animFrame={aFrame}/>
+                  </div>
+                );
+              })()}
 
               {/* All existing QTE overlays render here via existing render code — they check qteAnim type */}
               {/* Turn indicator */}
@@ -5347,6 +5524,321 @@ function App() {
           </div>
         );
       })()}
+
+      {/* ── QTE Inspector — visible at ?debug URL param ── */}
+      {window.location.search.includes('debug') && (() => {
+        // Auto-bootstrap combat state so QTEs render without navigating the game
+        const _dbgSetup = () => {
+          if (window.__qteDbgInit) return;
+          window.__qteDbgInit = true;
+          const heroLooks = randomHeroLooks();
+          setPlayer({ name:'Debug', hp:100, maxHp:100, level:5, str:10, def:5,
+            potions:[], xp:0, xpToNext:100, weapons:['sword'],
+            heroLooks, class:'Knight', floor:1, visited:[], nodeId:'n0' });
+          setCs({ phase:'action',
+            enemy:{ ...ENEMIES.goblin, id:'goblin', hp:99999, maxHp:99999 },
+            enemySprite:{ ...ENEMY_SPRITE_POOL[0] },
+            hp:99999, maxHp:99999, log:[],
+            elite:false, pvpMode:false, bossAttackPattern:null, nodeId:'n0' });
+          setScreen('combat');
+        };
+        const _dbgReset = () => {
+          window.__qteDbgInit = false;
+          setQteAnim(null);
+          _dbgSetup();
+        };
+        const _launchQte = (weaponId) => {
+          if (!player || !cs) { _dbgSetup(); return; }
+          if (weaponId === '__defend') { startDefendQTE(); return; }
+          const weapon = ALL_WEAPONS[weaponId];
+          if (!weapon) return;
+          // Cancel ALL pending QTE timers so stale timeouts don't fire into the new QTE
+          const _r = qteRef.current;
+          clearTimeout(_r.defendTimer);
+          clearTimeout(_r.beatTimer);
+          clearTimeout(_r.pokeTimer);
+          clearTimeout(_r.seqTimer);
+          clearTimeout(_r.rpgTimer);
+          _r.done = true;       // kills any running tick/defend animation
+          _r.debugMode = true;  // tells resolveAttack to skip defend queue
+          setQteAnim(null);
+          // Reset cs phase to action so startAttack sees correct state
+          qteRef.current.done = false; // allow new QTE to run
+          setCs(prev => prev ? { ...prev, phase:'action',
+            enemy:{ ...prev.enemy, hp:99999, maxHp:99999 } } : prev);
+          startAttack(weapon);
+        };
+        const QTE_GROUPS = [
+          { label:'⚔ Swing Beat',    type:'swing_beat',      ids:['sword','longsword','obsidian_blade'] },
+          { label:'⚒ Hold/Release',  type:'hold_release',    ids:['hammer','axe','great_maul','titan_hammer'] },
+          { label:'🗡 Rapid Tap',     type:'rapid_tap',       ids:['daggers','twin_blades','shadow_fangs'] },
+          { label:'🔱 Poke',          type:'poke',            ids:['spear','war_lance','dragon_lance'] },
+          { label:'🏹 Archery',       type:'archery',         ids:['bow','hunters_bow','darkwood_bow'] },
+          { label:'🪄 Sequence',      type:'sequence',        ids:['staff','wand','runic_staff','void_scepter'] },
+          { label:'🚀 RPG Reveal',    type:'sequence_reveal', ids:['rpg'] },
+          { label:'👟 Stomp',         type:'stomp',           ids:['boots','iron_stompers','thunder_boots'] },
+          { label:'⚔🔫 Dual Action', type:'dual_action',     ids:['sword_gun','knife_shotgun','axe_pistol','club_musket','sniper_spear'] },
+          { label:'🛡 Defend',        type:'defend',          ids:['__defend'] },
+        ];
+        const activeType = qteAnim?.type;
+        const activeWpn  = qteAnim?.weapon?.id;
+        return (
+          <div ref={el=>{ if(el) _dbgSetup(); }}
+            style={{position:'fixed',top:8,left:8,zIndex:9999,background:'rgba(0,0,0,.93)',
+              border:'1px solid #556',borderRadius:7,padding:'8px 10px',fontFamily:'monospace',
+              fontSize:10,boxShadow:'0 4px 20px #000',width:210,maxHeight:'94vh',overflowY:'auto'}}>
+            {/* Header */}
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:7}}>
+              <span style={{color:'#ffcc44',fontWeight:'bold',letterSpacing:2,fontSize:10}}>QTE INSPECTOR</span>
+              <span style={{color:player?'#44ff88':'#ff6666',fontSize:9}}>{player?'● LIVE':'○ INIT'}</span>
+            </div>
+
+            {/* QTE groups */}
+            {QTE_GROUPS.map(({label,type,ids})=>(
+              <div key={type} style={{marginBottom:6}}>
+                <div style={{color: activeType===type ? '#ffcc44':'#667',fontSize:9,
+                  letterSpacing:1,marginBottom:2,textTransform:'uppercase',
+                  borderBottom:`1px solid ${activeType===type?'#ffcc4444':'#222'}`,paddingBottom:1}}>
+                  {label}
+                </div>
+                <div style={{display:'flex',flexWrap:'wrap',gap:2}}>
+                  {ids.map(wid=>{
+                    const w  = ALL_WEAPONS[wid];
+                    const nm = wid==='__defend' ? 'Defend' : (w?.name||wid);
+                    const em = wid==='__defend' ? '🛡' : (w?.emoji||'⚔');
+                    const isActive = activeType===type && (wid==='__defend' ? true : activeWpn===wid);
+                    return (
+                      <button key={wid} onClick={()=>_launchQte(wid)}
+                        title={w?.desc||nm}
+                        style={{padding:'2px 5px',fontSize:9,
+                          background: isActive ? '#1a2240' : '#111',
+                          color: isActive ? '#ffcc44' : '#999',
+                          border:`1px solid ${isActive?'#ffcc44':'#2a2a2a'}`,
+                          borderRadius:3,cursor:'pointer',fontFamily:'monospace',
+                          transition:'border-color .1s,background .1s'}}>
+                        {em} {nm.split(' ').slice(-1)[0]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            {/* Controls */}
+            <div style={{display:'flex',gap:4,marginTop:7}}>
+              <button onClick={()=>setQteAnim(null)}
+                style={{flex:1,padding:'3px 0',background:'#2a0808',color:'#ff6666',
+                  border:'1px solid #661111',borderRadius:3,cursor:'pointer',fontFamily:'monospace',fontSize:9}}>
+                ✕ clear
+              </button>
+              <button onClick={_dbgReset}
+                style={{flex:1,padding:'3px 0',background:'#082a08',color:'#66ff88',
+                  border:'1px solid #116611',borderRadius:3,cursor:'pointer',fontFamily:'monospace',fontSize:9}}>
+                ↺ reset
+              </button>
+              <button onClick={()=>{ window.location.href='?debug&sheets'; }}
+                style={{flex:1,padding:'3px 0',background:'#0a0a2a',color:'#88aaff',
+                  border:'1px solid #224488',borderRadius:3,cursor:'pointer',fontFamily:'monospace',fontSize:9}}>
+                🖼 sheets
+              </button>
+            </div>
+
+            {/* Randomize hero looks */}
+            <button onClick={()=>{
+              const looks = randomHeroLooks();
+              setPlayer(p => p ? {...p, heroLooks: looks} : p);
+              // bust bake cache so new composite is generated
+              Object.keys(_bakedSheets).forEach(k => { delete _bakedSheets[k]; });
+            }}
+              style={{width:'100%',marginTop:4,padding:'4px 0',background:'#1a0a2a',color:'#cc88ff',
+                border:'1px solid #553388',borderRadius:3,cursor:'pointer',fontFamily:'monospace',fontSize:9,
+                letterSpacing:1}}>
+              🎲 randomize looks
+            </button>
+
+            {/* Active QTE state readout */}
+            {qteAnim && (
+              <div style={{marginTop:5,padding:'4px 6px',background:'#080818',borderRadius:3,
+                color:'#88aaff',fontSize:9,lineHeight:1.5,fontFamily:'monospace'}}>
+                <span style={{color:'#aaccff'}}>type</span>: {qteAnim.type}{'\n'}
+                {qteAnim.weapon && <><span style={{color:'#aaccff'}}>wpn </span>: {qteAnim.weapon.name}<br/></>}
+                <span style={{color:'#aaccff'}}>t   </span>: {(qteAnim.t||0).toFixed(3)}
+                {qteAnim.type==='hold_release'&&<><br/><span style={{color:'#aaccff'}}>chg </span>: {(qteAnim.charge||0).toFixed(2)}</>}
+                {qteAnim.type==='rapid_tap'&&<><br/><span style={{color:'#aaccff'}}>taps</span>: {qteAnim.taps||0}/{qteAnim.tapTarget||0}</>}
+                {qteAnim.type==='poke'&&<><br/><span style={{color:'#aaccff'}}>hits</span>: {qteAnim.inputs||0}/{qteAnim.tapTarget||0}</>}
+                {qteAnim.type==='archery'&&<><br/><span style={{color:'#aaccff'}}>shot</span>: {qteAnim.shotsFired||0}/3</>}
+                {qteAnim.type==='dual_action'&&<><br/><span style={{color:'#aaccff'}}>dot </span>: {(qteAnim.dotPos||0).toFixed(2)}</>}
+                {(qteAnim.type==='sequence'||qteAnim.type==='sequence_reveal')&&
+                  <><br/><span style={{color:'#aaccff'}}>seq </span>: {(qteAnim.seq||[]).join(' ')}</>}
+              </div>
+            )}
+
+            {/* Hero zoom canvas — live composite of sprite layers */}
+            {qteAnim && <canvas id="__dbgZoom" width="1" height="1"
+              ref={el=>{
+                if(!el)return;
+                setTimeout(()=>{
+                  const layers=[...document.querySelectorAll('div')].filter(d=>
+                    d.style.backgroundImage?.includes('Gandalf')&&d.clientHeight<=70
+                  );
+                  if(!layers.length)return;
+                  const cw=layers[0].clientWidth,ch=layers[0].clientHeight;
+                  const sc=4;
+                  el.width=cw*sc; el.height=ch*sc;
+                  el.style.cssText=`display:block;margin-top:6px;border:1px solid #334;image-rendering:pixelated;width:${cw*sc}px;height:${ch*sc}px;background:#0a0a12`;
+                  const ctx=el.getContext('2d'); ctx.imageSmoothingEnabled=false;
+                  layers.forEach(layer=>{
+                    const lcs=window.getComputedStyle(layer);
+                    const sz=lcs.backgroundSize.match(/([\d.]+)px\s+([\d.]+)px/);
+                    const pos=lcs.backgroundPosition.match(/(-?[\d.]+)px\s+(-?[\d.]+)px/);
+                    if(!sz||!pos)return;
+                    const [,sw,sh]=[...sz].map(Number);
+                    const [,bpx,bpy]=[...pos].map(Number);
+                    const url=layer.style.backgroundImage.replace(/url\(["']?/,'').replace(/["']?\)/,'');
+                    const img=new Image();
+                    img.onload=()=>{
+                      const nw=img.naturalWidth,nh=img.naturalHeight;
+                      ctx.drawImage(img,
+                        Math.round(-bpx*nw/sw),Math.round(-bpy*nh/sh),
+                        Math.round(cw*nw/sw),Math.round(ch*nh/sh),
+                        0,0,cw*sc,ch*sc);
+                    };
+                    img.src=url;
+                  });
+                },200);
+              }}/>
+            }
+          </div>
+        );
+      })()}
+
+      {/* ── Sprite Sheet Viewer — visible at ?debug&sheets ── */}
+      {window.location.search.includes('debug') && window.location.search.includes('sheets') && player?.heroLooks && (() => {
+        const looks    = player.heroLooks;
+        const cols      = looks.cols      || 10;
+        const totalRows = looks.totalRows || 7;
+        // Inspector bakes at FULL source frame dimensions (no center-crop) so death
+        // frames lying flat aren't clipped. Game bake uses dW=41 (cropped); here we
+        // use the raw frameW×frameH so all content is visible.
+        const inspDW   = looks.frameW || 80;
+        const inspDH   = looks.frameH || 64;
+        const ZOOM     = 2;
+        const ROW_LABELS = ['IDLE','WALK','RUN','JUMP','FALL','ATK','DEATH'];
+        // Bake with srcXOffset=0 / contentW=frameW so centerCrop=0 (no crop)
+        const noCropLooks = {...looks, srcXOffset: 0, contentW: inspDW};
+        const key     = _bakeKey(noCropLooks, inspDW, inspDH);
+        const baked   = typeof _bakedSheets[key] === 'string' ? _bakedSheets[key] : null;
+        // Kick off bake if not yet started (frameTick at 120ms will re-render and pick up result)
+        if (!baked && !_bakedSheets[key]) {
+          _bakedSheets[key] = _bakeHeroSheet(noCropLooks, inspDW, inspDH)
+            .then(url => { _bakedSheets[key] = url; });
+        }
+        // dW/dH aliases for label below
+        const dW = inspDW, dH = inspDH;
+        const LAYERS  = ['skin','clothing','boots','legs','arms','hair'];
+
+        return (
+          <div style={{position:'fixed',inset:0,background:'#020205',zIndex:99999,
+            overflow:'auto',padding:'16px 20px',fontFamily:'monospace'}}>
+            {/* Header */}
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+              <span style={{fontFamily:'Cinzel',color:'#ffcc44',fontSize:13,letterSpacing:2}}>
+                SPRITE SHEET INSPECTOR
+              </span>
+              <button onClick={()=>{ window.history.back(); }}
+                style={{background:'#2a0808',color:'#ff6666',border:'1px solid #661111',
+                  padding:'4px 14px',fontFamily:'Cinzel',fontSize:11,cursor:'pointer',borderRadius:3}}>
+                ✕ CLOSE
+              </button>
+            </div>
+
+            {/* ── Baked composite sheet ── */}
+            <div style={{marginBottom:24}}>
+              <div style={{color:'#88aaff',fontSize:10,marginBottom:6,letterSpacing:1}}>
+                BAKED COMPOSITE — all layers merged, {cols}×{totalRows} cells @ {dW}×{dH}px → {ZOOM}x zoom
+              </div>
+              {baked ? (
+                <div style={{position:'relative',display:'inline-block',border:'1px solid #333'}}>
+                  <img src={baked} style={{imageRendering:'pixelated',display:'block',
+                    width:cols*dW*ZOOM, height:totalRows*dH*ZOOM}}/>
+                  <svg style={{position:'absolute',inset:0,pointerEvents:'none',overflow:'visible'}}
+                    width={cols*dW*ZOOM} height={totalRows*dH*ZOOM}>
+                    {[...Array(cols+1)].map((_,i)=>(
+                      <line key={`cv${i}`} x1={i*dW*ZOOM} y1={0} x2={i*dW*ZOOM} y2={totalRows*dH*ZOOM}
+                        stroke="#ffcc4455" strokeWidth="1"/>
+                    ))}
+                    {[...Array(totalRows)].map((_,r)=>(
+                      <g key={`rr${r}`}>
+                        <line x1={0} y1={r*dH*ZOOM} x2={cols*dW*ZOOM} y2={r*dH*ZOOM}
+                          stroke="#ffcc4455" strokeWidth="1"/>
+                        <text x={3} y={r*dH*ZOOM+9} fill="#ffcc44cc"
+                          fontFamily="monospace" fontSize="8" fontWeight="bold">
+                          {ROW_LABELS[r]||r}
+                        </text>
+                      </g>
+                    ))}
+                    <line x1={0} y1={totalRows*dH*ZOOM} x2={cols*dW*ZOOM} y2={totalRows*dH*ZOOM}
+                      stroke="#ffcc4455" strokeWidth="1"/>
+                    {[...Array(cols)].map((_,c)=>(
+                      <text key={`cn${c}`} x={c*dW*ZOOM+2} y={totalRows*dH*ZOOM+10}
+                        fill="#aaa" fontFamily="monospace" fontSize="7">{c}</text>
+                    ))}
+                  </svg>
+                </div>
+              ) : (
+                <div style={{color:'#666',fontSize:11}}>Baking… reload if stuck.</div>
+              )}
+            </div>
+
+            {/* ── Individual layer source sheets ── */}
+            <div style={{color:'#88aaff',fontSize:10,marginBottom:10,letterSpacing:1}}>
+              SOURCE LAYERS — raw sprite sheets with frame grid
+            </div>
+            {LAYERS.map(lk => {
+              const src = looks[lk];
+              if (!src) return null;
+              const img = _heroImgEl[src];
+              if (!img) return <div key={lk} style={{color:'#555',fontSize:9,marginBottom:8}}>{lk.toUpperCase()} — loading…</div>;
+              const nw = img.naturalWidth, nh = img.naturalHeight;
+              const fW = nw / cols, fH = nh / totalRows;
+              const LZ = Math.min(3, Math.floor(900 / nw)) || 1;
+              return (
+                <div key={lk} style={{marginBottom:20}}>
+                  <div style={{color:'#ccc',fontSize:9,marginBottom:5,letterSpacing:1}}>
+                    <span style={{color:'#ffcc44'}}>{lk.toUpperCase()}</span>
+                    {' — '}{src.split('/').pop()}
+                    {'  '}{nw}×{nh}px · {fW}×{fH} per frame · {LZ}x zoom
+                  </div>
+                  <div style={{position:'relative',display:'inline-block',border:'1px solid #222'}}>
+                    <img src={src} style={{imageRendering:'pixelated',display:'block',
+                      width:nw*LZ, height:nh*LZ}}/>
+                    <svg style={{position:'absolute',inset:0,pointerEvents:'none'}}
+                      width={nw*LZ} height={nh*LZ}>
+                      {[...Array(cols+1)].map((_,i)=>(
+                        <line key={`lv${i}`} x1={i*fW*LZ} y1={0} x2={i*fW*LZ} y2={nh*LZ}
+                          stroke="#ffcc4444" strokeWidth="1"/>
+                      ))}
+                      {[...Array(totalRows)].map((_,r)=>(
+                        <g key={`lr${r}`}>
+                          <line x1={0} y1={r*fH*LZ} x2={nw*LZ} y2={r*fH*LZ}
+                            stroke="#ffcc4444" strokeWidth="1"/>
+                          <text x={3} y={r*fH*LZ+10} fill="#ffcc44bb"
+                            fontFamily="monospace" fontSize="9">
+                            {ROW_LABELS[r]||r}
+                          </text>
+                        </g>
+                      ))}
+                      <line x1={0} y1={nh*LZ} x2={nw*LZ} y2={nh*LZ}
+                        stroke="#ffcc4444" strokeWidth="1"/>
+                    </svg>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
     </div>
   );
 }
