@@ -4041,7 +4041,7 @@ function App() {
                 const ty  = eTop + eH*0.38;
                 const bx  = sx + (tx-sx)*easeIO(rt);
                 const by  = sy + (ty-sy)*easeIO(rt);
-                const wEmoji = qteAnim.weapon?.emoji||"⚔️";
+                const wid2 = qteAnim.weapon?.id||"hammer";
                 return (
                   <svg style={{position:"absolute",left:0,top:0,zIndex:12,pointerEvents:"none",overflow:"visible"}} width={BFW} height={BFH}>
                     {/* Trail */}
@@ -4054,9 +4054,11 @@ function App() {
                     {/* Main orb */}
                     <circle cx={bx} cy={by} r="11" fill={col} style={{filter:`drop-shadow(0 0 16px ${col})`}}/>
                     <circle cx={bx} cy={by} r="5.5" fill="#fff" opacity=".9"/>
-                    {/* Spinning weapon emoji */}
-                    <foreignObject x={bx-10} y={by-10} width="20" height="20" style={{overflow:"visible",pointerEvents:"none"}}>
-                      <div style={{fontSize:14,lineHeight:1,textAlign:"center",transform:`rotate(${rt*720}deg)`,transformOrigin:"center"}}>{wEmoji}</div>
+                    {/* Spinning weapon icon */}
+                    <foreignObject x={bx-9} y={by-9} width="18" height="18" style={{overflow:"visible",pointerEvents:"none"}}>
+                      <div style={{transform:`rotate(${rt*720}deg)`,transformOrigin:"center",width:18,height:18,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        <Icon type={wid2} size={14} color="#fff"/>
+                      </div>
                     </foreignObject>
                     {/* Impact burst at end */}
                     {rt>0.85&&[...Array(8)].map((_,i)=>{
@@ -5021,13 +5023,12 @@ function App() {
                       left: ORBIT_R - 11, top: -11,
                       width:22, height:22,
                       display:"flex", alignItems:"center", justifyContent:"center",
-                      fontSize:15,
                       background:"rgba(0,0,0,0.55)",
                       borderRadius:"50%",
                       border:"1px solid rgba(255,200,80,0.5)",
                       boxShadow:"0 0 6px rgba(255,180,40,0.4)",
                       animation:`weaponOrbitCounter ${ORBIT_DUR}s linear ${delay}s infinite`,
-                    }}>{wData.emoji}</div>
+                    }}><Icon type={wid} size={16} color="#ffcc50"/></div>
                   </div>
                 );
               })}
