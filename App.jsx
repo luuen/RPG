@@ -1466,17 +1466,11 @@ function App() {
     setTimeout(()=>{ if(!pvpModeRef.current) return; pvpStartIncoming(atk); }, 500);
   },[oppSnap?.pvpAtk?.ts, screen, cs?.pvpMode]);
 
-  // ── Watch pvpTurnDone → defender resolved, restore attacker's action phase ──
-  // Fires on ATTACKER side: pvpTurn="theirs" (waiting), oppSnap.pvpTurnDone just arrived.
-  useEffect(()=>{
-    if(pvpWinner) return;
-    if(screen!=="combat"||!cs?.pvpMode||pvpTurn!=="theirs"||!oppSnap?.pvpTurnDone) return;
-    if(oppSnap.pvpTurnDone===mpRef.current.lastTurnDoneTs) return;
-    mpRef.current.lastTurnDoneTs = oppSnap.pvpTurnDone;
-    // Defender resolved — flip back to attacker's turn and restore action phase
-    setPvpTurn("mine");
-    setCs(prev=>prev?{...prev,phase:"action"}:prev);
-  },[oppSnap?.pvpTurnDone, screen, pvpTurn, cs?.pvpMode, pvpWinner]);
+  // pvpTurnDone effect REMOVED — turns are self-managing:
+  // After you ATTACK → pvpTurn="theirs" (pvpOnAttackDone)
+  // After you DEFEND → pvpTurn="mine"  (pvpDefCbRef callback in pvpStartIncoming)
+  // Giving the original attacker their turn back here caused BOTH players to have
+  // "mine" simultaneously, leaving both books open and allowing anyone to attack freely.
 
   // ── Watch oppSnap.pvpHp — single source of truth for opponent HP on attacker side ──
   // Attacker never touches pvpOppHp directly; defender reports actual HP after block/parry.
