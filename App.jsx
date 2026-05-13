@@ -84,26 +84,26 @@ const ALL_WEAPONS = {
   wand:           { id:"wand",          name:"Chaos Wand",      emoji:"✨",  baseDmg:18, speed:2.0, qteType:"sequence",     tier:"basic",  seqLength:3,                          classEmoji:"✨",  className:"Sorcerer"    },
   knife_shotgun:  { id:"knife_shotgun", name:"Knife & Shotgun", emoji:"🔪💥", baseDmg:24, speed:2.2, qteType:"dual_action", tier:"basic",  dotSpeed:2.00, centerWidth:0.25,      classEmoji:"💥",  className:"Brawgunner", desc:"Faster dot — wide zone saves you. Hold A+W+D and click." },
   // ── REFINED (elite drops only — blue) ──
-  longsword:      { id:"longsword",     name:"Longsword",       emoji:"🗡️",  baseDmg:22, speed:2.0, qteType:"swing_beat",   tier:"refined", beatTimeout:1500,                                        classEmoji:"⚔️",  className:"Swordmaster", desc:"Faster combo window — A→W→D before time runs out!" },
-  great_maul:     { id:"great_maul",    name:"Great Maul",      emoji:"🔨",  baseDmg:32, speed:1.0, qteType:"hold_release", tier:"refined", chargePerfectLo:0.78, chargePerfectHi:0.91,             classEmoji:"💪",  className:"Warlord",     desc:"Narrower perfect zone — hold steady and release at the peak." },
-  twin_blades:    { id:"twin_blades",   name:"Twin Blades",     emoji:"⚔️",  baseDmg:18, speed:3.5, qteType:"rapid_tap",   tier:"refined", tapTarget:11, rapidDur:1500,                             classEmoji:"🌀",  className:"Bladedancer", desc:"Mash A+D 11 times in 1.5 seconds — push faster!" },
-  runic_staff:    { id:"runic_staff",   name:"Runic Staff",     emoji:"🪄",  baseDmg:28, speed:1.6, qteType:"sequence",    tier:"refined", seqLength:5, seqDur:3200,                                classEmoji:"📖",  className:"Runekeeper",  desc:"5-rune sequence, tighter window — one mistake restarts!" },
-  hunters_bow:    { id:"hunters_bow",   name:"Hunter's Bow",    emoji:"🏹",  baseDmg:18, speed:1.5, qteType:"archery",     tier:"refined", archDur:3200,                                            classEmoji:"🎯",  className:"Hunter",      desc:"Faster orbiting dots — time each shot carefully." },
-  iron_stompers:  { id:"iron_stompers", name:"Iron Stompers",   emoji:"👢",  baseDmg:18, speed:1.4, qteType:"stomp",       tier:"refined", stompDur:650,                                            classEmoji:"🦵",  className:"Crusher",     desc:"Faster stomp — hit the timing at peak force!" },
-  war_lance:      { id:"war_lance",     name:"War Lance",       emoji:"🔱",  baseDmg:26, speed:2.0, qteType:"poke",        tier:"refined", pokeDur:1800, pokeTarg:28,                               classEmoji:"⚡",  className:"Vanguard",    desc:"28 keypresses in less time — hammer the entire keyboard!" },
-  axe_pistol:     { id:"axe_pistol",    name:"Axe & Pistol",   emoji:"🪓🔫", baseDmg:36, speed:1.5, qteType:"dual_action", tier:"refined", dotSpeed:2.80, centerWidth:0.16,                         classEmoji:"🪓",  className:"Gunslinger",  desc:"Noticeably faster dot — keep your eye on it. Hold A+W+D, click." },
+  longsword:      { id:"longsword",     name:"Longsword",       emoji:"🗡️",  baseDmg:19, speed:2.0, qteType:"swing_beat",   tier:"refined", beatTimeout:1500,                                        classEmoji:"⚔️",  className:"Swordmaster", desc:"Faster combo window — A→W→D before time runs out!" },
+  great_maul:     { id:"great_maul",    name:"Great Maul",      emoji:"🔨",  baseDmg:21, speed:1.0, qteType:"hold_release", tier:"refined", chargePerfectLo:0.78, chargePerfectHi:0.91,             classEmoji:"💪",  className:"Warlord",     desc:"Narrower perfect zone — hold steady and release at the peak." },
+  twin_blades:    { id:"twin_blades",   name:"Twin Blades",     emoji:"⚔️",  baseDmg:17, speed:3.5, qteType:"rapid_tap",   tier:"refined", tapTarget:11, rapidDur:1500,                             classEmoji:"🌀",  className:"Bladedancer", desc:"Mash A+D 11 times in 1.5 seconds — push faster!" },
+  runic_staff:    { id:"runic_staff",   name:"Runic Staff",     emoji:"🪄",  baseDmg:19, speed:1.6, qteType:"sequence",    tier:"refined", seqLength:5, seqDur:3200,                                classEmoji:"📖",  className:"Runekeeper",  desc:"5-rune sequence, tighter window — one mistake restarts!" },
+  hunters_bow:    { id:"hunters_bow",   name:"Hunter's Bow",    emoji:"🏹",  baseDmg:16, speed:1.5, qteType:"archery",     tier:"refined", archDur:3200,                                            classEmoji:"🎯",  className:"Hunter",      desc:"Faster orbiting dots — time each shot carefully." },
+  iron_stompers:  { id:"iron_stompers", name:"Iron Stompers",   emoji:"👢",  baseDmg:17, speed:1.4, qteType:"stomp",       tier:"refined", stompDur:650,                                            classEmoji:"🦵",  className:"Crusher",     desc:"Faster stomp — hit the timing at peak force!" },
+  war_lance:      { id:"war_lance",     name:"War Lance",       emoji:"🔱",  baseDmg:18, speed:2.0, qteType:"poke",        tier:"refined", pokeDur:1800, pokeTarg:28,                               classEmoji:"⚡",  className:"Vanguard",    desc:"28 keypresses in less time — hammer the entire keyboard!" },
+  axe_pistol:     { id:"axe_pistol",    name:"Axe & Pistol",   emoji:"🪓🔫", baseDmg:21, speed:1.5, qteType:"dual_action", tier:"refined", dotSpeed:2.80, centerWidth:0.16,                         classEmoji:"🪓",  className:"Gunslinger",  desc:"Noticeably faster dot — keep your eye on it. Hold A+W+D, click." },
   // ── EPIC (elite drops only — purple) ──
-  obsidian_blade: { id:"obsidian_blade",name:"Obsidian Blade",  emoji:"🗡️",  baseDmg:38, speed:2.2, qteType:"swing_beat",  tier:"epic", beatTimeout:900,                                           classEmoji:"🌑",  className:"Darkblade",  desc:"Blink-fast — nail A→W→D in under a second or miss completely." },
-  titan_hammer:   { id:"titan_hammer",  name:"Titan's Hammer",  emoji:"🔨",  baseDmg:48, speed:0.9, qteType:"hold_release",tier:"epic", chargePerfectLo:0.84, chargePerfectHi:0.91,               classEmoji:"⚡",  className:"Titan",      desc:"Razor-thin perfect zone — hold steady, release at the peak." },
-  shadow_fangs:   { id:"shadow_fangs",  name:"Shadow Fangs",    emoji:"🗡️",  baseDmg:30, speed:4.0, qteType:"rapid_tap",  tier:"epic", tapTarget:14, rapidDur:1300,                               classEmoji:"🕷️", className:"Assassin",   desc:"Mash A+D 14 times in 1.3 seconds — pure chaos speed." },
-  void_scepter:   { id:"void_scepter",  name:"Void Scepter",    emoji:"✨",  baseDmg:42, speed:1.8, qteType:"sequence",   tier:"epic", seqLength:6, seqDur:2600,                                   classEmoji:"🌌",  className:"Arcanist",   desc:"6 runes in 2.6 seconds — one mistake and you restart." },
-  darkwood_bow:   { id:"darkwood_bow",  name:"Darkwood Bow",    emoji:"🏹",  baseDmg:32, speed:1.5, qteType:"archery",    tier:"epic", archDur:2500,                                               classEmoji:"🌙",  className:"Shadowshot", desc:"Fast-orbiting dots — lightning reflexes needed." },
-  thunder_boots:  { id:"thunder_boots", name:"Thunder Boots",   emoji:"👟",  baseDmg:32, speed:1.4, qteType:"stomp",      tier:"epic", stompDur:530,                                               classEmoji:"⚡",  className:"Thunderfoot",desc:"Blink-fast stomp — the window is tiny." },
-  dragon_lance:   { id:"dragon_lance",  name:"Dragon Lance",    emoji:"🔱",  baseDmg:40, speed:2.0, qteType:"poke",       tier:"epic", pokeDur:1400, pokeTarg:36,                                  classEmoji:"🐉",  className:"Dragoon",    desc:"36 keypresses — blazing speed, use every finger." },
-  club_musket:    { id:"club_musket",   name:"Club & Musket",   emoji:"🏏💥", baseDmg:46, speed:1.0, qteType:"dual_action",tier:"epic", dotSpeed:3.60, centerWidth:0.12,                           classEmoji:"💥",  className:"Rifleman",   desc:"Blazing dot speed — react fast. Hold A+W+D, click the center." },
-  sniper_spear:   { id:"sniper_spear",  name:"Sniper & Spear",  emoji:"🎯🔱", baseDmg:50, speed:1.0, qteType:"dual_action",tier:"epic", dotSpeed:4.20, centerWidth:0.10,                           classEmoji:"🎯",  className:"Deadeye",    desc:"Fastest dot — pure reflex. Nail it for massive damage. Hold A+W+D, click." },
+  obsidian_blade: { id:"obsidian_blade",name:"Obsidian Blade",  emoji:"🗡️",  baseDmg:20, speed:2.2, qteType:"swing_beat",  tier:"epic", beatTimeout:900,                                           classEmoji:"🌑",  className:"Darkblade",  desc:"Blink-fast — nail A→W→D in under a second or miss completely." },
+  titan_hammer:   { id:"titan_hammer",  name:"Titan's Hammer",  emoji:"🔨",  baseDmg:24, speed:0.9, qteType:"hold_release",tier:"epic", chargePerfectLo:0.84, chargePerfectHi:0.91,               classEmoji:"⚡",  className:"Titan",      desc:"Razor-thin perfect zone — hold steady, release at the peak." },
+  shadow_fangs:   { id:"shadow_fangs",  name:"Shadow Fangs",    emoji:"🗡️",  baseDmg:19, speed:4.0, qteType:"rapid_tap",  tier:"epic", tapTarget:14, rapidDur:1300,                               classEmoji:"🕷️", className:"Assassin",   desc:"Mash A+D 14 times in 1.3 seconds — pure chaos speed." },
+  void_scepter:   { id:"void_scepter",  name:"Void Scepter",    emoji:"✨",  baseDmg:21, speed:1.8, qteType:"sequence",   tier:"epic", seqLength:6, seqDur:2600,                                   classEmoji:"🌌",  className:"Arcanist",   desc:"6 runes in 2.6 seconds — one mistake and you restart." },
+  darkwood_bow:   { id:"darkwood_bow",  name:"Darkwood Bow",    emoji:"🏹",  baseDmg:20, speed:1.5, qteType:"archery",    tier:"epic", archDur:2500,                                               classEmoji:"🌙",  className:"Shadowshot", desc:"Fast-orbiting dots — lightning reflexes needed." },
+  thunder_boots:  { id:"thunder_boots", name:"Thunder Boots",   emoji:"👟",  baseDmg:20, speed:1.4, qteType:"stomp",      tier:"epic", stompDur:530,                                               classEmoji:"⚡",  className:"Thunderfoot",desc:"Blink-fast stomp — the window is tiny." },
+  dragon_lance:   { id:"dragon_lance",  name:"Dragon Lance",    emoji:"🔱",  baseDmg:22, speed:2.0, qteType:"poke",       tier:"epic", pokeDur:1400, pokeTarg:36,                                  classEmoji:"🐉",  className:"Dragoon",    desc:"36 keypresses — blazing speed, use every finger." },
+  club_musket:    { id:"club_musket",   name:"Club & Musket",   emoji:"🏏💥", baseDmg:24, speed:1.0, qteType:"dual_action",tier:"epic", dotSpeed:3.60, centerWidth:0.12,                           classEmoji:"💥",  className:"Rifleman",   desc:"Blazing dot speed — react fast. Hold A+W+D, click the center." },
+  sniper_spear:   { id:"sniper_spear",  name:"Sniper & Spear",  emoji:"🎯🔱", baseDmg:26, speed:1.0, qteType:"dual_action",tier:"epic", dotSpeed:4.20, centerWidth:0.10,                           classEmoji:"🎯",  className:"Deadeye",    desc:"Fastest dot — pure reflex. Nail it for massive damage. Hold A+W+D, click." },
   // ── LEGENDARY ──
-  rpg:            { id:"rpg",           name:"RPG",             emoji:"🚀",  baseDmg:55, speed:1.2, qteType:"sequence_reveal", tier:"legendary", seqLength:10, classEmoji:"💥", className:"Demolisher" },
+  rpg:            { id:"rpg",           name:"RPG",             emoji:"🚀",  baseDmg:35, speed:1.2, qteType:"sequence_reveal", tier:"legendary", seqLength:10, classEmoji:"💥", className:"Demolisher" },
 };
 
 /* ─── ENEMY DATA ─────────────────────────────────────────────── */
@@ -686,7 +686,7 @@ const CLASS_COLORS = {
 };
 const TIER_COLOR = { basic:"#e8d5a3", refined:"#4488ff", epic:"#aa44ff", legendary:"#ffaa00" };
 const TIER_LABEL = { basic:"", refined:"Refined", epic:"Epic", legendary:"Legendary" };
-const TIER_DMG_MULT = { basic:1.0, refined:1.35, epic:1.75, legendary:2.3 };
+const TIER_DMG_MULT = { basic:1.0, refined:1.0, epic:1.2, legendary:1.3 };
 const TIER_ORDER  = { basic:0, refined:1, epic:2, legendary:3 }; // numeric rank for comparison
 // Apply tier scaling to baseDmg — refined/epic/legendary weapons hit significantly harder
 const weaponDmg = (w) => Math.round((w?.baseDmg||0) * (TIER_DMG_MULT[w?.tier||"basic"]||1.0));
@@ -1961,8 +1961,8 @@ function App() {
   const startCombat = (node) => {
     const e = ENEMIES[node.enemy];
     const elite = node.type === "elite";
-    const hp  = elite ? Math.round(e.hp  * 1.6) : e.hp;
-    const atk = elite ? Math.round(e.atk * 1.3) : e.atk;
+    const hp  = elite ? Math.round(e.hp  * 2.5) : e.hp;
+    const atk = elite ? Math.round(e.atk * 1.6) : e.atk;
     const xp  = elite ? Math.round(e.xp  * 3.0) : e.xp;
     if (node.enemy==="dragon") sfx.bossStart();
     const eSprite = node.enemy!=="dragon" ? ENEMY_SPRITE_POOL[Math.floor(Math.random()*ENEMY_SPRITE_POOL.length)] : null;
@@ -2041,7 +2041,8 @@ function App() {
       }
       // In debug mode stay in "action" so the panel can re-launch immediately
       const nextPhase = qteRef.current.debugMode ? "action" : "enemy_turn";
-      return {...prev, enemy:{...prev.enemy,hp:newHp}, phase:nextPhase, bossAttackPattern:qteRef.current.debugMode?null:bossAtk, log:[...prev.log,logMsg]};
+      const pendingAttacks = (!qteRef.current.debugMode && prev.elite && newHp>0) ? 1 : 0;
+      return {...prev, enemy:{...prev.enemy,hp:newHp}, phase:nextPhase, bossAttackPattern:qteRef.current.debugMode?null:bossAtk, pendingAttacks, log:[...prev.log,logMsg]};
     });
   };
 
@@ -2065,10 +2066,21 @@ function App() {
       if (nhp <= 0) setTimeout(()=>setScreen("gameover"), 650);
       return {...p, hp:nhp};
     });
-    setCs(prev=>prev?({...prev,phase:"action",
-      log:[...prev.log, q==="perfect"?"⚡ Perfect parry! 0 damage.":
-                        q==="good"   ?`Blocked — ${dmg} through.`:
-                                      `${prev.enemy.name} slams for ${dmg}!`]}):prev);
+    setCs(prev=>{
+      if(!prev) return prev;
+      const logMsg = q==="perfect"?"⚡ Perfect parry! 0 damage.":
+                     q==="good"   ?`Blocked — ${dmg} through.`:
+                                   `${prev.enemy.name} slams for ${dmg}!`;
+      if((prev.pendingAttacks||0)>0){
+        const nextPending = prev.pendingAttacks-1;
+        const nextBossAtk = prev.enemy.id==="dragon"?(Math.random()<.5?"cleave":"charge"):null;
+        qteRef.current.defendTimer = setTimeout(()=>startDefendQTE(nextBossAtk), 550);
+        return {...prev, phase:"enemy_turn", pendingAttacks:nextPending, bossAttackPattern:nextBossAtk,
+          log:[...prev.log, logMsg, "⚔ ELITE attacks again!"].slice(-8)};
+      }
+      return {...prev, phase:"action", pendingAttacks:0,
+        log:[...prev.log, logMsg].slice(-8)};
+    });
   };
 
   const applyReward = (r) => {
