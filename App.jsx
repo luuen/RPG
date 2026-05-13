@@ -1177,8 +1177,8 @@ const sfx = (() => {
   // Ratios follow a pentatonic-ish ladder so keys 0→9 sound increasingly powerful
   const RUNE_RATES = [1.00,1.12,1.26,1.41,1.59,1.78,2.00,2.24,2.52,2.83];
   // Rapid-fire pools (pre-created at init)
-  const _daggerPlay = mkPool("FGHTImpt_MELEE-Swish Hit_HY_PC", 0.5);
-  const _pokePlay   = mkPool("WHSH_MOVEMENT-Simple Whoosh_HY_PC", 0.38);
+  const _daggerPlay = mkPool("FGHTImpt_MELEE-Swish Hit_HY_PC", 0.28);
+  const _pokePlay   = mkPool("WHSH_MOVEMENT-Simple Whoosh_HY_PC", 0.22);
   const _swordWalkPlay = mkPool("SWSH_MOVEMENT-Bamboo Whip_HY_PC", 0.28);
   // ── Web Audio (kept for sustained/dynamic-only effects) ──────
   const D  = ctx => ctx.destination;
@@ -1210,8 +1210,8 @@ const sfx = (() => {
     slimeDeath:   ()=>rf("DSGNMisc_CAST-Slime Ball_HY_PC",           6, 0.58),
     // ── Sword / Beat ─────────────────────────────────────────────
     swordWalk:    ()=>_swordWalkPlay(),
-    swordKey:     ()=>rf("DSGNMisc_MELEE-Sword Slash_HY_PC",         6, 0.45),
-    swordBadKey:  ()=>rf("UIMisc_INTERFACE-Denied_HY_PC",            6, 0.38),
+    swordKey:     ()=>rf("DSGNMisc_MELEE-Sword Slash_HY_PC",         6, 0.26),
+    swordBadKey:  ()=>rf("UIMisc_INTERFACE-Denied_HY_PC",            6, 0.22),
     swordPerfect: ()=>rf("DSGNMisc_SKILL IMPACT-Critical Strike_HY_PC",6,0.50),
     // ── Hammer / Charge ──────────────────────────────────────────
     // hammerHold stays synthetic — sustained ramping rumble
@@ -1238,33 +1238,33 @@ const sfx = (() => {
       // Layer 1 — crisp crystal ting, pitched up — MV applied
       try {
         const a = new Audio(hy("DSGNTonl_SKILL IMPACT-Energy Crystal_HY_PC", 1+Math.floor(Math.random()*6)));
-        a.volume = Math.min(1, 0.55 * MV); a.playbackRate = rate; a.play().catch(()=>{});
+        a.volume = Math.min(1, 0.30 * MV); a.playbackRate = rate; a.play().catch(()=>{});
       } catch(_e){}
       // Layer 2 — sparkle shimmer — MV applied
       setTimeout(()=>{
         try {
           const b = new Audio(hy("DSGNTonl_SKILL IMPACT-Magic Sparkles_HY_PC", 1+Math.floor(Math.random()*6)));
-          b.volume = Math.min(1, 0.32 * MV); b.playbackRate = rate * 1.08; b.play().catch(()=>{});
+          b.volume = Math.min(1, 0.16 * MV); b.playbackRate = rate * 1.08; b.play().catch(()=>{});
         } catch(_e){}
       }, 22);
     },
     runeWrong: () => {
-      rf("DSGNSynth_BUFF-Failed Buff_HY_PC", 6, 0.52);
-      setTimeout(()=>rf("UIMisc_INTERFACE-Denied_HY_PC", 6, 0.42), 55);
+      rf("DSGNSynth_BUFF-Failed Buff_HY_PC", 6, 0.28);
+      setTimeout(()=>rf("UIMisc_INTERFACE-Denied_HY_PC", 6, 0.22), 55);
     },
     magicBolt: (q) => {
       rf("MAGSpel_CAST-Panic Energy_HY_PC", 6, 0.55);
       if(q==="perfect") setTimeout(()=>rf("DSGNMisc_SKILL IMPACT-Critical Strike_HY_PC",6,0.50),260);
     },
     // ── Stomp / Boots ────────────────────────────────────────────
-    stompApproach:()=>rf("FEETMisc_STEP-Hard Step_HY_PC",                   6, 0.45),
+    stompApproach:()=>rf("FEETMisc_STEP-Hard Step_HY_PC",                   6, 0.26),
     stompLand:    (q)=>rf(q==="perfect"?"DSGNImpt_EXPLOSION-Thud_HY_PC":"DSGNImpt_EXPLOSION-Sand Impact_HY_PC",6, q==="perfect"?0.50:0.42),
-    stompBounce:  ()=>rf("DSGNMisc_MOVEMENT-Pierce Jump_HY_PC",             6, 0.45),
+    stompBounce:  ()=>rf("DSGNMisc_MOVEMENT-Pierce Jump_HY_PC",             6, 0.26),
     // ── Poke / Spear ─────────────────────────────────────────────
     pokeTap:      ()=>_pokePlay(),
     // ── Archery / Bow ────────────────────────────────────────────
     bowDraw:      ()=>(()=>{}),
-    bowRelease:   ()=>rf("SWSH_MOVEMENT-Bamboo Whip_HY_PC",                 6, 0.50),
+    bowRelease:   ()=>rf("SWSH_MOVEMENT-Bamboo Whip_HY_PC",                 6, 0.28),
     arrowFlight:  ()=>rf("WHSH_MOVEMENT-Wind Shaker_HY_PC",                 6, 0.45),
     arrowHit:     (q)=>{
       rf("DSGNMisc_HIT-Gore Pierce_HY_PC", 6, q==="perfect"?0.58:0.48);
@@ -1395,14 +1395,15 @@ function App() {
     return ()=>clearInterval(id);
   },[runStartTime]);
 
-  // Freeze timer when run ends
+  // Freeze timer when run ends (solo victory/gameover OR pvp winner declared OR pvp_wait)
   useEffect(()=>{
-    if((screen==="victory"||screen==="gameover")&&runStartTime&&!finalTime){
+    const ended = screen==="victory"||screen==="gameover"||screen==="pvp_wait"||pvpWinner;
+    if(ended&&runStartTime&&!finalTime){
       const t = fmtTime(Date.now()-runStartTime);
       setFinalTime(t);
       setTimerDisplay(t);
     }
-  },[screen]);
+  },[screen, pvpWinner]);
 
   // Map legend — injected onto document.body, position:fixed mid-right, screen==="map" only
   useEffect(()=>{
@@ -3414,7 +3415,7 @@ function App() {
       )}
 
       {/* ── Fixed timer (always top-right, foreground) ── */}
-      {runStartTime&&screen!=="victory"&&screen!=="gameover"&&(
+      {runStartTime&&screen!=="victory"&&screen!=="gameover"&&screen!=="pvp_wait"&&!pvpWinner&&(
         <div style={{position:"fixed",bottom:20,right:20,zIndex:9999,pointerEvents:"none",
           fontFamily:"Cinzel",fontSize:22,fontWeight:900,letterSpacing:4,
           color:"#ffcc44",textShadow:"0 0 16px #ff8800, 0 0 40px #ff440088",
