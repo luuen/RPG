@@ -73,8 +73,8 @@ const STARTER_WEAPONS = {
   daggers:    { id:"daggers",    name:"Shadow Daggers",emoji:"🗡️",  baseDmg:15, speed:3.0, qteType:"rapid_tap",    tier:"basic", tapTarget:8, rapidDur:1200, desc:"Mash A and D alternately 8 times before the timer runs out!", classEmoji:"🐍", className:"Rogue"    },
   staff:      { id:"staff",      name:"Arcane Staff",  emoji:"🪄",  baseDmg:11, speed:1.8, qteType:"sequence",     tier:"basic", seqLength:8,  desc:"Type the 8-rune sequence — wrong keys reduce damage. Hit all 8 for maximum power!", classEmoji:"🌙", className:"Mage"     },
   bow:        { id:"bow",        name:"Elven Bow",     emoji:"🏹",  baseDmg:8,  speed:1.5, qteType:"archery",      tier:"basic", desc:"3 orbiting dots — press SPACE when each is in the center ring.", classEmoji:"🌿", className:"Ranger"   },
-  sword_gun:  { id:"sword_gun",  name:"Sword & Gun",   emoji:"⚔🔫", baseDmg:11, speed:1.8, qteType:"dual_action",  tier:"basic", dotSpeed:1.60, centerWidth:0.22, classEmoji:"🔫", className:"Duelist",  desc:"Hold A+W+D simultaneously, then LEFT CLICK when the dot hits the center zone." },
-  boots:      { id:"boots",      name:"Iron Boots",    emoji:"👟",  baseDmg:11, speed:1.4, qteType:"stomp",        tier:"basic", classEmoji:"👊", className:"Brawler", desc:"Run to the enemy and jump! Press SPACE at the moment of landing." },
+  sword_gun:  { id:"sword_gun",  name:"Sword & Gun",   emoji:"⚔🔫", baseDmg:15, speed:1.8, qteType:"dual_action",  tier:"basic", dotSpeed:1.60, centerWidth:0.22, classEmoji:"🔫", className:"Duelist",  desc:"Hold A+W+D simultaneously, then LEFT CLICK when the dot hits the center zone." },
+  boots:      { id:"boots",      name:"Iron Boots",    emoji:"👟",  baseDmg:15, speed:1.4, qteType:"stomp",        tier:"basic", classEmoji:"👊", className:"Brawler", desc:"Run to the enemy and jump! Press SPACE at the moment of landing." },
 };
 const ALL_WEAPONS = {
   ...STARTER_WEAPONS,
@@ -113,6 +113,7 @@ const XP_THRESHOLDS = [35, 75, 60, 110, 160];
 const xpThresholdFor = (level) => XP_THRESHOLDS[level - 1] ?? 9999;
 
 const ENEMIES = {
+  goblin_pup: { name:"Goblin Pup",     hp:14,  emoji:"👺", xp:20,  atk:3,  color:"#66cc66", desc:"A tiny, harmless pest"      },
   goblin:   { name:"Goblin Scout",     hp:22,  emoji:"👺", xp:35,  atk:5,  color:"#55bb55", desc:"A cunning little pest"      },
   skeleton: { name:"Skeleton Warrior", hp:32,  emoji:"💀", xp:40,  atk:7,  color:"#aaaaaa", desc:"Bones that refuse to rest"  },
   eye:      { name:"Void Eye",         hp:28,  emoji:"👁️", xp:45,  atk:10, color:"#9944ff", desc:"It sees into your soul"     },
@@ -121,15 +122,21 @@ const ENEMIES = {
   dragon:   { name:"Demon Slime",       hp:150, emoji:"🟢", xp:160, atk:18, color:"#44dd66", desc:"A demonic mass of pure malice" },
 };
 const ENEMY_DIMS = {
-  goblin:{w:64,h:78}, skeleton:{w:56,h:88}, eye:{w:80,h:80},
+  goblin_pup:{w:48,h:58}, goblin:{w:64,h:78}, skeleton:{w:56,h:88}, eye:{w:80,h:80},
   golem:{w:84,h:88},  wraith:{w:64,h:96},
   // Boss GIF natural frame size is 288×160 — scale to ~75% to fit battlefield
   dragon:{w:216,h:120},
 };
 
 // Enemy sprite pool — 9 variants randomized per encounter (dragon excluded)
-// headPad: transparent px at top of frame before actual character head (raw frame coords).
-// Used to push hero feet down to true contact point during stomp.
+// headPad:    transparent px at top of raw frame before actual character head.
+//             Used by stomp QTE to find true head contact point.
+//             After cropY is applied, effective headPad in display = max(0, headPad - cropY).
+// groundPad:  px to shift enemy up from ground line (raw frame has transparent bottom).
+// centerOffsetX: px to shift enemy horizontally for visual centering.
+// cropX/Y:    top-left corner of content region within each raw frame (px, pre-scale).
+// cropW/H:    size of content region (px). DisplayW/H = cropW/H * eScale.
+//             Omit (or leave undefined) for no crop — falls back to full frameW/frameH.
 const ENEMY_SPRITE_POOL = [
   {variant:"Gorgon_1",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16, headPad:22},
   {variant:"Gorgon_2",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16, headPad:22},
@@ -285,7 +292,7 @@ const MAP_W = 520, MAP_H = 480;
 
 // 5 floors of choices + boss. Clean, readable, deliberate pacing.
 const FLOOR_CONFIGS = [
-  [{ type:"combat", enemy:"goblin"   }, { type:"combat",  enemy:"skeleton" }],
+  [{ type:"combat", enemy:"goblin_pup" }, { type:"combat", enemy:"goblin_pup" }],
   [{ type:"combat", enemy:"skeleton" }, { type:"rest"                      }, { type:"combat", enemy:"eye"    }],
   [{ type:"combat", enemy:"eye"      }, { type:"elite",   enemy:"goblin"   }, { type:"combat", enemy:"golem"  }],
   [{ type:"combat", enemy:"golem"    }, { type:"rest"                      }, { type:"combat", enemy:"wraith" }],
@@ -351,7 +358,18 @@ const BASE_REWARDS = [
 ];
 const pickRewards = (held, eliteDrop=false) => {
   const pool = BASE_REWARDS.filter(r => {
-    if (r.type==="weapon" && held.includes(r.weaponId)) return false;
+    if (r.type==="weapon") {
+      if (held.includes(r.weaponId)) return false;
+      const newW = ALL_WEAPONS[r.weaponId];
+      if (newW) {
+        const sameQte = held.find(wid=>(ALL_WEAPONS[wid]?.qteType)===newW.qteType);
+        if (sameQte) {
+          const oldTier = TIER_ORDER[ALL_WEAPONS[sameQte]?.tier??'basic']??0;
+          const newTier = TIER_ORDER[newW.tier??'basic']??0;
+          if (newTier <= oldTier) return false; // useless downgrade/sidegrade
+        }
+      }
+    }
     if (r.eliteOnly && !eliteDrop) return false;
     return true;
   });
@@ -465,18 +483,29 @@ if (!document.getElementById('__stompImpactKF')) {
 
 // Animates a horizontal sprite strip — JS-driven frame counter
 // React.memo prevents re-renders during QTE rAF loops (props stable; only qteAnim.t changes)
-const AnimatedSprite = React.memo(function AnimatedSprite({ src, numFrames, fps=8, displayW, displayH, flip=false }) {
+// Crop support: when imgW/imgH are provided (full strip px), the div clips to displayW×displayH
+// and each frame is offset by (frame * frameStride + cropOffX, cropOffY) in display pixels.
+// Without crop props the behaviour is identical to before.
+const AnimatedSprite = React.memo(function AnimatedSprite({
+  src, numFrames, fps=8, displayW, displayH, flip=false,
+  imgW=null, imgH=null, cropOffX=0, cropOffY=0,
+}) {
   const [frame, setFrame] = React.useState(0);
   React.useEffect(()=>{
     const iv = setInterval(()=>setFrame(f=>(f+1)%numFrames), 1000/fps);
     return ()=>clearInterval(iv);
   },[src, numFrames, fps]);
+  const totalW     = imgW ?? numFrames * displayW;  // full strip display width
+  const totalH     = imgH ?? displayH;
+  const frameStride = totalW / numFrames;            // display px per raw frame
   return (
     <div style={{width:displayW,height:displayH,overflow:"hidden",position:"relative",
       transform:flip?"scaleX(-1)":"none",imageRendering:"pixelated"}}>
       <img src={src} style={{
-        position:"absolute",left:-frame*displayW,top:0,
-        height:displayH,width:numFrames*displayW,
+        position:"absolute",
+        left: -(frame * frameStride + cropOffX),
+        top:  -cropOffY,
+        width: totalW, height: totalH,
         imageRendering:"pixelated",
       }}/>
     </div>
@@ -658,8 +687,11 @@ const CLASS_COLORS = {
 const TIER_COLOR = { basic:"#e8d5a3", refined:"#4488ff", epic:"#aa44ff", legendary:"#ffaa00" };
 const TIER_LABEL = { basic:"", refined:"Refined", epic:"Epic", legendary:"Legendary" };
 const TIER_DMG_MULT = { basic:1.0, refined:1.35, epic:1.75, legendary:2.3 };
+const TIER_ORDER  = { basic:0, refined:1, epic:2, legendary:3 }; // numeric rank for comparison
 // Apply tier scaling to baseDmg — refined/epic/legendary weapons hit significantly harder
 const weaponDmg = (w) => Math.round((w?.baseDmg||0) * (TIER_DMG_MULT[w?.tier||"basic"]||1.0));
+// Sort weapon ID list by weaponDmg descending (highest damage first)
+const sortWeapons = (wids) => [...wids].sort((a,b)=>weaponDmg(ALL_WEAPONS[b]||{})-weaponDmg(ALL_WEAPONS[a]||{}));
 const SKIN = "#e8c47a";
 
 const HeroSprite = React.memo(function HeroSprite({ className="Knight", scale=1, weapons=[], heroLooks=null, animRow=null, animFrame=0 }) {
@@ -730,15 +762,27 @@ const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, spr
   };
 
   if (sprite) {
-    // Use sprite's own frame dimensions — pool sprites are 128×128, not ENEMY_DIMS
-    const displayW = Math.round(sprite.frameW*scale);
-    const displayH = Math.round(sprite.frameH*scale);
+    // Crop region — defaults to full frame when not specified
+    const cropX  = sprite.cropX  || 0;
+    const cropY  = sprite.cropY  || 0;
+    const cropW  = sprite.cropW  || sprite.frameW;
+    const cropH  = sprite.cropH  || sprite.frameH;
+    // Display size = crop region * scale
+    const displayW = Math.round(cropW * scale);
+    const displayH = Math.round(cropH * scale);
+    // Full strip dimensions in display pixels (for AnimatedSprite offset maths)
+    const imgW = Math.round(sprite.frameW * scale) * (attacking ? sprite.atkFrames : sprite.idleFrames);
+    const imgH = Math.round(sprite.frameH * scale);
+    const cropOffX = Math.round(cropX * scale);
+    const cropOffY = Math.round(cropY * scale);
     const base = `${ASSET_BASE}/icons/sprites/${sprite.dir}/${sprite.variant}`;
     const src = attacking
       ? `${base}/${sprite.atkFile}`
       : `${base}/Idle.png`;
     const frames = attacking ? sprite.atkFrames : sprite.idleFrames;
-    return <AnimatedSprite src={src} numFrames={frames} fps={attacking?12:8} displayW={displayW} displayH={displayH}/>;
+    return <AnimatedSprite src={src} numFrames={frames} fps={attacking?12:8}
+      displayW={displayW} displayH={displayH}
+      imgW={imgW} imgH={imgH} cropOffX={cropOffX} cropOffY={cropOffY}/>;
   }
   // Fallback — invisible placeholder (shouldn't normally reach here for non-dragon)
   const dims = ENEMY_DIMS[id]||{w:64,h:78};
@@ -1298,6 +1342,7 @@ function App() {
   const [pvpWinner,  setPvpWinner] = useState(null);      // null | "me" | "them"
   const [mpDisconnected, setMpDisconnected] = useState(false);
   const [iWonRace,   setIWonRace]  = useState(false);
+  const [myWeaponLocked, setMyWeaponLocked] = useState(false); // race: true after LOCK IN pressed
   const [bookOpen,   setBookOpen]  = useState(false);
   const [bookHoverPotion, setBookHoverPotion] = useState(null);
   const [hoverWeaponId, setHoverWeaponId] = useState(null);
@@ -1398,6 +1443,17 @@ function App() {
     }
   },[oppSnap?.dragonKilled, screen]);
 
+  // ── Weapon lock-in: both players locked → start simultaneously ──
+  useEffect(()=>{
+    if(gameMode!=="race") return;
+    if(screen!=="weapon_select") return;
+    if(!myWeaponLocked || !oppSnap?.weaponLocked) return;
+    if(!selectedWeapon) return;
+    // Brief flash so both see "BOTH READY" before transition
+    setTimeout(()=>startGame(selectedWeapon), 600);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[myWeaponLocked, oppSnap?.weaponLocked, gameMode, screen]);
+
   // ── Watch opponent pvpAtk in PvP → start defend QTE ──
   useEffect(()=>{
     if(pvpWinner) return;
@@ -1409,15 +1465,30 @@ function App() {
     setTimeout(()=>{ if(!pvpModeRef.current) return; pvpStartIncoming(atk); }, 500);
   },[oppSnap?.pvpAtk?.ts, screen, cs?.pvpMode]);
 
-  // ── Watch pvpTurnDone → attacker's turn flips back to "mine" ──
+  // ── Watch pvpTurnDone → defender resolved, restore attacker's action phase ──
+  // Fires on ATTACKER side: pvpTurn="theirs" (waiting), oppSnap.pvpTurnDone just arrived.
   useEffect(()=>{
     if(pvpWinner) return;
-    if(screen!=="combat"||!cs?.pvpMode||pvpTurn!=="mine"||!oppSnap?.pvpTurnDone) return;
+    if(screen!=="combat"||!cs?.pvpMode||pvpTurn!=="theirs"||!oppSnap?.pvpTurnDone) return;
     if(oppSnap.pvpTurnDone===mpRef.current.lastTurnDoneTs) return;
     mpRef.current.lastTurnDoneTs = oppSnap.pvpTurnDone;
-    // Defender has resolved — re-enable attacker's action phase
+    // Defender resolved — flip back to attacker's turn and restore action phase
+    setPvpTurn("mine");
     setCs(prev=>prev?{...prev,phase:"action"}:prev);
   },[oppSnap?.pvpTurnDone, screen, pvpTurn, cs?.pvpMode, pvpWinner]);
+
+  // ── Watch oppSnap.pvpHp — single source of truth for opponent HP on attacker side ──
+  // Attacker never touches pvpOppHp directly; defender reports actual HP after block/parry.
+  useEffect(()=>{
+    if(!cs?.pvpMode||pvpWinner) return;
+    if(oppSnap?.pvpHp===undefined||oppSnap?.pvpHp===null) return;
+    setPvpOppHp(oppSnap.pvpHp);
+    if(oppSnap.pvpHp<=0){
+      setPvpWinner("me");
+      pvpModeRef.current=false;
+      mpRef.current.cleanEnded=true;
+    }
+  },[oppSnap?.pvpHp, cs?.pvpMode, pvpWinner]);
 
   // ── PvP winner check — sync final HP to opponent ──
   useEffect(()=>{
@@ -1513,9 +1584,10 @@ function App() {
       if (data.floor        !== undefined) next.floor        = data.floor;
       if (data.hp           !== undefined) next.hp           = data.hp;
       if (data.maxHp        !== undefined) next.maxHp        = data.maxHp;
-      if (data.dragonKilled !== undefined) next.dragonKilled = data.dragonKilled;
-      if (data.pvpReady     !== undefined) next.pvpReady     = data.pvpReady;
-      if (data.weapon       !== undefined) next.weapon       = data.weapon;
+      if (data.dragonKilled  !== undefined) next.dragonKilled  = data.dragonKilled;
+      if (data.pvpReady      !== undefined) next.pvpReady      = data.pvpReady;
+      if (data.weapon        !== undefined) next.weapon        = data.weapon;
+      if (data.weaponLocked  !== undefined) next.weaponLocked  = data.weaponLocked;
       if (data.name         !== undefined) next.name         = data.name;
       if (data.pvpMyHp      !== undefined) next.pvpHp        = data.pvpMyHp;
       if (data.pvpAtk       !== undefined) next.pvpAtk       = data.pvpAtk;
@@ -1546,9 +1618,12 @@ function App() {
       }
     });
     conn.on("open", () => {
-      // Introduce ourselves
+      // Introduce ourselves — reset any previous lock-in state
+      setMyWeaponLocked(false);
+      setSelectedWeapon(null);
       mpSend({ type:"state", name: portalName, floor:0, hp:60, maxHp:60,
-               weapon:"sword", dragonKilled:false, pvpReady:false, pvpMyHp:80, pvpAtk:null });
+               weapon:"sword", dragonKilled:false, pvpReady:false, pvpMyHp:80, pvpAtk:null,
+               weaponLocked:false });
       setGameMode("race");
       setMpStatus("racing");
       setScreen("weapon_select");
@@ -1630,19 +1705,19 @@ function App() {
     setEnemyFlash(true); setTimeout(()=>setEnemyFlash(false), 450);
     showHit(q==="miss"?`MISS!`:`LAUNCHING −${dmg}`, q==="miss"?"#666":"#ff6600");
     if (q !== "miss") {
+      // Send attack — DO NOT update pvpOppHp here. Defender reports their HP after block/parry.
+      // pvpOppHp is updated via oppSnap.pvpHp effect once defender resolves. This ensures
+      // damage registers after their QTE and prevents both-win race conditions.
       mpSend({ type:"state", pvpAtk: { dmg, quality: q, ts } });
-      setPvpOppHp(h => {
-        const nh = Math.max(0, h - dmg);
-        if (nh <= 0) { setPvpWinner("me"); pvpModeRef.current = false; mpRef.current.cleanEnded = true; }
-        return nh;
-      });
       setCs(prev=>prev?{...prev,phase:"enemy_turn",
-        log:[...prev.log,`⚔ You hit ${prev.enemy.name} for ${dmg}!`].slice(-8)}:prev);
-      setPvpLog(lg => [...lg, `⚔ You hit ${oppSnap?.name||"RIVAL"} for ${dmg} (${q})!`].slice(-6));
+        log:[...prev.log,`⚔ You launched ${dmg} at ${prev.enemy.name}…`].slice(-8)}:prev);
+      setPvpLog(lg => [...lg, `⚔ You attacked ${oppSnap?.name||"RIVAL"} for ${dmg} (${q}) — awaiting block…`].slice(-6));
     } else {
-      setCs(prev=>prev?{...prev,phase:"enemy_turn",
+      // Miss: no defend QTE on opponent side — flip turn back immediately
+      setCs(prev=>prev?{...prev,phase:"action",
         log:[...prev.log,"⚔ Your attack missed!"].slice(-8)}:prev);
       setPvpLog(lg => [...lg, "⚔ Your attack missed!"].slice(-6));
+      return; // don't set pvpTurn="theirs" — stay on "mine"
     }
     setPvpTurn("theirs");
   };
@@ -1938,10 +2013,10 @@ function App() {
             if (gameMode === "race") {
               const won = !oppSnap?.dragonKilled;
               setIWonRace(won);
-              // Winner of race gets opponent to drop RPG; loser gets RPG guaranteed
+              // First to kill dragon earns the RPG; second player fights with their starter
               setPlayer(p => {
                 if (!p) return p;
-                const newWeapons = won ? p.weapons : [...new Set([...p.weapons, "rpg"])];
+                const newWeapons = won ? sortWeapons([...new Set([...p.weapons, "rpg"])]) : p.weapons;
                 mpSend({ type:"state", dragonKilled: true, weapon: newWeapons[0] ?? "sword" });
                 return {...p, weapons: newWeapons};
               });
@@ -1949,7 +2024,7 @@ function App() {
               setScreen("pvp_wait");
             } else {
               // Solo mode: always drop the RPG on dragon kill
-              setPlayer(p => p ? {...p, weapons: [...new Set([...p.weapons, "rpg"])]} : p);
+              setPlayer(p => p ? {...p, weapons: sortWeapons([...new Set([...p.weapons, "rpg"])])} : p);
               setScreen("victory");
             }
             return;
@@ -2001,7 +2076,20 @@ function App() {
       const n={...p};
       if(r.type==="heal") n.hp=Math.min(p.maxHp,p.hp+r.value);
       if(r.type==="stat"){n[r.stat]=p[r.stat]+r.value;if(r.stat==="maxHp")n.hp=p.hp+r.value;}
-      if(r.type==="weapon"&&!p.weapons.includes(r.weaponId)) n.weapons=[...p.weapons,r.weaponId];
+      if(r.type==="weapon"){
+        const newW=ALL_WEAPONS[r.weaponId];
+        if(newW&&!p.weapons.includes(r.weaponId)){
+          const sameQte=p.weapons.find(wid=>(ALL_WEAPONS[wid]?.qteType)===newW.qteType);
+          if(sameQte){
+            const oldTier=TIER_ORDER[ALL_WEAPONS[sameQte]?.tier??'basic']??0;
+            const newTier=TIER_ORDER[newW.tier??'basic']??0;
+            if(newTier>oldTier) n.weapons=sortWeapons([...p.weapons.filter(wid=>wid!==sameQte),r.weaponId]);
+            // same or lower tier → don't add
+          } else {
+            n.weapons=sortWeapons([...p.weapons,r.weaponId]);
+          }
+        }
+      }
       if(r.type==="potion") n.potions=[...(p.potions||[]),r.potion];
       return n;
     });
@@ -2027,7 +2115,7 @@ function App() {
           setTimeout(()=>{
             setPlayer(p=>p?({...p,xp:p.xp+prev.enemy.xp,floor:p.floor+1,visited:[...p.visited,prev.nodeId]}):p);
             if(prev.enemy.id==="dragon"){
-              if(gameMode==="race"){const won=!oppSnap?.dragonKilled;setIWonRace(won);setPlayer(p=>{if(!p)return p;const nw=won?p.weapons:[...new Set([...p.weapons,"rpg"])];mpSend({type:"state",dragonKilled:true,weapon:nw[0]??"sword"});return{...p,weapons:nw};});setMpStatus("pvp_wait");setScreen("pvp_wait");}else{setPlayer(p=>p?{...p,weapons:[...new Set([...p.weapons,"rpg"])]}:p);setScreen("victory");}return;
+              if(gameMode==="race"){const won=!oppSnap?.dragonKilled;setIWonRace(won);setPlayer(p=>{if(!p)return p;const nw=won?sortWeapons([...new Set([...p.weapons,"rpg"])]):p.weapons;mpSend({type:"state",dragonKilled:true,weapon:nw[0]??"sword"});return{...p,weapons:nw};});setMpStatus("pvp_wait");setScreen("pvp_wait");}else{setPlayer(p=>p?{...p,weapons:sortWeapons([...new Set([...p.weapons,"rpg"])])}:p);setScreen("victory");}return;
             }
             setPlayer(p=>{setRewards(pickRewards(p?.weapons||[], prev.elite));return p;});
             setScreen("reward");
@@ -2382,8 +2470,9 @@ function App() {
       // Lock the active dot at current position
       const d = ref.dots[idx];
       const dist = Math.sqrt(d.x*d.x+d.y*d.y);
-      const q = dist<0.20?"perfect":dist<0.56?"good":"miss";
-      const dmgMult = dist<0.20?1.6:dist<0.56?1.0:0.3;
+      // Thresholds aligned with visual rings: bullseye r=R*0.16 → dist≈0.18; inner ring r=R*0.38 → dist≈0.42
+      const q = dist<0.18?"perfect":dist<0.42?"good":"miss";
+      const dmgMult = dist<0.18?1.6:dist<0.42?1.0:0.3;
       const dmg = Math.max(1,Math.floor((weaponDmg(weapon)+(player?.str||0))*dmgMult));
       ref.lockedDots.push({x:d.x,y:d.y,q,dmg});
       ref.shotsFired++;
@@ -2562,13 +2651,17 @@ function App() {
   const startStompQTE = (weapon) => {
     const stompDurEff     = weapon.stompDur ?? STOMP_DUR;
     const stompApproachEff = Math.round(stompDurEff * LAND_FRAC);
-    // Use pool sprite frame height if available — pool sprites are 128×128, not ENEMY_DIMS
-    const dims = cs?.enemySprite ? {w:cs.enemySprite.frameW, h:cs.enemySprite.frameH} : (ENEMY_DIMS[cs?.enemy?.id]||{w:55,h:70});
+    // Use crop dims when set (eliminates transparent padding from size calc)
+    const dims = cs?.enemySprite
+      ? {w:(cs.enemySprite.cropW||cs.enemySprite.frameW), h:(cs.enemySprite.cropH||cs.enemySprite.frameH)}
+      : (ENEMY_DIMS[cs?.enemy?.id]||{w:55,h:70});
     const eScale = 1.1;
     const eScaledH = dims.h * eScale;
     const stompGroundPad = cs?.enemySprite?.groundPad || 0;
-    // headPad: transparent px at frame top before the actual character head (raw coords → scale up)
-    const headPad = cs?.enemySprite ? ((cs.enemySprite.headPad || 0) * eScale) : 0;
+    // headPad: after cropY is applied the frame top moves down, shrinking effective transparent gap.
+    const headPad = cs?.enemySprite
+      ? (Math.max(0, (cs.enemySprite.headPad||0) - (cs.enemySprite.cropY||0)) * eScale)
+      : 0;
     // landTop: hero overlaps enemy body — sinks in so models appear close together
     const STOMP_OVERLAP = 30; // px hero sinks below enemy head for visual contact
     const landTop  = Math.max(5, GNDY - eScaledH + headPad - HSH + stompGroundPad + STOMP_OVERLAP);
@@ -2789,7 +2882,8 @@ function App() {
       setTimeout(()=>sfx.dualGunshot(), 110);
       const dist = Math.abs(clickPos - 0.5);
       const half = centerW / 2;
-      const q = dist < half*0.32 ? "perfect" : dist < half ? "good" : "miss";
+      // Full center zone = perfect; up to 2× zone width = good; beyond = miss
+      const q = dist < half ? "perfect" : dist < half * 2.2 ? "good" : "miss";
       const base = (weapon.baseDmg + (player?.str||0)) * (q==="perfect"?2.0:q==="good"?1.0:0.3);
       const dmg  = Math.max(1, Math.floor(base * Math.max(0.3, 1 - ref.dropCount*0.18)));
       setQteAnim(null);
@@ -3281,8 +3375,8 @@ function App() {
         </div>
       )}
 
-      {/* ── RACE rival — center-top fixed strip ── */}
-      {gameMode==="race"&&oppSnap&&screen!=="pvp"&&screen!=="pvp_wait"&&screen!=="title"&&(
+      {/* ── RACE rival — center-top fixed strip — hidden during PvP duel ── */}
+      {gameMode==="race"&&oppSnap&&!cs?.pvpMode&&screen!=="pvp"&&screen!=="pvp_wait"&&screen!=="title"&&(
         <div style={{position:"fixed",top:12,left:"50%",transform:"translateX(-50%)",zIndex:9990,
           background:"rgba(4,4,18,.92)",backdropFilter:"blur(8px)",
           border:"1px solid #4466ff66",borderRadius:12,padding:"10px 26px",
@@ -3316,15 +3410,6 @@ function App() {
                 transition:"width .5s"}}/>
             </div>
           </div>
-          {oppSnap.dragonKilled&&(
-            <>
-              <div style={{width:1,height:32,background:"#ff442233"}}/>
-              <div style={{fontFamily:"Cinzel",fontSize:12,letterSpacing:2,color:"#ff4422",
-                textShadow:"0 0 8px #ff4422",animation:"pulse .5s ease-in-out infinite"}}>
-                🟢 SLIME SLAIN!
-              </div>
-            </>
-          )}
         </div>
       )}
 
@@ -3707,14 +3792,21 @@ function App() {
           <div style={{display:"flex",flexDirection:"row",gap:12,marginBottom:28,flexWrap:"wrap",justifyContent:"center",zoom:Math.min(1.25,(window.innerWidth-80)/((Object.keys(STARTER_WEAPONS).length*212)-12))}}>
             {Object.values(STARTER_WEAPONS).map(w=>{
               const sel=selectedWeapon===w.id;
-              const hov=hoverWeaponId===w.id;
+              const hov=hoverWeaponId===w.id&&!myWeaponLocked;
+              const locked=myWeaponLocked; // freeze selection after lock-in
               const qteLabel=QTE_LABEL[w.qteType]||"?";
               return (
                 <div key={w.id}
-                  onClick={()=>setSelectedWeapon(w.id)}
-                  onMouseEnter={()=>{setHoverWeaponId(w.id);sfx.metalClink();}}
+                  onClick={()=>{ if(!locked) setSelectedWeapon(w.id); }}
+                  onMouseEnter={()=>{ if(!locked){setHoverWeaponId(w.id);sfx.metalClink();} }}
                   onMouseLeave={()=>setHoverWeaponId(null)}
-                  style={{width:200,padding:"28px 18px",textAlign:"center",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",border:`2px solid ${sel?"#e8d5a3":hov?"#6677aa":"#2a2a3a"}`,background:sel?"#14142a":hov?"#0c0c1e":"#09090f",boxShadow:sel?"0 0 32px rgba(232,213,163,.2)":hov?"0 0 16px rgba(100,120,200,.15)":"none",transition:"all .2s",position:"relative"}}>
+                  style={{width:200,padding:"28px 18px",textAlign:"center",cursor:locked?"default":"pointer",
+                    display:"flex",flexDirection:"column",alignItems:"center",
+                    border:`2px solid ${sel?(locked?"#44ff88":"#e8d5a3"):hov?"#6677aa":"#2a2a3a"}`,
+                    background:sel?"#14142a":hov?"#0c0c1e":"#09090f",
+                    boxShadow:sel?(locked?"0 0 32px rgba(68,255,136,.15)":"0 0 32px rgba(232,213,163,.2)"):hov?"0 0 16px rgba(100,120,200,.15)":"none",
+                    opacity:locked&&!sel?0.35:1,
+                    transition:"all .2s",position:"relative"}}>
                   <div style={{width:80,height:80,marginBottom:16,display:"flex",alignItems:"center",justifyContent:"center",filter:sel?"drop-shadow(0 0 14px #e8d5a388)":hov?"drop-shadow(0 0 10px #6677aaaa)":"none",transition:"filter .2s"}}>
                     <Icon type={w.id} size={74} color={sel?"#e8d5a3":hov?"#9aabcc":"#8a7a66"}/>
                   </div>
@@ -3742,12 +3834,63 @@ function App() {
                   <div style={{fontSize:12,opacity:.55,lineHeight:1.7,marginBottom:"auto",paddingBottom:14}}>{w.desc}</div>
                   <div style={{fontSize:11,fontFamily:"Cinzel",padding:"5px 10px",border:`1px solid ${sel?"#ffcc4455":"#222"}`,color:sel?"#ffcc44":"#555",marginBottom:10}}>{qteLabel}</div>
                   <div style={{fontSize:12,opacity:.45,fontFamily:"Cinzel"}}>ATK {weaponDmg(w)}</div>
+                  {/* Locked-in badge over selected card */}
+                  {locked&&sel&&(
+                    <div style={{position:"absolute",inset:0,display:"flex",alignItems:"flex-start",justifyContent:"flex-end",padding:8,pointerEvents:"none"}}>
+                      <div style={{background:"#44ff8822",border:"1px solid #44ff8866",borderRadius:4,
+                        fontFamily:"Cinzel",fontSize:9,letterSpacing:2,color:"#44ff88",padding:"3px 7px"}}>
+                        LOCKED ✓
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
-          <button className="btn" disabled={!selectedWeapon} style={{fontSize:16,padding:"15px 48px",letterSpacing:5}}
-            onClick={()=>selectedWeapon&&startGame(selectedWeapon)}>ENTER THE SPIRE →</button>
+          {/* ── Solo: go straight in. Race: lock-in gate ── */}
+          {gameMode!=="race" ? (
+            <button className="btn" disabled={!selectedWeapon} style={{fontSize:16,padding:"15px 48px",letterSpacing:5}}
+              onClick={()=>selectedWeapon&&startGame(selectedWeapon)}>ENTER THE SPIRE →</button>
+          ) : (
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
+              {/* Opponent status strip */}
+              <div style={{display:"flex",alignItems:"center",gap:10,fontFamily:"Cinzel",fontSize:11,
+                letterSpacing:2,color:oppSnap?.weaponLocked?"#44ff88":"#4466ff",
+                background:"rgba(4,4,18,.7)",border:`1px solid ${oppSnap?.weaponLocked?"#44ff8844":"#4466ff44"}`,
+                borderRadius:8,padding:"8px 20px",minWidth:280,justifyContent:"center",
+                transition:"all .4s"}}>
+                <span style={{fontSize:14}}>{oppSnap?.weaponLocked?"✅":"⏳"}</span>
+                {oppSnap?.weaponLocked
+                  ? <span>{(oppSnap.name||"RIVAL").toUpperCase()} LOCKED IN <span style={{opacity:.7}}>— {(ALL_WEAPONS[oppSnap.weapon]||{name:"?"}).name}</span></span>
+                  : <span>{oppSnap ? `${(oppSnap.name||"RIVAL").toUpperCase()} CHOOSING…` : "WAITING FOR OPPONENT…"}</span>
+                }
+              </div>
+
+              {/* Lock-in button or locked state */}
+              {!myWeaponLocked ? (
+                <button className="btn" disabled={!selectedWeapon} style={{fontSize:16,padding:"15px 48px",letterSpacing:5,
+                  borderColor:selectedWeapon?"#ffcc44":"#333",color:selectedWeapon?"#ffcc44":"#555"}}
+                  onClick={()=>{
+                    if(!selectedWeapon) return;
+                    mpSend({type:"state", weapon:selectedWeapon, weaponLocked:true});
+                    setMyWeaponLocked(true);
+                  }}>⚔ LOCK IN</button>
+              ) : (
+                <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+                  <div style={{fontFamily:"Cinzel",fontSize:16,letterSpacing:5,color:"#44ff88",
+                    textShadow:"0 0 20px #44ff8888",animation:"pulse .8s infinite"}}>
+                    ✅ LOCKED IN
+                  </div>
+                  {oppSnap?.weaponLocked
+                    ? <div style={{fontFamily:"Cinzel",fontSize:13,letterSpacing:3,color:"#ffcc44",
+                        animation:"pulse .4s infinite"}}>⚔ BOTH READY — STARTING…</div>
+                    : <div style={{fontFamily:"Cinzel",fontSize:11,letterSpacing:2,color:"#4466ff",opacity:.7,
+                        animation:"pulse 1.2s infinite"}}>WAITING FOR {(oppSnap?.name||"RIVAL").toUpperCase()}…</div>
+                  }
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -3853,9 +3996,9 @@ function App() {
       {/* ══ COMBAT ══ */}
       {screen==="combat"&&cs&&player&&(()=>{
         const enemyData = ENEMIES[cs.enemy.id]||ENEMIES.goblin;
-        // Use sprite pool frame dims if available — pool sprites are all 128×128, not ENEMY_DIMS
+        // Use crop dims when set — otherwise full frame.  Pool sprites are 128×128 raw.
         const eDims     = cs?.enemySprite
-          ? {w:cs.enemySprite.frameW, h:cs.enemySprite.frameH}
+          ? {w:(cs.enemySprite.cropW||cs.enemySprite.frameW), h:(cs.enemySprite.cropH||cs.enemySprite.frameH)}
           : (ENEMY_DIMS[cs.enemy.id]||{w:55,h:70});
         const eScale    = 1.1;
         const eW        = eDims.w*eScale, eH = eDims.h*eScale;
@@ -4123,7 +4266,7 @@ function App() {
                 // Quality by normalized Lissajous dist (matches QTE logic thresholds)
                 const dotQ = (lx,ly) => {
                   const d=Math.sqrt(lx*lx+ly*ly);
-                  return d<0.20?"perfect":d<0.56?"good":"miss";
+                  return d<0.18?"perfect":d<0.42?"good":"miss";
                 };
                 const qColor = q => q==="perfect"?"#44ff88":q==="good"?"#ffcc44":"#ff5544";
                 // Active dot current position
@@ -4310,8 +4453,9 @@ function App() {
                 const dotX   = trackX + dotPos * trackW;
                 const zoneX  = trackX + (0.5 - centerWidth/2) * trackW;
                 const zoneW  = centerWidth * trackW;
-                const perfW  = zoneW * 0.32;          // inner perfect strip
-                const perfX  = trackX + (0.5 - centerWidth*0.32/2) * trackW;
+                // Good band: 2.2× center zone (matches resolve logic), clamped to track
+                const goodW  = Math.min(trackW, centerWidth * 2.2 * trackW);
+                const goodX  = trackX + (0.5 - centerWidth*2.2/2) * trackW;
                 const wCol   = WEAPON_PART_COL[qteAnim.weapon?.id] || "#e8d5a3";
                 const timeLeft = 1 - t;
                 const timerCol = timeLeft > 0.4 ? "#44ff88" : timeLeft > 0.2 ? "#ffcc44" : "#ff4422";
@@ -4331,13 +4475,14 @@ function App() {
                     {/* Track background */}
                     <rect x={trackX} y={trackY} width={trackW} height={trackH} rx="2" fill="#08080e"/>
 
-                    {/* Good zone */}
-                    <rect x={zoneX} y={trackY} width={zoneW} height={trackH} rx="1"
-                      fill={wCol} opacity={allHeld?.28:.14}/>
+                    {/* Good band (wider, dim) */}
+                    <rect x={Math.max(trackX,goodX)} y={trackY}
+                      width={Math.min(goodW, trackW-(Math.max(trackX,goodX)-trackX))} height={trackH} rx="1"
+                      fill={wCol} opacity={allHeld?.18:.09}/>
 
-                    {/* Perfect zone */}
-                    <rect x={perfX} y={trackY} width={perfW} height={trackH} rx="1"
-                      fill={allHeld?"#ffffff":wCol} opacity={allHeld?.42:.20}/>
+                    {/* Perfect zone (full center zone, bright) */}
+                    <rect x={zoneX} y={trackY} width={zoneW} height={trackH} rx="1"
+                      fill={allHeld?"#ffffff":wCol} opacity={allHeld?.45:.22}/>
 
                     {/* Center tick */}
                     <line x1={trackX+trackW/2} y1={trackY-3} x2={trackX+trackW/2} y2={trackY+trackH+3}
@@ -5051,7 +5196,10 @@ function App() {
                 const eMaxHp = cs.pvpMode ? pvpMaxHp : cs.enemy.maxHp;
                 const ePct   = Math.max(0, Math.min(100, eHp / Math.max(1,eMaxHp) * 100));
                 const eCol   = ePct<30?"#ff4444":ePct<60?"#ffcc44":enemyData.color||"#cc4444";
-                const pPct   = Math.max(0, Math.min(100, player.hp / Math.max(1,player.maxHp) * 100));
+                // PvP: use pvpMyHp (decremented by defender's block/parry result), not player.hp
+                const myHp   = cs.pvpMode ? pvpMyHp  : player.hp;
+                const myMaxHp= cs.pvpMode ? pvpMaxHp : player.maxHp;
+                const pPct   = Math.max(0, Math.min(100, myHp / Math.max(1,myMaxHp) * 100));
                 const pCol   = pPct<30?"#ff4444":pPct<60?"#ffcc44":"#44dd88";
                 const barH   = 7;
                 const barW   = 130;
@@ -5079,7 +5227,7 @@ function App() {
                         fontFamily:"Cinzel",fontSize:7,letterSpacing:.5,marginBottom:2,color:pCol,
                         textShadow:`0 0 6px ${pCol}88`}}>
                         <span style={{opacity:.8}}>{player.class}</span>
-                        <span>{player.hp}/{player.maxHp}</span>
+                        <span>{myHp}/{myMaxHp}</span>
                       </div>
                       <div style={{height:barH,background:"#0a0a14",border:"1px solid #2a2a3a",borderRadius:3,overflow:"hidden"}}>
                         <div style={{height:"100%",width:`${pPct}%`,borderRadius:3,
@@ -5298,8 +5446,8 @@ function App() {
           </h1>
           <p style={{fontFamily:"IM Fell English",fontStyle:"italic",opacity:.5,fontSize:16,marginBottom:30,letterSpacing:3}}>
             {iWonRace
-              ? "You won the race. Waiting for your rival to finish..."
-              : "You got the RPG. Now take down the winner."}
+              ? "You won the race — 🚀 RPG is yours! Waiting for your rival..."
+              : "Rival claimed the RPG. Survive if you can."}
           </p>
           {/* Opponent progress while waiting */}
           {oppSnap&&(
@@ -5712,6 +5860,152 @@ function App() {
                 },200);
               }}/>
             }
+          </div>
+        );
+      })()}
+
+      {/* ── Enemy Sprite Inspector — visible at ?debug&enemies ── */}
+      {window.location.search.includes('debug') && window.location.search.includes('enemies') && (() => {
+        const ZOOM = 2;
+        // One entry per distinct variant (all 9 shown)
+        const eGroups = [
+          {label:'GORGON',    entries: ENEMY_SPRITE_POOL.slice(0,3)},
+          {label:'MINOTAUR',  entries: ENEMY_SPRITE_POOL.slice(3,6)},
+          {label:'WEREWOLF',  entries: ENEMY_SPRITE_POOL.slice(6,9)},
+        ];
+
+        // Render one sprite sheet (idle or attack) with frame grid + optional crop box
+        const SheetView = ({base, file, numFrames, sp, label}) => {
+          const src      = `${base}/${file}`;
+          const sheetW   = sp.frameW * numFrames * ZOOM;
+          const sheetH   = sp.frameH * ZOOM;
+          const cropX    = sp.cropX  || 0;
+          const cropY    = sp.cropY  || 0;
+          const cropW    = sp.cropW  || sp.frameW;
+          const cropH    = sp.cropH  || sp.frameH;
+          const hasCrop  = !!(sp.cropW || sp.cropH || sp.cropX || sp.cropY);
+          return (
+            <div style={{marginBottom:8}}>
+              <div style={{color:'#888',fontSize:9,marginBottom:3,letterSpacing:1}}>
+                {label} — {numFrames} frames · {sp.frameW}×{sp.frameH}px raw
+                {hasCrop && <span style={{color:'#44ff88'}}> · crop [{cropX},{cropY},{cropW},{cropH}]</span>}
+              </div>
+              <div style={{position:'relative',display:'inline-block',border:'1px solid #333',background:'#111'}}>
+                <img src={src} style={{imageRendering:'pixelated',display:'block',width:sheetW,height:sheetH}}/>
+                <svg style={{position:'absolute',inset:0,pointerEvents:'none',overflow:'visible'}}
+                  width={sheetW} height={sheetH}>
+                  {/* Frame dividers */}
+                  {[...Array(numFrames+1)].map((_,i)=>(
+                    <line key={`v${i}`} x1={i*sp.frameW*ZOOM} y1={0} x2={i*sp.frameW*ZOOM} y2={sheetH}
+                      stroke="#ffcc4422" strokeWidth="1"/>
+                  ))}
+                  {/* Crop box per frame (green) */}
+                  {hasCrop && [...Array(numFrames)].map((_,i)=>(
+                    <rect key={`c${i}`}
+                      x={i*sp.frameW*ZOOM + cropX*ZOOM} y={cropY*ZOOM}
+                      width={cropW*ZOOM} height={cropH*ZOOM}
+                      fill="none" stroke="#44ff8877" strokeWidth="1" strokeDasharray="3,2"/>
+                  ))}
+                  {/* headPad line per frame (yellow) — where character head starts */}
+                  {(sp.headPad||0) > 0 && [...Array(numFrames)].map((_,i)=>(
+                    <line key={`hp${i}`}
+                      x1={i*sp.frameW*ZOOM} y1={sp.headPad*ZOOM}
+                      x2={(i+1)*sp.frameW*ZOOM} y2={sp.headPad*ZOOM}
+                      stroke="#ffcc4466" strokeWidth="1" strokeDasharray="3,2"/>
+                  ))}
+                  {/* groundPad line — character foot baseline (red, from bottom) */}
+                  {(sp.groundPad||0) > 0 && [...Array(numFrames)].map((_,i)=>(
+                    <line key={`gp${i}`}
+                      x1={i*sp.frameW*ZOOM} y1={sheetH - sp.groundPad*ZOOM}
+                      x2={(i+1)*sp.frameW*ZOOM} y2={sheetH - sp.groundPad*ZOOM}
+                      stroke="#ff443366" strokeWidth="1" strokeDasharray="3,2"/>
+                  ))}
+                </svg>
+              </div>
+            </div>
+          );
+        };
+
+        // Live AnimatedSprite preview using current pool settings
+        const LivePreview = ({sp, scale=1.5}) => {
+          const cropW = sp.cropW || sp.frameW;
+          const cropH = sp.cropH || sp.frameH;
+          const dW = Math.round(cropW * scale);
+          const dH = Math.round(cropH * scale);
+          const iW = Math.round(sp.frameW * scale) * sp.idleFrames;
+          const iH = Math.round(sp.frameH * scale);
+          const cOX = Math.round((sp.cropX||0) * scale);
+          const cOY = Math.round((sp.cropY||0) * scale);
+          const base = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}`;
+          return (
+            <div style={{display:'inline-block',verticalAlign:'bottom',background:'#0a0a14',
+              border:'1px solid #1e1e30',padding:'4px 8px',marginRight:12}}>
+              <div style={{color:'#555',fontSize:8,marginBottom:3,letterSpacing:1,textAlign:'center'}}>
+                {sp.variant}
+              </div>
+              <AnimatedSprite src={`${base}/Idle.png`} numFrames={sp.idleFrames} fps={8}
+                displayW={dW} displayH={dH} imgW={iW} imgH={iH} cropOffX={cOX} cropOffY={cOY}/>
+            </div>
+          );
+        };
+
+        return (
+          <div style={{position:'fixed',inset:0,background:'#020205',zIndex:99999,
+            overflow:'auto',padding:'16px 20px',fontFamily:'monospace'}}>
+            {/* Header */}
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+              <div>
+                <span style={{fontFamily:'Cinzel',color:'#ff8844',fontSize:13,letterSpacing:2}}>
+                  ENEMY SPRITE INSPECTOR
+                </span>
+                <span style={{color:'#555',fontSize:9,marginLeft:12}}>
+                  — — <span style={{color:'#ffcc4488'}}>yellow dashes</span> = headPad
+                  {'  '}<span style={{color:'#ff443388'}}>red dashes</span> = groundPad
+                  {'  '}<span style={{color:'#44ff8888'}}>green dashes</span> = crop box
+                </span>
+              </div>
+              <button onClick={()=>{ window.history.back(); }}
+                style={{background:'#2a0808',color:'#ff6666',border:'1px solid #661111',
+                  padding:'4px 14px',fontFamily:'Cinzel',fontSize:11,cursor:'pointer',borderRadius:3}}>
+                ✕ CLOSE
+              </button>
+            </div>
+
+            {eGroups.map(grp => (
+              <div key={grp.label} style={{marginBottom:40}}>
+                <div style={{fontFamily:'Cinzel',color:'#88aaff',fontSize:11,letterSpacing:3,
+                  marginBottom:12,borderBottom:'1px solid #1a1a2a',paddingBottom:6}}>
+                  {grp.label}
+                </div>
+
+                {/* Live previews — all 3 variants side by side */}
+                <div style={{marginBottom:16,display:'flex',flexWrap:'wrap',gap:4,alignItems:'flex-end'}}>
+                  {grp.entries.map(sp => <LivePreview key={sp.variant} sp={sp} scale={1.5}/>)}
+                </div>
+
+                {/* Sprite sheets for representative entry (index 0 of group) */}
+                {(() => {
+                  const sp   = grp.entries[0];
+                  const base = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}`;
+                  return (
+                    <div>
+                      <SheetView base={base} file="Idle.png" numFrames={sp.idleFrames} sp={sp} label="IDLE"/>
+                      <SheetView base={base} file={sp.atkFile} numFrames={sp.atkFrames} sp={sp} label="ATTACK"/>
+                      {/* Metadata table */}
+                      <div style={{fontSize:9,color:'#666',marginTop:6,lineHeight:'1.6em'}}>
+                        <span style={{color:'#aaa'}}>headPad</span>={sp.headPad||0}px
+                        {'  '}<span style={{color:'#aaa'}}>groundPad</span>={sp.groundPad||0}px
+                        {'  '}<span style={{color:'#aaa'}}>centerOffsetX</span>={sp.centerOffsetX||0}px
+                        {'  '}<span style={{color:'#aaa'}}>cropX</span>={sp.cropX||0}
+                        {'  '}<span style={{color:'#aaa'}}>cropY</span>={sp.cropY||0}
+                        {'  '}<span style={{color:'#aaa'}}>cropW</span>={sp.cropW||sp.frameW}
+                        {'  '}<span style={{color:'#aaa'}}>cropH</span>={sp.cropH||sp.frameH}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            ))}
           </div>
         );
       })()}
