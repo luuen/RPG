@@ -2759,11 +2759,12 @@ function App() {
   };
 
   // ── RPG ROCKET: fires massive rocket after sequence_reveal QTE ──
-  const fireRPGRocket = (q, dmg, weapon) => {
+  const fireRPGRocket = (q, dmg, weapon, correctCount=0) => {
     sfx.rpgLaunch();
     const start = performance.now();
-    const ROCKET_DUR = 480;
-    setQteAnim({ type:"rpg_rocket", weapon, t:0, q });
+    const rocketLevel = correctCount<=4?0:correctCount<=7?1:correctCount<=9?2:3;
+    const ROCKET_DUR = rocketLevel===0?480:rocketLevel===1?340:rocketLevel===2?720:560;
+    setQteAnim({ type:"rpg_rocket", weapon, t:0, q, rocketLevel });
     const tick = () => {
       const t = Math.min(1,(performance.now()-start)/ROCKET_DUR);
       setQteAnim(prev=>prev?{...prev,t}:null);
@@ -2816,7 +2817,7 @@ function App() {
           window.removeEventListener("keydown", onKey);
           clearTimeout(ref.rpgTimer);
           const dmg = Math.round(200 * Math.max(0.30, 1 - ref.missCount * 0.05));
-          fireRPGRocket("perfect", dmg, weapon);
+          fireRPGRocket("perfect", dmg, weapon, ref.doneSet.size);
         } else {
           // Pick new random target from remaining slots
           const remaining = [];
@@ -2845,7 +2846,7 @@ function App() {
         const incomplete = len - ref.doneSet.size;
         const dmg = Math.round(200 * Math.max(0.30, 1 - (ref.missCount + incomplete) * 0.05));
         const q = ref.doneSet.size >= len*0.75 ? "perfect" : ref.doneSet.size >= len*0.45 ? "good" : "miss";
-        fireRPGRocket(q, dmg, weapon);
+        fireRPGRocket(q, dmg, weapon, ref.doneSet.size);
       }
     }, SEQ_DUR);
 
@@ -4757,44 +4758,89 @@ function App() {
               {/* ── RPG ROCKET (fired after sequence_reveal) ── */}
               {qteAnim?.type==="rpg_rocket"&&(()=>{
                 const t   = qteAnim.t||0;
+                const rl  = qteAnim.rocketLevel||0;
                 const sx  = HR_L+HSW/2, sy = HR_T+HSH/2;
                 const tx  = ENX, ty = eTop+eH*0.45;
-                const bx  = sx+(tx-sx)*easeIO(t);
-                const by  = sy+(ty-sy)*easeIO(t);
-                const ang = Math.atan2(ty-sy, tx-sx);
-                const deg = ang*180/Math.PI;
+                // Path function — all levels end at (tx,ty) when t=1
+                const rocketXY = (tp) => {
+                  if (rl===0) {
+                    return { x:sx+(tx-sx)*easeIO(tp), y:sy+(ty-sy)*easeIO(tp) };
+                  }
+                  if (rl===1) {
+                    // Sine wave, faster
+                    return { x:sx+(tx-sx)*tp, y:sy+(ty-sy)*tp + Math.sin(tp*Math.PI*5)*38 };
+                  }
+                  if (rl===2) {
+                    // 2 loops then dive
+                    const LP=0.62;
+                    if (tp<=LP) {
+                      const p=tp/LP;
+                      return { x:sx+(tx-sx)*p*0.6+Math.cos(p*Math.PI*4)*72,
+                               y:sy+(ty-sy)*p*0.4+Math.sin(p*Math.PI*4)*52-p*70 };
+                    } else {
+                      // cos(4π)=1, sin(4π)=0 → loop-end pos:
+                      const ex=sx+(tx-sx)*0.6+72, ey=sy+(ty-sy)*0.4-70;
+                      const p=(tp-LP)/(1-LP);
+                      return { x:ex+(tx-ex)*p, y:ey+(ty-ey)*p };
+                    }
+                  }
+                  if (rl===3) {
+                    // Exits left, wraps around, hits from right
+                    if (tp<0.42) {
+                      const p=tp/0.42;
+                      return { x:sx+(-80-sx)*p, y:sy+(ty-sy)*0.15*p };
+                    } else if (tp<0.50) {
+                      return { x:-300, y:-300 }; // off-screen (hidden)
+                    } else {
+                      const p=(tp-0.50)/0.50;
+                      const rx=BFW+80;
+                      return { x:rx+(tx-rx)*easeIO(p), y:sy*0.85+(ty-sy*0.85)*easeIO(p) };
+                    }
+                  }
+                  return { x:sx+(tx-sx)*tp, y:sy+(ty-sy)*tp };
+                };
+                const {x:bx,y:by}=rocketXY(t);
+                // Angle from derivative
+                const dt2=0.012;
+                const {x:x1,y:y1}=rocketXY(Math.min(1,t+dt2));
+                const {x:x0,y:y0}=rocketXY(Math.max(0,t-dt2));
+                const deg=Math.atan2(y1-y0, x1-x0)*180/Math.PI;
+                const hidden=bx<-150||by<-150;
                 return (
                   <svg style={{position:"absolute",left:0,top:0,zIndex:12,pointerEvents:"none",overflow:"visible"}} width={BFW} height={BFH}>
                     {/* Smoke trail */}
-                    {[...Array(7)].map((_,i)=>{
-                      const tp=Math.max(0,t-(i+1)*0.055);
-                      const tx2=sx+(tx-sx)*easeIO(tp), ty2=sy+(ty-sy)*easeIO(tp);
+                    {!hidden&&[...Array(7)].map((_,i)=>{
+                      const {x:tx2,y:ty2}=rocketXY(Math.max(0,t-(i+1)*0.055));
+                      if(tx2<-150||ty2<-150) return null;
                       return <circle key={i} cx={tx2} cy={ty2} r={7-i*0.8} fill="#666666" opacity={(1-i*0.13)*0.28}/>;
                     })}
                     {/* Fire trail */}
-                    {[...Array(5)].map((_,i)=>{
-                      const tp=Math.max(0,t-(i+1)*0.035);
-                      const tx2=sx+(tx-sx)*easeIO(tp), ty2=sy+(ty-sy)*easeIO(tp);
+                    {!hidden&&[...Array(5)].map((_,i)=>{
+                      const {x:tx2,y:ty2}=rocketXY(Math.max(0,t-(i+1)*0.035));
+                      if(tx2<-150||ty2<-150) return null;
                       return <circle key={i} cx={tx2} cy={ty2} r={5-i*0.7} fill={i%2===0?"#ff4400":"#ffaa00"} opacity={(1-i*0.18)*0.75}/>;
                     })}
                     {/* Rocket body */}
-                    <g transform={`translate(${bx},${by}) rotate(${deg})`}>
+                    {!hidden&&<g transform={`translate(${bx},${by}) rotate(${deg})`}>
                       <rect x="-22" y="-5" width="30" height="10" rx="5" fill="#556677"/>
                       <rect x="-22" y="-5" width="30" height="5" rx="3" fill="#778899" opacity=".6"/>
                       <polygon points="8,-5 18,0 8,5" fill="#ff5522"/>
                       <polygon points="-22,-5 -30,0 -22,5" fill="#ff6600" opacity=".9"/>
                       <circle cx="-16" cy="0" r="3" fill="#334455"/>
                       <rect x="-8" y="-8" width="4" height="4" rx="1" fill="#ff2200" opacity=".8"/>
-                    </g>
-                    {/* Impact burst rings at t>0.78 */}
-                    {t>0.78&&[...Array(14)].map((_,i)=>{
+                    </g>}
+                    {/* Impact burst rings near end */}
+                    {t>0.80&&[...Array(14)].map((_,i)=>{
                       const a=i/14*Math.PI*2;
-                      const r=(t-0.78)/0.22*40;
+                      const r=(t-0.80)/0.20*40;
                       return <line key={i} x1={tx} y1={ty}
                         x2={tx+Math.cos(a)*r} y2={ty+Math.sin(a)*r}
                         stroke={i%3===0?"#ffcc00":i%3===1?"#ff4400":"#ff8800"}
-                        strokeWidth="3" opacity={(1-(t-0.78)/0.22)*0.95}/>;
+                        strokeWidth="3" opacity={(1-(t-0.80)/0.20)*0.95}/>;
                     })}
+                    {/* Level label (debug hint via color ring) */}
+                    {rl>=2&&!hidden&&<circle cx={bx} cy={by} r={rl===3?14:11}
+                      fill="none" stroke={rl===3?"#aa44ff":"#4488ff"} strokeWidth="2" opacity=".5"/>}
                   </svg>
                 );
               })()}
