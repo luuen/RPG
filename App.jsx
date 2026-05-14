@@ -1353,45 +1353,48 @@ function CropSliderRow({ label, value, min, max, onChange }) {
 function CombatSpriteOverlay({ cs, enemyFlash }) {
   // Which pool entry is selected (null = follow live cs.enemySprite)
   const [overrideIdx, setOverrideIdx] = React.useState(null);
-
-  // Per-sprite crop overrides: { [poolIdx]: {x,y,w,h} }
-  // Initialised lazily from the pool entry on first access
+  // cropMap: { [poolIdx]: {x,y,w,h} } — per-sprite crop calibration
   const [cropMap, setCropMap] = React.useState({});
+  // logText: shown in-panel after LOG ALL
+  const [logText, setLogText] = React.useState('');
 
   function getCrop(idx) {
     if (cropMap[idx]) return cropMap[idx];
     const e = ENEMY_SPRITE_POOL[idx];
-    // If no crop baked in, start at half-height so slider has room to grow
-    return { x: e.cropX||0, y: e.cropY||0, w: e.cropW||e.frameW, h: e.cropH||(Math.round(e.frameH*0.75)) };
+    return { x: e.cropX||0, y: e.cropY||0, w: e.cropW||e.frameW, h: e.cropH||Math.round(e.frameH*0.75) };
   }
 
+  // Push a crop update to: local state, pool entry, AND cs.enemySprite (always by value copy)
   function applyCrop(idx, patch) {
     const next = { ...getCrop(idx), ...patch };
-    // Clamp: x/y within frame, w/h can exceed frame (AnimatedSprite handles overflow)
     const fw = ENEMY_SPRITE_POOL[idx].frameW, fh = ENEMY_SPRITE_POOL[idx].frameH;
     next.x = Math.max(0, Math.min(next.x, fw-1));
     next.y = Math.max(0, Math.min(next.y, fh-1));
     next.w = Math.max(1, Math.min(next.w, fw*2));
     next.h = Math.max(1, Math.min(next.h, fh*2));
-    // Write to local state
     setCropMap(m => ({...m, [idx]: next}));
-    // Mutate pool entry so EnemySpriteSmall picks it up
+    // Mutate pool entry (persists across re-renders)
     const e = ENEMY_SPRITE_POOL[idx];
     e.cropX = next.x; e.cropY = next.y; e.cropW = next.w; e.cropH = next.h;
-    // Force cs re-render so React.memo on EnemySpriteSmall sees new props
-    if (window.__setCs) window.__setCs(prev => prev ? ({
-      ...prev, enemySprite: prev.enemySprite
-        ? { ...prev.enemySprite,
-            cropX: prev.enemySprite === e ? next.x : prev.enemySprite.cropX,
-            cropY: prev.enemySprite === e ? next.y : prev.enemySprite.cropY,
-            cropW: prev.enemySprite === e ? next.w : prev.enemySprite.cropW,
-            cropH: prev.enemySprite === e ? next.h : prev.enemySprite.cropH }
-        : prev.enemySprite
-    }) : prev);
+    // Force-push a new enemySprite object so React.memo re-renders EnemySpriteSmall
+    // Use the selected pool entry regardless of reference equality
+    if (window.__setCs) window.__setCs(prev => prev ? {
+      ...prev, enemySprite: { ...e, cropX:next.x, cropY:next.y, cropW:next.w, cropH:next.h }
+    } : prev);
   }
 
-  const livePoolIdx = ENEMY_SPRITE_POOL.indexOf(cs.enemySprite);
-  const activePoolIdx = overrideIdx !== null ? overrideIdx : (livePoolIdx >= 0 ? livePoolIdx : 0);
+  // Switch the in-game sprite to a specific pool entry
+  function pickSprite(idx) {
+    setOverrideIdx(idx);
+    const e = ENEMY_SPRITE_POOL[idx];
+    const c = getCrop(idx);
+    if (window.__setCs) window.__setCs(prev => prev ? {
+      ...prev, enemySprite: { ...e, cropX:c.x, cropY:c.y, cropW:c.w, cropH:c.h }
+    } : prev);
+  }
+
+  const activePoolIdx = overrideIdx !== null ? overrideIdx
+    : Math.max(0, ENEMY_SPRITE_POOL.findIndex(e => e.variant === cs.enemySprite?.variant));
   const sp   = ENEMY_SPRITE_POOL[activePoolIdx];
   const crop = getCrop(activePoolIdx);
   const base = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}`;
@@ -1446,7 +1449,7 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
       <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:7,
         borderBottom:'1px solid #1e1e3a',paddingBottom:6,flexWrap:'wrap'}}>
         <span style={{fontSize:9,color:'#555',letterSpacing:'.1em'}}>SPRITE</span>
-        <button onClick={()=>setOverrideIdx(null)}
+        <button onClick={()=>{ setOverrideIdx(null); if(window.__setCs&&cs.enemySprite) window.__setCs(prev=>prev?{...prev,enemySprite:{...cs.enemySprite}}:prev); }}
           style={{padding:'2px 8px',fontFamily:'monospace',fontSize:9,cursor:'pointer',borderRadius:3,
             background:overrideIdx===null?'#2a1a00':'#0d0d1a',
             border:`1px solid ${overrideIdx===null?'#ffcc00':'#2a2a3a'}`,
@@ -1460,7 +1463,7 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
               const label = e.variant.replace(/^(Gorgon|Minotaur)_/,'').replace(/_Werewolf/,'');
               const hasCrop = !!(cropMap[idx]);
               return (
-                <button key={idx} onClick={()=>setOverrideIdx(idx)}
+                <button key={idx} onClick={()=>pickSprite(idx)}
                   style={{padding:'2px 8px',fontFamily:'monospace',fontSize:9,cursor:'pointer',borderRadius:3,
                     background:sel?'#1a1430':'#0d0d1a',
                     border:`1px solid ${sel?'#9977cc':hasCrop?'#445533':'#2a2a3a'}`,
@@ -1543,15 +1546,21 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
           </div>
           <button onClick={()=>{
             const lines = ENEMY_SPRITE_POOL.map((e,i)=>{
-              const c = cropMap[i]||{x:e.cropX||0,y:e.cropY||0,w:e.cropW||e.frameW,h:e.cropH||e.frameH};
-              return `  // ${e.variant}\n  cropX:${c.x}, cropY:${c.y}, cropW:${c.w}, cropH:${c.h}`;
+              const c = getCrop(i);
+              return `{variant:"${e.variant}", cropX:${c.x}, cropY:${c.y}, cropW:${c.w}, cropH:${c.h}}`;
             }).join('\n');
-            console.log('CROP VALUES:\n'+lines);
-            navigator.clipboard.writeText(lines).catch(()=>{});
+            setLogText(lines);
           }} style={{padding:'3px 8px',background:'#0d0d1a',border:'1px solid #4a3a7a',
             color:'#9977cc',borderRadius:3,cursor:'pointer',fontSize:9}}>
             LOG ALL
           </button>
+          {logText && (
+            <textarea readOnly value={logText}
+              style={{width:'100%',height:120,background:'#050508',border:'1px solid #2a2a4a',
+                color:'#88ff88',fontSize:8,fontFamily:'monospace',borderRadius:3,padding:4,
+                resize:'vertical',marginTop:4}}
+              onClick={e=>e.target.select()}/>
+          )}
         </div>
       </div>
     </div>
