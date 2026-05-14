@@ -3381,7 +3381,7 @@ function App() {
 
     ref.startMs = performance.now(); ref.pressT = null; ref.done = false; ref._rushLastRender = 0;
     setCs(prev => prev ? {...prev, phase:"defending"} : prev);
-    setQteAnim({ type:"rush_melee", t:0, walkEnd:WALK_END, attackEnd:ATK_END, arrive:ARRIVE, window:WINDOW, rushPhase:"approach" });
+    setQteAnim({ type:"rush_melee", t:0, walkEnd:WALK_END, attackEnd:ATK_END, arrive:ARRIVE, hitWindow:WINDOW, rushPhase:"approach" });
 
     const onKey = (e) => {
       if (ref.gen !== myGen) { window.removeEventListener("keydown", onKey); return; }
@@ -5679,7 +5679,7 @@ function App() {
 
             {/* ── RUSH MELEE — approach warning + timing bar ── */}
             {qteAnim?.type==="rush_melee"&&(()=>{
-              const { t, walkEnd=0.42, attackEnd=0.72, arrive=0.55, window:win=0.065 } = qteAnim;
+              const { t, walkEnd=0.42, attackEnd=0.72, arrive=0.55, hitWindow:win=0.065 } = qteAnim;
               const isApproach = t < walkEnd;
               const isStrike   = t >= walkEnd && t < attackEnd;
               const inWindow   = Math.abs(t - arrive) < win;

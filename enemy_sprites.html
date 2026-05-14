@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>RPG — Enemy Sprite Sheets</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#07070f;color:#d4c49a;font-family:'IM Fell English',serif;padding:24px}
+h1{font-family:Cinzel,serif;color:#c8a84b;font-size:1.9rem;text-align:center;margin-bottom:4px;letter-spacing:.15em}
+.sub{text-align:center;color:#777;font-style:italic;margin-bottom:30px;font-size:.9rem}
+h2{font-family:Cinzel,serif;color:#c8a84b;font-size:1rem;letter-spacing:.12em;margin:32px 0 14px;border-bottom:1px solid #3a3010;padding-bottom:6px;display:flex;align-items:center;gap:10px}
+h2 .badge{font-size:.6rem;padding:2px 8px;border-radius:10px;background:#1a1430;color:#9977cc;letter-spacing:.06em}
+
+.variant-section{margin-bottom:40px}
+.variant-header{font-family:Cinzel,serif;font-size:.78rem;color:#9988bb;letter-spacing:.1em;margin-bottom:10px;padding:6px 12px;background:#0d0d1a;border-radius:6px;border-left:3px solid #4a3a7a}
+
+.sheets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.sheet-card{background:#0a0a18;border:1px solid #1e1e3a;border-radius:8px;padding:14px;overflow:hidden}
+.sheet-card h3{font-family:Cinzel,serif;font-size:.72rem;color:#8888cc;letter-spacing:.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.sheet-card h3 .meta{color:#554455;font-size:.65rem;font-family:'IM Fell English',serif;letter-spacing:0}
+
+/* Sprite canvas area */
+.sprite-wrap{position:relative;background:#111122;border-radius:6px;overflow:hidden;cursor:pointer}
+.sprite-wrap img{display:block;image-rendering:pixelated;image-rendering:crisp-edges;width:100%;height:auto}
+.sheet-strip{display:block;width:100%;height:auto}
+
+/* Preview: single animated frame */
+.anim-preview{display:flex;align-items:center;gap:12px;margin-top:10px}
+.frame-canvas{background:#111122;border-radius:4px;image-rendering:pixelated;border:1px solid #2a2a4a}
+.anim-controls{flex:1;font-size:.7rem;color:#666}
+.anim-controls .frame-label{color:#aaa;font-size:.75rem;margin-bottom:4px}
+.play-btn{display:inline-block;padding:3px 10px;border:1px solid #4a3a7a;border-radius:4px;cursor:pointer;font-size:.65rem;font-family:Cinzel,serif;color:#9977cc;letter-spacing:.06em;user-select:none}
+.play-btn:hover{background:#1a1430}
+
+/* Rush melee */
+.rush-card{border-color:#2a1a0a}
+.hit-badge{font-size:.58rem;padding:2px 7px;border-radius:8px;background:#400a00;color:#ff7755;letter-spacing:.05em;margin-left:6px}
+
+/* Boss section */
+.boss-gif{display:block;image-rendering:pixelated;max-width:100%;border-radius:6px}
+.boss-sheet-img{display:block;width:100%;image-rendering:pixelated;border-radius:6px;border:1px solid #3a1010}
+</style>
+</head>
+<body>
+
+<h1>R.P.G.</h1>
+<p class="sub">Enemy Sprite Sheet Viewer &mdash; all variants &amp; animations</p>
+
+<script>
+const BASE = '/icons/sprites';
+const FW = 128, FH = 128; // all enemy sprites are 128×128 per frame
+
+// Rush melee data mirrored from ENEMY_SPRITE_POOL
+const RUSH_DATA = [
+  { label:'GORGON 1',   dir:'free-gorgon-pixel-art-character-sprite-sheets',  variant:'Gorgon_1',
+    approach:{file:'Run.png',frames:8,fps:10}, strike:{file:'Attack_1.png',frames:16,fps:14,hitFrame:8} },
+  { label:'GORGON 2',   dir:'free-gorgon-pixel-art-character-sprite-sheets',  variant:'Gorgon_2',
+    approach:{file:'Run.png',frames:8,fps:10}, strike:{file:'Attack_1.png',frames:16,fps:14,hitFrame:8} },
+  { label:'GORGON 3',   dir:'free-gorgon-pixel-art-character-sprite-sheets',  variant:'Gorgon_3',
+    approach:{file:'Run.png',frames:8,fps:10}, strike:{file:'Attack_1.png',frames:16,fps:14,hitFrame:8} },
+  { label:'MINOTAUR 1', dir:'free-minotaur-sprite-sheet-pixel-art-pack',      variant:'Minotaur_1',
+    approach:{file:'Walk.png',frames:8,fps:8}, strike:{file:'Attack.png',frames:5,fps:10,hitFrame:3} },
+  { label:'MINOTAUR 2', dir:'free-minotaur-sprite-sheet-pixel-art-pack',      variant:'Minotaur_2',
+    approach:{file:'Walk.png',frames:8,fps:8}, strike:{file:'Attack.png',frames:5,fps:10,hitFrame:3} },
+  { label:'MINOTAUR 3', dir:'free-minotaur-sprite-sheet-pixel-art-pack',      variant:'Minotaur_3',
+    approach:{file:'Walk.png',frames:8,fps:8}, strike:{file:'Attack.png',frames:5,fps:10,hitFrame:3} },
+  { label:'BLACK WEREWOLF', dir:'free-werewolf-sprite-sheets-pixel-art', variant:'Black_Werewolf',
+    approach:{file:'Run.png',frames:8,fps:12}, strike:{file:'Run+Attack.png',frames:9,fps:14,hitFrame:5} },
+  { label:'RED WEREWOLF',   dir:'free-werewolf-sprite-sheets-pixel-art', variant:'Red_Werewolf',
+    approach:{file:'Run.png',frames:8,fps:12}, strike:{file:'Run+Attack.png',frames:9,fps:14,hitFrame:5} },
+  { label:'WHITE WEREWOLF', dir:'free-werewolf-sprite-sheets-pixel-art', variant:'White_Werewolf',
+    approach:{file:'Run.png',frames:8,fps:12}, strike:{file:'Run+Attack.png',frames:9,fps:14,hitFrame:5} },
+];
+
+const GROUPS = [
+  {
+    label:'GORGON', badge:'×3 variants', color:'#997733',
+    dir:'free-gorgon-pixel-art-character-sprite-sheets',
+    variants:['Gorgon_1','Gorgon_2','Gorgon_3'],
+    sheets:[
+      {name:'Idle',     file:'Idle.png',     frames:7},
+      {name:'Attack 1', file:'Attack_1.png', frames:16},
+      {name:'Attack 2', file:'Attack_2.png', frames:16},
+      {name:'Attack 3', file:'Attack_3.png', frames:16},
+      {name:'Hurt',     file:'Hurt.png',     frames:4},
+      {name:'Dead',     file:'Dead.png',     frames:7},
+      {name:'Run',      file:'Run.png',      frames:8},
+    ]
+  },
+  {
+    label:'MINOTAUR', badge:'×3 variants', color:'#996633',
+    dir:'free-minotaur-sprite-sheet-pixel-art-pack',
+    variants:['Minotaur_1','Minotaur_2','Minotaur_3'],
+    sheets:[
+      {name:'Idle',   file:'Idle.png',   frames:10},
+      {name:'Attack', file:'Attack.png', frames:5},
+      {name:'Hurt',   file:'Hurt.png',   frames:3},
+      {name:'Dead',   file:'Dead.png',   frames:7},
+      {name:'Walk',   file:'Walk.png',   frames:8},
+    ]
+  },
+  {
+    label:'WEREWOLF', badge:'Black · Red · White', color:'#779933',
+    dir:'free-werewolf-sprite-sheets-pixel-art',
+    variants:['Black_Werewolf','Red_Werewolf','White_Werewolf'],
+    sheets:[
+      {name:'Idle',      file:'Idle.png',       frames:8},
+      {name:'Attack 1',  file:'Attack_1.png',   frames:6},
+      {name:'Attack 2',  file:'Attack_2.png',   frames:6},
+      {name:'Attack 3',  file:'Attack_3.png',   frames:6},
+      {name:'Hurt',      file:'Hurt.png',        frames:4},
+      {name:'Dead',      file:'Dead.png',        frames:5},
+      {name:'Run',       file:'Run.png',         frames:8},
+      {name:'Walk',      file:'walk.png',        frames:8},
+      {name:'Run+Atk',   file:'Run+Attack.png',  frames:9},
+    ]
+  }
+];
+
+// Animation state map: key = canvasId → {frame, playing, interval}
+const STATE = {};
+
+function makeCard(groupDir, variant, sheet) {
+  const path = `${BASE}/${groupDir}/${variant}/${sheet.file}`;
+  const uid = (groupDir+variant+sheet.file).replace(/[^a-zA-Z0-9]/g,'_');
+  const canvasId = 'cv_'+uid;
+  const previewId = 'pv_'+uid;
+
+  const card = document.createElement('div');
+  card.className = 'sheet-card';
+  card.innerHTML = `
+    <h3>${sheet.name} <span class="meta">${sheet.frames} frames · 128px</span></h3>
+    <div class="sprite-wrap">
+      <img class="sheet-strip" src="${path}" alt="${sheet.name}" onerror="this.style.opacity='.2';this.alt='missing'"/>
+    </div>
+    <div class="anim-preview">
+      <canvas id="${canvasId}" class="frame-canvas" width="96" height="96" title="click to play/pause"></canvas>
+      <div class="anim-controls">
+        <div class="frame-label" id="${previewId}">frame 1 / ${sheet.frames}</div>
+        <div class="play-btn" onclick="togglePlay('${canvasId}','${previewId}','${path}',${sheet.frames})">&#9654; PLAY</div>
+      </div>
+    </div>
+  `;
+
+  // Draw first frame once image loads
+  const img = new Image();
+  img.onload = () => {
+    drawFrame(canvasId, img, 0, sheet.frames);
+    STATE[canvasId] = { img, frames:sheet.frames, frame:0, playing:false, interval:null, previewId };
+  };
+  img.src = path;
+
+  return card;
+}
+
+function drawFrame(canvasId, img, frameIdx, totalFrames) {
+  const cv = document.getElementById(canvasId);
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0,0,96,96);
+  // source: clip one 128×128 frame from the horizontal strip, scale to 96×96
+  const sx = frameIdx * FW;
+  ctx.drawImage(img, sx, 0, FW, FH, 0, 0, 96, 96);
+}
+
+function togglePlay(canvasId, previewId, path, frames) {
+  let s = STATE[canvasId];
+  if (!s) {
+    const img = new Image();
+    img.onload = () => {
+      STATE[canvasId] = { img, frames, frame:0, playing:false, interval:null, previewId };
+      togglePlay(canvasId, previewId, path, frames);
+    };
+    img.src = path;
+    return;
+  }
+  if (s.playing) {
+    clearInterval(s.interval);
+    s.playing = false;
+    const btn = document.querySelector(`[onclick*="${canvasId}"]`);
+    if (btn) btn.innerHTML = '&#9654; PLAY';
+  } else {
+    s.playing = true;
+    const btn = document.querySelector(`[onclick*="${canvasId}"]`);
+    if (btn) btn.innerHTML = '&#9646;&#9646; PAUSE';
+    s.interval = setInterval(() => {
+      s.frame = (s.frame + 1) % s.frames;
+      drawFrame(canvasId, s.img, s.frame, s.frames);
+      const lbl = document.getElementById(previewId);
+      if (lbl) lbl.textContent = `frame ${s.frame+1} / ${s.frames}`;
+    }, 120);
+  }
+}
+
+window.togglePlay = togglePlay;
+
+function build() {
+  const root = document.getElementById('root');
+
+  GROUPS.forEach(group => {
+    const sec = document.createElement('section');
+    sec.className = 'variant-section';
+
+    const h2 = document.createElement('h2');
+    h2.innerHTML = `${group.label} <span class="badge">${group.badge}</span>`;
+    h2.style.borderBottomColor = group.color+'66';
+    sec.appendChild(h2);
+
+    group.variants.forEach(variant => {
+      const vHeader = document.createElement('div');
+      vHeader.className = 'variant-header';
+      vHeader.textContent = variant.replace(/_/g,' ');
+      sec.appendChild(vHeader);
+
+      const grid = document.createElement('div');
+      grid.className = 'sheets-grid';
+
+      group.sheets.forEach(sheet => {
+        grid.appendChild(makeCard(group.dir, variant, sheet));
+      });
+
+      sec.appendChild(grid);
+    });
+
+    root.appendChild(sec);
+  });
+
+  // Boss section
+  const bossSec = document.createElement('section');
+  bossSec.className = 'variant-section';
+  bossSec.innerHTML = `
+    <h2 style="border-bottom-color:#8b303066">DEMON SLIME <span class="badge" style="color:#ff9977">BOSS</span></h2>
+    <div class="variant-header">Demon Slime &mdash; 288&#215;160 per frame &middot; full spritesheet</div>
+    <div class="sheets-grid">
+      <div class="sheet-card" style="border-color:#3a1010">
+        <h3>Full Spritesheet <span class="meta">288&#215;160 frames</span></h3>
+        <div class="sprite-wrap">
+          <img class="sheet-strip" src="${BASE}/boss/boss_demon_slime_FREE_v1.0/spritesheets/demon_slime_FREE_v1.0_288x160_spritesheet.png" style="width:100%"/>
+        </div>
+      </div>
+      <div class="sheet-card" style="border-color:#3a1010">
+        <h3>Idle GIF <span class="meta">animated</span></h3>
+        <div class="sprite-wrap" style="padding:10px;background:#0d0505">
+          <img src="${BASE}/boss/boss_demon_slime_FREE_v1.0/gifs/demon_slime_idle.gif" style="image-rendering:pixelated;display:block;margin:0 auto;max-height:160px"/>
+        </div>
+      </div>
+      <div class="sheet-card" style="border-color:#3a1010">
+        <h3>Cleave GIF <span class="meta">boss attack pattern</span></h3>
+        <div class="sprite-wrap" style="padding:10px;background:#0d0505">
+          <img src="${BASE}/boss/boss_demon_slime_FREE_v1.0/gifs/demon_slime_cleave.gif" style="image-rendering:pixelated;display:block;margin:0 auto;max-height:160px" onerror="this.alt='missing';this.style.opacity=.3"/>
+        </div>
+      </div>
+    </div>
+    <div class="sheets-grid" style="margin-top:12px">
+      ${['01_demon_idle','02_demon_walk','03_demon_cleave','04_demon_take_hit','05_demon_death'].map(folder=>`
+        <div class="sheet-card" style="border-color:#3a1010">
+          <h3>${folder.replace(/\d+_demon_/,'').replace(/_/g,' ').toUpperCase()} <span class="meta">individual frames</span></h3>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;background:#0d0505;padding:8px;border-radius:6px">
+            ${[1,2,3,4,5,6].map(i=>`<img src="${BASE}/boss/boss_demon_slime_FREE_v1.0/individual sprites/${folder}/demon_${folder.replace(/\d+_demon_/,'')}${folder.includes('idle')?'_idle':folder.includes('walk')?'_walk':folder.includes('cleave')?'_cleave':folder.includes('hit')?'_take_hit':'_death'}_${i}.png" style="image-rendering:pixelated;height:60px;background:#111" onerror="this.style.display='none'"/>`).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  root.appendChild(bossSec);
+}
+
+/* ── Rush melee preview ───────────────────────────────────── */
+function makeRushCard(entry, phase /* "approach"|"strike" */) {
+  const anim   = phase === 'approach' ? entry.approach : entry.strike;
+  const path   = `${BASE}/${entry.dir}/${entry.variant}/${anim.file}`;
+  const uid    = (entry.variant + phase).replace(/[^a-zA-Z0-9]/g,'_');
+  const canvasId  = 'rv_' + uid;
+  const previewId = 'rp_' + uid;
+  const hitFrame  = anim.hitFrame ?? null;
+  const msPerFrame = Math.round(1000 / (anim.fps || 10));
+
+  const card = document.createElement('div');
+  card.className = 'sheet-card rush-card';
+  if (phase === 'strike') card.style.borderColor = '#5a1010';
+
+  const hitBadge = (hitFrame != null)
+    ? `<span class="hit-badge">HIT FRAME ${hitFrame}</span>` : '';
+
+  card.innerHTML = `
+    <h3>
+      ${phase === 'approach' ? '🏃 APPROACH' : '⚔️ STRIKE'} ${hitBadge}
+      <span class="meta">${anim.frames} frames · ${anim.fps}fps · ${msPerFrame}ms/f</span>
+    </h3>
+    <div class="sprite-wrap">
+      <img class="sheet-strip" src="${path}" alt="${phase}"
+           onerror="this.style.opacity='.2';this.alt='missing'"/>
+    </div>
+    <div class="anim-preview">
+      <canvas id="${canvasId}" class="frame-canvas" width="96" height="96"></canvas>
+      <div class="anim-controls">
+        <div class="frame-label" id="${previewId}">frame 1 / ${anim.frames}</div>
+        <div class="play-btn" onclick="togglePlay('${canvasId}','${previewId}','${path}',${anim.frames},${msPerFrame},${hitFrame??-1})">&#9654; PLAY</div>
+        ${hitFrame!=null?`<div style="margin-top:6px;font-size:.65rem;color:#ff6644">▶ hit frame ${hitFrame} highlighted</div>`:''}
+      </div>
+    </div>
+  `;
+
+  // Load and draw frame 0
+  const img = new Image();
+  img.onload = () => {
+    drawFrame(canvasId, img, 0, anim.frames);
+    STATE[canvasId] = { img, frames:anim.frames, frame:0, playing:false, interval:null, previewId, hitFrame };
+  };
+  img.src = path;
+
+  return card;
+}
+
+function buildRushSection() {
+  const root = document.getElementById('root');
+
+  const sec = document.createElement('section');
+  sec.className = 'variant-section';
+  sec.innerHTML = `
+    <h2 style="border-bottom-color:#7a1a0066;margin-top:48px">
+      RUSH MELEE ATTACKS <span class="badge" style="color:#ff8855;background:#200a00">NEW QTE</span>
+    </h2>
+    <p style="font-size:.78rem;color:#666;font-style:italic;margin-bottom:20px;padding-left:4px">
+      Approach animation plays as enemy closes distance · Strike fires on arrival · hit-frame = perfect-block window
+    </p>
+  `;
+
+  const lastGroup = RUSH_DATA.reduce((acc, e) => {
+    const key = e.variant.replace(/_\d+$/,'').replace(/_/g,' ');
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(e);
+    return acc;
+  }, {});
+
+  // Group by species
+  const seen = {};
+  RUSH_DATA.forEach(entry => {
+    const species = entry.label.replace(/ \d+$/,'');
+    if (!seen[species]) {
+      seen[species] = true;
+      const header = document.createElement('div');
+      header.className = 'variant-header';
+      header.textContent = species;
+      sec.appendChild(header);
+    }
+
+    const varHeader = document.createElement('div');
+    varHeader.style.cssText = 'font-size:.68rem;color:#554;margin:8px 0 6px 4px;font-style:italic;font-family:"IM Fell English",serif';
+    varHeader.textContent = entry.variant.replace(/_/g,' ');
+    sec.appendChild(varHeader);
+
+    const row = document.createElement('div');
+    row.className = 'sheets-grid';
+    row.style.gridTemplateColumns = 'repeat(2, 1fr)';
+    row.appendChild(makeRushCard(entry, 'approach'));
+    row.appendChild(makeRushCard(entry, 'strike'));
+    sec.appendChild(row);
+  });
+
+  root.appendChild(sec);
+}
+
+// Override togglePlay to support per-frame interval + hitFrame highlight
+const _origTogglePlay = togglePlay;
+window.togglePlay = function(canvasId, previewId, path, frames, msPerFrame, hitFrame) {
+  // msPerFrame / hitFrame may be undefined when called from original cards
+  if (msPerFrame === undefined) { _origTogglePlay(canvasId, previewId, path, frames); return; }
+
+  let s = STATE[canvasId];
+  if (!s) {
+    const img = new Image();
+    img.onload = () => {
+      STATE[canvasId] = { img, frames, frame:0, playing:false, interval:null, previewId, hitFrame };
+      window.togglePlay(canvasId, previewId, path, frames, msPerFrame, hitFrame);
+    };
+    img.src = path;
+    return;
+  }
+  if (s.playing) {
+    clearInterval(s.interval);
+    s.playing = false;
+    const btn = document.querySelector(`[onclick*="${canvasId}"]`);
+    if (btn) btn.innerHTML = '&#9654; PLAY';
+  } else {
+    s.playing = true;
+    const btn = document.querySelector(`[onclick*="${canvasId}"]`);
+    if (btn) btn.innerHTML = '&#9646;&#9646; PAUSE';
+    s.interval = setInterval(() => {
+      s.frame = (s.frame + 1) % s.frames;
+      drawFrame(canvasId, s.img, s.frame, s.frames);
+
+      // Hit-frame flash: tint the canvas orange-red
+      const cv = document.getElementById(canvasId);
+      if (cv) {
+        const isHit = s.frame === s.hitFrame;
+        cv.style.boxShadow = isHit ? '0 0 10px 3px #ff4400' : '';
+        cv.style.outline   = isHit ? '2px solid #ff4400' : '';
+      }
+
+      const lbl = document.getElementById(previewId);
+      if (lbl) lbl.textContent = `frame ${s.frame+1} / ${s.frames}${s.frame===s.hitFrame?' 🔥 HIT':''}`;
+    }, msPerFrame);
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => { build(); buildRushSection(); });
+</script>
+
+<div id="root"></div>
+
+</body>
+</html>
