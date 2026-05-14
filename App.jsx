@@ -138,15 +138,33 @@ const ENEMY_DIMS = {
 // cropW/H:    size of content region (px). DisplayW/H = cropW/H * eScale.
 //             Omit (or leave undefined) for no crop — falls back to full frameW/frameH.
 const ENEMY_SPRITE_POOL = [
-  {variant:"Gorgon_1",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16, headPad:22},
-  {variant:"Gorgon_2",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16, headPad:22},
-  {variant:"Gorgon_3",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7, atkFile:"Attack_1.png",atkFrames:16, headPad:22},
-  {variant:"Minotaur_1",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5,  headPad:18},
-  {variant:"Minotaur_2",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5,  headPad:18},
-  {variant:"Minotaur_3",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10,atkFile:"Attack.png",  atkFrames:5,  headPad:18},
-  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:10, headPad:24},
-  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:10, headPad:24},
-  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8, atkFile:"Attack_1.png",atkFrames:6, groundPad:10, headPad:24},
+  {variant:"Gorgon_1",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7,  headPad:22,
+   attacks:[{file:"Attack_1.png",frames:16},{file:"Attack_2.png",frames:7},{file:"Attack_3.png",frames:10}],
+   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:3},
+  {variant:"Gorgon_2",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7,  headPad:22,
+   attacks:[{file:"Attack_1.png",frames:16},{file:"Attack_2.png",frames:7},{file:"Attack_3.png",frames:10}],
+   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:3},
+  {variant:"Gorgon_3",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7,  headPad:22,
+   attacks:[{file:"Attack_1.png",frames:16},{file:"Attack_2.png",frames:7},{file:"Attack_3.png",frames:10}],
+   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:3},
+  {variant:"Minotaur_1",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10, headPad:18,
+   attacks:[{file:"Attack.png",frames:5}],
+   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:5},
+  {variant:"Minotaur_2",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10, headPad:18,
+   attacks:[{file:"Attack.png",frames:5}],
+   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:5},
+  {variant:"Minotaur_3",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10, headPad:18,
+   attacks:[{file:"Attack.png",frames:5}],
+   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:5},
+  {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8,  headPad:24,groundPad:10,
+   attacks:[{file:"Attack_1.png",frames:6},{file:"Attack_2.png",frames:4},{file:"Attack_3.png",frames:5}],
+   hurtFile:"Hurt.png",hurtFrames:2, deadFile:"Dead.png",deadFrames:2},
+  {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8,  headPad:24,groundPad:10,
+   attacks:[{file:"Attack_1.png",frames:6},{file:"Attack_2.png",frames:4},{file:"Attack_3.png",frames:5}],
+   hurtFile:"Hurt.png",hurtFrames:2, deadFile:"Dead.png",deadFrames:2},
+  {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8,  headPad:24,groundPad:10,
+   attacks:[{file:"Attack_1.png",frames:6},{file:"Attack_2.png",frames:4},{file:"Attack_3.png",frames:5}],
+   hurtFile:"Hurt.png",hurtFrames:2, deadFile:"Dead.png",deadFrames:2},
 ];
 
 // Gandalf layered hero sprites — randomized per run
@@ -755,36 +773,59 @@ function DemonSlimeSprite({ renderW=238, renderH=132, enemyFlash=false, phase="a
   );
 }
 
-const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, sprite=null, attacking=false, enemyFlash=false, phase="action", bossAttackPattern=null }) {
+const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, sprite=null, enemyFlash=false, phase="action", bossAttackPattern=null }) {
   if (id==="dragon") {
     const bd = ENEMY_DIMS.dragon;
     return <DemonSlimeSprite renderW={Math.round(bd.w*scale)} renderH={Math.round(bd.h*scale)} enemyFlash={enemyFlash} phase={phase} bossAttackPattern={bossAttackPattern}/>;
-  };
+  }
+
+  // Track which attack variant to play — rotate each time enemy_turn begins
+  const atkIdxRef = React.useRef(0);
+  const prevPhaseRef = React.useRef(phase);
+  if (phase==="enemy_turn" && prevPhaseRef.current!=="enemy_turn" && sprite?.attacks?.length>1) {
+    atkIdxRef.current = (atkIdxRef.current + 1) % sprite.attacks.length;
+  }
+  prevPhaseRef.current = phase;
 
   if (sprite) {
-    // Crop region — defaults to full frame when not specified
     const cropX  = sprite.cropX  || 0;
     const cropY  = sprite.cropY  || 0;
     const cropW  = sprite.cropW  || sprite.frameW;
     const cropH  = sprite.cropH  || sprite.frameH;
-    // Display size = crop region * scale
     const displayW = Math.round(cropW * scale);
     const displayH = Math.round(cropH * scale);
-    // Full strip dimensions in display pixels (for AnimatedSprite offset maths)
-    const imgW = Math.round(sprite.frameW * scale) * (attacking ? sprite.atkFrames : sprite.idleFrames);
-    const imgH = Math.round(sprite.frameH * scale);
     const cropOffX = Math.round(cropX * scale);
     const cropOffY = Math.round(cropY * scale);
     const base = `${ASSET_BASE}/icons/sprites/${sprite.dir}/${sprite.variant}`;
-    const src = attacking
-      ? `${base}/${sprite.atkFile}`
-      : `${base}/Idle.png`;
-    const frames = attacking ? sprite.atkFrames : sprite.idleFrames;
-    return <AnimatedSprite src={src} numFrames={frames} fps={attacking?12:8}
+
+    // ── Pick animation based on combat state ──
+    let src, frames, fps;
+    const isAttacking = phase==="enemy_turn" || phase==="defending";
+    if (phase==="won" && sprite.deadFile) {
+      src    = `${base}/${sprite.deadFile}`;
+      frames = sprite.deadFrames || 3;
+      fps    = 9;
+    } else if (enemyFlash && sprite.hurtFile) {
+      src    = `${base}/${sprite.hurtFile}`;
+      frames = sprite.hurtFrames || 2;
+      fps    = 14;
+    } else if (isAttacking && sprite.attacks?.length) {
+      const atk = sprite.attacks[atkIdxRef.current % sprite.attacks.length];
+      src    = `${base}/${atk.file}`;
+      frames = atk.frames;
+      fps    = 12;
+    } else {
+      src    = `${base}/Idle.png`;
+      frames = sprite.idleFrames;
+      fps    = 8;
+    }
+
+    const imgW = Math.round(sprite.frameW * scale) * frames;
+    const imgH = Math.round(sprite.frameH * scale);
+    return <AnimatedSprite src={src} numFrames={frames} fps={fps}
       displayW={displayW} displayH={displayH}
       imgW={imgW} imgH={imgH} cropOffX={cropOffX} cropOffY={cropOffY}/>;
   }
-  // Fallback — invisible placeholder (shouldn't normally reach here for non-dragon)
   const dims = ENEMY_DIMS[id]||{w:64,h:78};
   return <div style={{width:dims.w*scale,height:dims.h*scale}}/>;
 }); // EnemySpriteSmall memo
@@ -6043,7 +6084,9 @@ function App() {
                   return (
                     <div>
                       <SheetView base={base} file="Idle.png" numFrames={sp.idleFrames} sp={sp} label="IDLE"/>
-                      <SheetView base={base} file={sp.atkFile} numFrames={sp.atkFrames} sp={sp} label="ATTACK"/>
+                      {(sp.attacks||[]).map((a,i)=><SheetView key={i} base={base} file={a.file} numFrames={a.frames} sp={sp} label={`ATK${i+1}`}/>)}
+                      {sp.hurtFile&&<SheetView base={base} file={sp.hurtFile} numFrames={sp.hurtFrames} sp={sp} label="HURT"/>}
+                      {sp.deadFile&&<SheetView base={base} file={sp.deadFile} numFrames={sp.deadFrames} sp={sp} label="DEAD"/>}
                       {/* Metadata table */}
                       <div style={{fontSize:9,color:'#666',marginTop:6,lineHeight:'1.6em'}}>
                         <span style={{color:'#aaa'}}>headPad</span>={sp.headPad||0}px
