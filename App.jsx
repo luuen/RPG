@@ -1339,6 +1339,17 @@ const sfx = (() => {
 })();
 
 /* ─── COMBAT SPRITE FRAME OVERLAY (debug) ───────────────────── */
+function CropSliderRow({ label, value, min, max, onChange }) {
+  return (
+    <label style={{display:'flex',gap:5,alignItems:'center',fontSize:10,color:'#aaa'}}>
+      <span style={{width:14,textAlign:'right',color:'#666'}}>{label}</span>
+      <input type="range" min={min} max={max} value={value} style={{width:110}}
+        onChange={e => onChange(+e.target.value)}/>
+      <span style={{width:28,color:'#ffcc00'}}>{value}</span>
+    </label>
+  );
+}
+
 function CombatSpriteOverlay({ cs, enemyFlash }) {
   // Which pool entry is selected (null = follow live cs.enemySprite)
   const [overrideIdx, setOverrideIdx] = React.useState(null);
@@ -1350,17 +1361,18 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
   function getCrop(idx) {
     if (cropMap[idx]) return cropMap[idx];
     const e = ENEMY_SPRITE_POOL[idx];
-    return { x: e.cropX||0, y: e.cropY||0, w: e.cropW||e.frameW, h: e.cropH||e.frameH };
+    // If no crop baked in, start at half-height so slider has room to grow
+    return { x: e.cropX||0, y: e.cropY||0, w: e.cropW||e.frameW, h: e.cropH||(Math.round(e.frameH*0.75)) };
   }
 
   function applyCrop(idx, patch) {
     const next = { ...getCrop(idx), ...patch };
-    // Clamp to frame bounds
+    // Clamp: x/y within frame, w/h can exceed frame (AnimatedSprite handles overflow)
     const fw = ENEMY_SPRITE_POOL[idx].frameW, fh = ENEMY_SPRITE_POOL[idx].frameH;
     next.x = Math.max(0, Math.min(next.x, fw-1));
     next.y = Math.max(0, Math.min(next.y, fh-1));
-    next.w = Math.max(1, Math.min(next.w, fw - next.x));
-    next.h = Math.max(1, Math.min(next.h, fh - next.y));
+    next.w = Math.max(1, Math.min(next.w, fw*2));
+    next.h = Math.max(1, Math.min(next.h, fh*2));
     // Write to local state
     setCropMap(m => ({...m, [idx]: next}));
     // Mutate pool entry so EnemySpriteSmall picks it up
@@ -1424,16 +1436,6 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
     { label:'MINOTAUR', indices:[3,4,5] },
     { label:'WEREWOLF', indices:[6,7,8] },
   ];
-
-  const SliderRow = ({label, field, val, min, max}) => (
-    <label style={{display:'flex',gap:5,alignItems:'center',fontSize:10,color:'#aaa'}}>
-      <span style={{width:14,textAlign:'right',color:'#666'}}>{label}</span>
-      <input type="range" min={min} max={max} value={val} style={{width:100}}
-        onInput={e=>applyCrop(activePoolIdx,{[field]:+e.target.value})}
-        onChange={e=>applyCrop(activePoolIdx,{[field]:+e.target.value})}/>
-      <span style={{width:28,color:'#ffcc00'}}>{val}</span>
-    </label>
-  );
 
   return (
     <div style={{position:'fixed',bottom:0,left:0,right:0,
@@ -1532,10 +1534,10 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
         <div style={{flexShrink:0,display:'flex',flexDirection:'column',gap:6,
           background:'#0a0a16',border:'1px solid #1e1e3a',borderRadius:5,padding:'8px 10px'}}>
           <div style={{fontSize:9,color:'#555',letterSpacing:'.08em',marginBottom:2}}>CROP — {sp.variant}</div>
-          <SliderRow label="X"  field="x" val={crop.x} min={0} max={sp.frameW-1}/>
-          <SliderRow label="Y"  field="y" val={crop.y} min={0} max={sp.frameH-1}/>
-          <SliderRow label="W"  field="w" val={crop.w} min={1} max={sp.frameW}/>
-          <SliderRow label="H"  field="h" val={crop.h} min={1} max={sp.frameH}/>
+          <CropSliderRow label="X" value={crop.x} min={0}   max={sp.frameW}   onChange={v=>applyCrop(activePoolIdx,{x:v})}/>
+          <CropSliderRow label="Y" value={crop.y} min={0}   max={sp.frameH}   onChange={v=>applyCrop(activePoolIdx,{y:v})}/>
+          <CropSliderRow label="W" value={crop.w} min={1}   max={sp.frameW*2} onChange={v=>applyCrop(activePoolIdx,{w:v})}/>
+          <CropSliderRow label="H" value={crop.h} min={1}   max={sp.frameH*2} onChange={v=>applyCrop(activePoolIdx,{h:v})}/>
           <div style={{fontSize:8,color:'#333',marginTop:2}}>
             cropX:{crop.x} cropY:{crop.y} cropW:{crop.w} cropH:{crop.h}
           </div>
