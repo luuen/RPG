@@ -113,8 +113,8 @@ const XP_THRESHOLDS = [35, 75, 60, 110, 160];
 const xpThresholdFor = (level) => XP_THRESHOLDS[level - 1] ?? 9999;
 
 const ENEMIES = {
-  goblin_pup: { name:"Goblin Pup",     hp:14,  emoji:"👺", xp:20,  atk:3,  color:"#66cc66", desc:"A tiny, harmless pest"      },
-  goblin:   { name:"Goblin Scout",     hp:22,  emoji:"👺", xp:35,  atk:5,  color:"#55bb55", desc:"A cunning little pest"      },
+  goblin_pup: { name:"Goblin Pup",     hp:22,  emoji:"👺", xp:20,  atk:3,  color:"#66cc66", desc:"A tiny, harmless pest"      },
+  goblin:   { name:"Goblin Scout",     hp:30,  emoji:"👺", xp:35,  atk:5,  color:"#55bb55", desc:"A cunning little pest"      },
   skeleton: { name:"Skeleton Warrior", hp:32,  emoji:"💀", xp:40,  atk:7,  color:"#aaaaaa", desc:"Bones that refuse to rest"  },
   eye:      { name:"Void Eye",         hp:28,  emoji:"👁️", xp:45,  atk:10, color:"#9944ff", desc:"It sees into your soul"     },
   golem:    { name:"Stone Golem",      hp:65,  emoji:"🗿", xp:60,  atk:12, color:"#aa7744", desc:"Ancient earth made flesh"   },
