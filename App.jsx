@@ -1340,7 +1340,9 @@ const sfx = (() => {
 
 /* ─── COMBAT SPRITE FRAME OVERLAY (debug) ───────────────────── */
 function CombatSpriteOverlay({ cs, enemyFlash }) {
-  const sp   = cs.enemySprite;
+  // Sprite override — null means use whatever cs.enemySprite is
+  const [overrideIdx, setOverrideIdx] = React.useState(null);
+  const sp   = overrideIdx !== null ? ENEMY_SPRITE_POOL[overrideIdx] : cs.enemySprite;
   const base = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}`;
 
   const atkIdxRef  = React.useRef(0);
@@ -1368,18 +1370,58 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
 
   const VW    = Math.min(window.innerWidth - 20, 900);
   const SCALE = Math.floor(VW / numFrames);
-  // Baked box dims from user calibration (top:55 w:116 h:169 at SCALE=112)
   const BOX_W = Math.round(116/112*SCALE);
   const BOX_H = Math.round(169/112*SCALE);
   const BOX_Y = Math.round(55 /112*SCALE);
   const BIG   = Math.min(260, window.innerHeight*0.3);
 
+  // Group pool by type for the picker
+  const GROUPS = [
+    { label:'GORGON',    indices:[0,1,2] },
+    { label:'MINOTAUR',  indices:[3,4,5] },
+    { label:'WEREWOLF',  indices:[6,7,8] },
+  ];
+
   return (
     <div style={{position:'fixed',bottom:0,left:0,right:0,
       background:'rgba(7,7,15,0.93)',borderTop:'2px solid #2a2a4a',
       zIndex:88888,padding:'10px 14px 14px',fontFamily:'monospace',backdropFilter:'blur(4px)'}}>
-      <div style={{display:'flex',gap:14,alignItems:'flex-start'}}>
 
+      {/* Sprite picker */}
+      <div style={{display:'flex',gap:16,alignItems:'center',marginBottom:8,
+        borderBottom:'1px solid #1e1e3a',paddingBottom:7,flexWrap:'wrap'}}>
+        <div style={{fontSize:9,color:'#555',letterSpacing:'.1em',flexShrink:0}}>SPRITE</div>
+        {/* "Live" button — follow cs.enemySprite */}
+        <button onClick={()=>setOverrideIdx(null)}
+          style={{padding:'2px 8px',fontFamily:'monospace',fontSize:9,cursor:'pointer',borderRadius:3,
+            background: overrideIdx===null?'#2a1a00':'#0d0d1a',
+            border:`1px solid ${overrideIdx===null?'#ffcc00':'#333'}`,
+            color: overrideIdx===null?'#ffcc00':'#666'}}>
+          LIVE
+        </button>
+        {GROUPS.map(g=>(
+          <div key={g.label} style={{display:'flex',alignItems:'center',gap:4}}>
+            <span style={{fontSize:8,color:'#3a3a5a',letterSpacing:'.08em'}}>{g.label}</span>
+            {g.indices.map(idx=>{
+              const entry = ENEMY_SPRITE_POOL[idx];
+              const active = overrideIdx===idx;
+              // variant suffix: _1/_2/_3 or Black_/Red_/White_
+              const label = entry.variant.replace(/^(Gorgon|Minotaur)_/,'').replace(/_Werewolf/,'');
+              return (
+                <button key={idx} onClick={()=>setOverrideIdx(idx)}
+                  style={{padding:'2px 8px',fontFamily:'monospace',fontSize:9,cursor:'pointer',borderRadius:3,
+                    background: active?'#1a1430':'#0d0d1a',
+                    border:`1px solid ${active?'#9977cc':'#333'}`,
+                    color: active?'#cc99ff':'#666'}}>
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:'flex',gap:14,alignItems:'flex-start'}}>
         {/* Big frame preview */}
         <div style={{flexShrink:0}}>
           <div style={{fontSize:9,color:'#555',letterSpacing:'.1em',marginBottom:4}}>CURRENT FRAME</div>
