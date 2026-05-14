@@ -4785,16 +4785,19 @@ function App() {
                     }
                   }
                   if (rl===3) {
-                    // Exits left, wraps around, hits from right
-                    if (tp<0.42) {
-                      const p=tp/0.42;
-                      return { x:sx+(-80-sx)*p, y:sy+(ty-sy)*0.15*p };
-                    } else if (tp<0.50) {
-                      return { x:-300, y:-300 }; // off-screen (hidden)
+                    // One visible loop in the air, then hits enemy from front (right→left)
+                    const lcx=(sx+tx)/2, lcy=sy-85, R=100;
+                    const entX=lcx+R, entY=lcy; // loop entry & exit point
+                    if (tp<0.28) {
+                      const p=tp/0.28;
+                      return { x:sx+(entX-sx)*p, y:sy+(entY-sy)*p };
+                    } else if (tp<0.72) {
+                      const phase=(tp-0.28)/0.44; // 0→1 = full CCW loop
+                      return { x:lcx+R*Math.cos(phase*Math.PI*2),
+                               y:lcy-R*Math.sin(phase*Math.PI*2) };
                     } else {
-                      const p=(tp-0.50)/0.50;
-                      const rx=BFW+80;
-                      return { x:rx+(tx-rx)*easeIO(p), y:sy*0.85+(ty-sy*0.85)*easeIO(p) };
+                      const p=(tp-0.72)/0.28;
+                      return { x:entX+(tx-entX)*easeIO(p), y:entY+(ty-entY)*easeIO(p) };
                     }
                   }
                   return { x:sx+(tx-sx)*tp, y:sy+(ty-sy)*tp };
@@ -4805,7 +4808,7 @@ function App() {
                 const {x:x1,y:y1}=rocketXY(Math.min(1,t+dt2));
                 const {x:x0,y:y0}=rocketXY(Math.max(0,t-dt2));
                 const deg=Math.atan2(y1-y0, x1-x0)*180/Math.PI;
-                const hidden=bx<-150||by<-150;
+                const hidden=bx<-100||by<-100;
                 return (
                   <svg style={{position:"absolute",left:0,top:0,zIndex:12,pointerEvents:"none",overflow:"visible"}} width={BFW} height={BFH}>
                     {/* Smoke trail */}
@@ -4838,9 +4841,6 @@ function App() {
                         stroke={i%3===0?"#ffcc00":i%3===1?"#ff4400":"#ff8800"}
                         strokeWidth="3" opacity={(1-(t-0.80)/0.20)*0.95}/>;
                     })}
-                    {/* Level label (debug hint via color ring) */}
-                    {rl>=2&&!hidden&&<circle cx={bx} cy={by} r={rl===3?14:11}
-                      fill="none" stroke={rl===3?"#aa44ff":"#4488ff"} strokeWidth="2" opacity=".5"/>}
                   </svg>
                 );
               })()}
