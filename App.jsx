@@ -1340,13 +1340,52 @@ const sfx = (() => {
 
 /* ─── COMBAT SPRITE FRAME OVERLAY (debug) ───────────────────── */
 function CombatSpriteOverlay({ cs, enemyFlash }) {
-  // Sprite override — null means use whatever cs.enemySprite is
+  // Which pool entry is selected (null = follow live cs.enemySprite)
   const [overrideIdx, setOverrideIdx] = React.useState(null);
-  const sp   = overrideIdx !== null ? ENEMY_SPRITE_POOL[overrideIdx] : cs.enemySprite;
+
+  // Per-sprite crop overrides: { [poolIdx]: {x,y,w,h} }
+  // Initialised lazily from the pool entry on first access
+  const [cropMap, setCropMap] = React.useState({});
+
+  function getCrop(idx) {
+    if (cropMap[idx]) return cropMap[idx];
+    const e = ENEMY_SPRITE_POOL[idx];
+    return { x: e.cropX||0, y: e.cropY||0, w: e.cropW||e.frameW, h: e.cropH||e.frameH };
+  }
+
+  function applyCrop(idx, patch) {
+    const next = { ...getCrop(idx), ...patch };
+    // Clamp to frame bounds
+    const fw = ENEMY_SPRITE_POOL[idx].frameW, fh = ENEMY_SPRITE_POOL[idx].frameH;
+    next.x = Math.max(0, Math.min(next.x, fw-1));
+    next.y = Math.max(0, Math.min(next.y, fh-1));
+    next.w = Math.max(1, Math.min(next.w, fw - next.x));
+    next.h = Math.max(1, Math.min(next.h, fh - next.y));
+    // Write to local state
+    setCropMap(m => ({...m, [idx]: next}));
+    // Mutate pool entry so EnemySpriteSmall picks it up
+    const e = ENEMY_SPRITE_POOL[idx];
+    e.cropX = next.x; e.cropY = next.y; e.cropW = next.w; e.cropH = next.h;
+    // Force cs re-render so React.memo on EnemySpriteSmall sees new props
+    if (window.__setCs) window.__setCs(prev => prev ? ({
+      ...prev, enemySprite: prev.enemySprite
+        ? { ...prev.enemySprite,
+            cropX: prev.enemySprite === e ? next.x : prev.enemySprite.cropX,
+            cropY: prev.enemySprite === e ? next.y : prev.enemySprite.cropY,
+            cropW: prev.enemySprite === e ? next.w : prev.enemySprite.cropW,
+            cropH: prev.enemySprite === e ? next.h : prev.enemySprite.cropH }
+        : prev.enemySprite
+    }) : prev);
+  }
+
+  const livePoolIdx = ENEMY_SPRITE_POOL.indexOf(cs.enemySprite);
+  const activePoolIdx = overrideIdx !== null ? overrideIdx : (livePoolIdx >= 0 ? livePoolIdx : 0);
+  const sp   = ENEMY_SPRITE_POOL[activePoolIdx];
+  const crop = getCrop(activePoolIdx);
   const base = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}`;
 
-  const atkIdxRef  = React.useRef(0);
-  const prevPhase  = React.useRef(cs.phase);
+  const atkIdxRef = React.useRef(0);
+  const prevPhase = React.useRef(cs.phase);
   if (cs.phase==='enemy_turn' && prevPhase.current!=='enemy_turn' && sp.attacks?.length>1)
     atkIdxRef.current = (atkIdxRef.current+1) % sp.attacks.length;
   prevPhase.current = cs.phase;
@@ -1368,52 +1407,63 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
     return ()=>clearInterval(iv);
   },[src, numFrames, fps]);
 
-  const VW    = Math.min(window.innerWidth - 20, 900);
-  const SCALE = Math.floor(VW / numFrames);
-  const BOX_W = Math.round(116/112*SCALE);
-  const BOX_H = Math.round(169/112*SCALE);
-  const BOX_Y = Math.round(55 /112*SCALE);
-  const BIG   = Math.min(260, window.innerHeight*0.3);
+  // Strip display scale
+  const VW    = Math.min(window.innerWidth - 24, 860);
+  const SCALE = Math.floor(VW / numFrames); // px per frame in strip
+  const BIG   = Math.min(220, window.innerHeight*0.27);
 
-  // Group pool by type for the picker
+  // Box on strip = crop region scaled to display
+  const ratio  = SCALE / sp.frameW;          // display px per source px
+  const BOX_X  = Math.round(crop.x * ratio); // offset within a frame cell
+  const BOX_Y  = Math.round(crop.y * ratio);
+  const BOX_W  = Math.round(crop.w * ratio);
+  const BOX_H  = Math.round(crop.h * ratio);
+
   const GROUPS = [
-    { label:'GORGON',    indices:[0,1,2] },
-    { label:'MINOTAUR',  indices:[3,4,5] },
-    { label:'WEREWOLF',  indices:[6,7,8] },
+    { label:'GORGON',   indices:[0,1,2] },
+    { label:'MINOTAUR', indices:[3,4,5] },
+    { label:'WEREWOLF', indices:[6,7,8] },
   ];
+
+  const SliderRow = ({label, field, val, min, max}) => (
+    <label style={{display:'flex',gap:5,alignItems:'center',fontSize:10,color:'#aaa'}}>
+      <span style={{width:14,textAlign:'right',color:'#666'}}>{label}</span>
+      <input type="range" min={min} max={max} value={val} style={{width:100}}
+        onInput={e=>applyCrop(activePoolIdx,{[field]:+e.target.value})}
+        onChange={e=>applyCrop(activePoolIdx,{[field]:+e.target.value})}/>
+      <span style={{width:28,color:'#ffcc00'}}>{val}</span>
+    </label>
+  );
 
   return (
     <div style={{position:'fixed',bottom:0,left:0,right:0,
-      background:'rgba(7,7,15,0.93)',borderTop:'2px solid #2a2a4a',
-      zIndex:88888,padding:'10px 14px 14px',fontFamily:'monospace',backdropFilter:'blur(4px)'}}>
+      background:'rgba(7,7,15,0.94)',borderTop:'2px solid #2a2a4a',
+      zIndex:88888,padding:'8px 14px 12px',fontFamily:'monospace',backdropFilter:'blur(4px)'}}>
 
-      {/* Sprite picker */}
-      <div style={{display:'flex',gap:16,alignItems:'center',marginBottom:8,
-        borderBottom:'1px solid #1e1e3a',paddingBottom:7,flexWrap:'wrap'}}>
-        <div style={{fontSize:9,color:'#555',letterSpacing:'.1em',flexShrink:0}}>SPRITE</div>
-        {/* "Live" button — follow cs.enemySprite */}
+      {/* ── Sprite picker ── */}
+      <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:7,
+        borderBottom:'1px solid #1e1e3a',paddingBottom:6,flexWrap:'wrap'}}>
+        <span style={{fontSize:9,color:'#555',letterSpacing:'.1em'}}>SPRITE</span>
         <button onClick={()=>setOverrideIdx(null)}
           style={{padding:'2px 8px',fontFamily:'monospace',fontSize:9,cursor:'pointer',borderRadius:3,
-            background: overrideIdx===null?'#2a1a00':'#0d0d1a',
-            border:`1px solid ${overrideIdx===null?'#ffcc00':'#333'}`,
-            color: overrideIdx===null?'#ffcc00':'#666'}}>
-          LIVE
-        </button>
+            background:overrideIdx===null?'#2a1a00':'#0d0d1a',
+            border:`1px solid ${overrideIdx===null?'#ffcc00':'#2a2a3a'}`,
+            color:overrideIdx===null?'#ffcc00':'#555'}}>LIVE</button>
         {GROUPS.map(g=>(
-          <div key={g.label} style={{display:'flex',alignItems:'center',gap:4}}>
-            <span style={{fontSize:8,color:'#3a3a5a',letterSpacing:'.08em'}}>{g.label}</span>
+          <div key={g.label} style={{display:'flex',alignItems:'center',gap:3}}>
+            <span style={{fontSize:8,color:'#2a2a4a',letterSpacing:'.06em',marginRight:2}}>{g.label}</span>
             {g.indices.map(idx=>{
-              const entry = ENEMY_SPRITE_POOL[idx];
-              const active = overrideIdx===idx;
-              // variant suffix: _1/_2/_3 or Black_/Red_/White_
-              const label = entry.variant.replace(/^(Gorgon|Minotaur)_/,'').replace(/_Werewolf/,'');
+              const e = ENEMY_SPRITE_POOL[idx];
+              const sel = activePoolIdx===idx;
+              const label = e.variant.replace(/^(Gorgon|Minotaur)_/,'').replace(/_Werewolf/,'');
+              const hasCrop = !!(cropMap[idx]);
               return (
                 <button key={idx} onClick={()=>setOverrideIdx(idx)}
                   style={{padding:'2px 8px',fontFamily:'monospace',fontSize:9,cursor:'pointer',borderRadius:3,
-                    background: active?'#1a1430':'#0d0d1a',
-                    border:`1px solid ${active?'#9977cc':'#333'}`,
-                    color: active?'#cc99ff':'#666'}}>
-                  {label}
+                    background:sel?'#1a1430':'#0d0d1a',
+                    border:`1px solid ${sel?'#9977cc':hasCrop?'#445533':'#2a2a3a'}`,
+                    color:sel?'#cc99ff':hasCrop?'#88aa66':'#555'}}>
+                  {label}{hasCrop?' ✓':''}
                 </button>
               );
             })}
@@ -1421,48 +1471,85 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
         ))}
       </div>
 
-      <div style={{display:'flex',gap:14,alignItems:'flex-start'}}>
-        {/* Big frame preview */}
+      <div style={{display:'flex',gap:12,alignItems:'flex-start'}}>
+
+        {/* Big frame preview — cropped exactly as it appears in-game */}
         <div style={{flexShrink:0}}>
-          <div style={{fontSize:9,color:'#555',letterSpacing:'.1em',marginBottom:4}}>CURRENT FRAME</div>
+          <div style={{fontSize:9,color:'#555',letterSpacing:'.08em',marginBottom:3}}>IN-GAME CROP</div>
           <div style={{width:BIG,height:BIG,overflow:'hidden',position:'relative',
-            background:'#111122',border:'1px solid #2a2a4a',borderRadius:6}}>
-            <img src={src} style={{position:'absolute',top:0,
-              left:-(activeFrame*BIG),width:BIG*numFrames,height:BIG,imageRendering:'pixelated'}}/>
+            background:'#111122',border:'1px solid #2a2a4a',borderRadius:5}}>
+            {/* Show only the crop region of the active frame */}
+            <img src={src} style={{
+              position:'absolute',
+              left: -(activeFrame * sp.frameW / crop.w * BIG + crop.x / crop.w * BIG),
+              top:  -(crop.y / crop.h * BIG),
+              width:  (sp.frameW * numFrames / crop.w) * BIG,
+              height: (sp.frameH / crop.h) * BIG,
+              imageRendering:'pixelated'}}/>
           </div>
-          <div style={{fontSize:10,color:'#c8a84b',textAlign:'center',marginTop:4,letterSpacing:'.08em'}}>
-            frame {activeFrame+1} / {numFrames}
+          <div style={{fontSize:9,color:'#c8a84b',textAlign:'center',marginTop:3}}>
+            frame {activeFrame+1}/{numFrames} · {crop.w}×{crop.h}px
           </div>
         </div>
 
-        {/* Strip */}
+        {/* Strip + crop box */}
         <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:9,color:'#555',letterSpacing:'.1em',marginBottom:6}}>
-            {sp.variant} — {src.split('/').pop()} — {numFrames} frames · {sp.frameW}px
+          <div style={{fontSize:9,color:'#555',marginBottom:5}}>
+            {sp.variant} · {src.split('/').pop()} · {numFrames}f · raw {sp.frameW}px
           </div>
+          {/* Sprite strip */}
           <div style={{position:'relative',display:'inline-block',
-            width:SCALE*numFrames,height:SCALE,overflow:'hidden',borderRadius:4}}>
+            width:SCALE*numFrames,height:SCALE,borderRadius:4,overflow:'hidden'}}>
             <img src={src} style={{position:'absolute',top:0,left:0,
               width:SCALE*numFrames,height:SCALE,imageRendering:'pixelated',display:'block'}}/>
-            <div style={{position:'absolute',top:0,left:0,
-              width:activeFrame*SCALE,height:SCALE,background:'rgba(0,0,0,.6)',pointerEvents:'none'}}/>
-            <div style={{position:'absolute',top:BOX_Y,left:activeFrame*SCALE,
-              width:BOX_W,height:BOX_H,border:'3px solid #ffcc00',boxSizing:'border-box',pointerEvents:'none'}}>
-              <div style={{position:'absolute',bottom:2,left:0,right:0,textAlign:'center',
-                fontSize:8,color:'#ffcc00',textShadow:'0 0 4px #000'}}>ACTIVE</div>
-            </div>
-            <div style={{position:'absolute',top:0,left:(activeFrame+1)*SCALE,right:0,
-              height:SCALE,background:'rgba(0,0,0,.6)',pointerEvents:'none'}}/>
-          </div>
-          <div style={{display:'flex',width:SCALE*numFrames,marginTop:3}}>
+            {/* Dim non-active frames */}
+            <div style={{position:'absolute',top:0,left:0,width:activeFrame*SCALE,height:SCALE,
+              background:'rgba(0,0,0,.55)',pointerEvents:'none'}}/>
+            <div style={{position:'absolute',top:0,left:(activeFrame+1)*SCALE,right:0,height:SCALE,
+              background:'rgba(0,0,0,.55)',pointerEvents:'none'}}/>
+            {/* Crop box on every frame (green) */}
             {[...Array(numFrames)].map((_,i)=>(
-              <div key={i} style={{width:SCALE,textAlign:'center',fontSize:9,
-                color:i===activeFrame?'#ffcc00':'#444'}}>{i}</div>
+              <div key={i} style={{position:'absolute',
+                top:BOX_Y, left:i*SCALE+BOX_X,
+                width:BOX_W, height:BOX_H,
+                border:`2px solid ${i===activeFrame?'#ffcc00':'#44ff8866'}`,
+                boxSizing:'border-box',pointerEvents:'none'}}>
+                {i===activeFrame && <div style={{position:'absolute',bottom:1,left:0,right:0,
+                  textAlign:'center',fontSize:7,color:'#ffcc00',textShadow:'0 0 3px #000'}}>ACTIVE</div>}
+              </div>
             ))}
           </div>
-          <div style={{marginTop:6,fontSize:9,color:'#444'}}>
-            phase: {cs.phase} · scale: {SCALE}px/frame · box W:{BOX_W} H:{BOX_H} Y:{BOX_Y}
+          {/* Frame numbers */}
+          <div style={{display:'flex',width:SCALE*numFrames,marginTop:2}}>
+            {[...Array(numFrames)].map((_,i)=>(
+              <div key={i} style={{width:SCALE,textAlign:'center',fontSize:8,
+                color:i===activeFrame?'#ffcc00':'#333'}}>{i}</div>
+            ))}
           </div>
+        </div>
+
+        {/* Crop sliders */}
+        <div style={{flexShrink:0,display:'flex',flexDirection:'column',gap:6,
+          background:'#0a0a16',border:'1px solid #1e1e3a',borderRadius:5,padding:'8px 10px'}}>
+          <div style={{fontSize:9,color:'#555',letterSpacing:'.08em',marginBottom:2}}>CROP — {sp.variant}</div>
+          <SliderRow label="X"  field="x" val={crop.x} min={0} max={sp.frameW-1}/>
+          <SliderRow label="Y"  field="y" val={crop.y} min={0} max={sp.frameH-1}/>
+          <SliderRow label="W"  field="w" val={crop.w} min={1} max={sp.frameW}/>
+          <SliderRow label="H"  field="h" val={crop.h} min={1} max={sp.frameH}/>
+          <div style={{fontSize:8,color:'#333',marginTop:2}}>
+            cropX:{crop.x} cropY:{crop.y} cropW:{crop.w} cropH:{crop.h}
+          </div>
+          <button onClick={()=>{
+            const lines = ENEMY_SPRITE_POOL.map((e,i)=>{
+              const c = cropMap[i]||{x:e.cropX||0,y:e.cropY||0,w:e.cropW||e.frameW,h:e.cropH||e.frameH};
+              return `  // ${e.variant}\n  cropX:${c.x}, cropY:${c.y}, cropW:${c.w}, cropH:${c.h}`;
+            }).join('\n');
+            console.log('CROP VALUES:\n'+lines);
+            navigator.clipboard.writeText(lines).catch(()=>{});
+          }} style={{padding:'3px 8px',background:'#0d0d1a',border:'1px solid #4a3a7a',
+            color:'#9977cc',borderRadius:3,cursor:'pointer',fontSize:9}}>
+            LOG ALL
+          </button>
         </div>
       </div>
     </div>
