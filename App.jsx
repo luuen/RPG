@@ -1338,6 +1338,95 @@ const sfx = (() => {
   };
 })();
 
+/* ─── COMBAT SPRITE FRAME OVERLAY (debug) ───────────────────── */
+function CombatSpriteOverlay({ cs, enemyFlash }) {
+  const sp   = cs.enemySprite;
+  const base = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}`;
+
+  const atkIdxRef  = React.useRef(0);
+  const prevPhase  = React.useRef(cs.phase);
+  if (cs.phase==='enemy_turn' && prevPhase.current!=='enemy_turn' && sp.attacks?.length>1)
+    atkIdxRef.current = (atkIdxRef.current+1) % sp.attacks.length;
+  prevPhase.current = cs.phase;
+
+  let src, numFrames, fps;
+  if (cs.phase==='won' && sp.deadFile)
+    { src=`${base}/${sp.deadFile}`; numFrames=sp.deadFrames||3; fps=9; }
+  else if (enemyFlash && sp.hurtFile)
+    { src=`${base}/${sp.hurtFile}`; numFrames=sp.hurtFrames||2; fps=14; }
+  else if ((cs.phase==='enemy_turn'||cs.phase==='defending') && sp.attacks?.length) {
+    const atk=sp.attacks[atkIdxRef.current%sp.attacks.length];
+    src=`${base}/${atk.file}`; numFrames=atk.frames; fps=12;
+  } else { src=`${base}/Idle.png`; numFrames=sp.idleFrames; fps=8; }
+
+  const [activeFrame, setActiveFrame] = React.useState(0);
+  React.useEffect(()=>{
+    setActiveFrame(0);
+    const iv = setInterval(()=>setActiveFrame(f=>(f+1)%numFrames), 1000/fps);
+    return ()=>clearInterval(iv);
+  },[src, numFrames, fps]);
+
+  const VW    = Math.min(window.innerWidth - 20, 900);
+  const SCALE = Math.floor(VW / numFrames);
+  // Baked box dims from user calibration (top:55 w:116 h:169 at SCALE=112)
+  const BOX_W = Math.round(116/112*SCALE);
+  const BOX_H = Math.round(169/112*SCALE);
+  const BOX_Y = Math.round(55 /112*SCALE);
+  const BIG   = Math.min(260, window.innerHeight*0.3);
+
+  return (
+    <div style={{position:'fixed',bottom:0,left:0,right:0,
+      background:'rgba(7,7,15,0.93)',borderTop:'2px solid #2a2a4a',
+      zIndex:88888,padding:'10px 14px 14px',fontFamily:'monospace',backdropFilter:'blur(4px)'}}>
+      <div style={{display:'flex',gap:14,alignItems:'flex-start'}}>
+
+        {/* Big frame preview */}
+        <div style={{flexShrink:0}}>
+          <div style={{fontSize:9,color:'#555',letterSpacing:'.1em',marginBottom:4}}>CURRENT FRAME</div>
+          <div style={{width:BIG,height:BIG,overflow:'hidden',position:'relative',
+            background:'#111122',border:'1px solid #2a2a4a',borderRadius:6}}>
+            <img src={src} style={{position:'absolute',top:0,
+              left:-(activeFrame*BIG),width:BIG*numFrames,height:BIG,imageRendering:'pixelated'}}/>
+          </div>
+          <div style={{fontSize:10,color:'#c8a84b',textAlign:'center',marginTop:4,letterSpacing:'.08em'}}>
+            frame {activeFrame+1} / {numFrames}
+          </div>
+        </div>
+
+        {/* Strip */}
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:9,color:'#555',letterSpacing:'.1em',marginBottom:6}}>
+            {sp.variant} — {src.split('/').pop()} — {numFrames} frames · {sp.frameW}px
+          </div>
+          <div style={{position:'relative',display:'inline-block',
+            width:SCALE*numFrames,height:SCALE,overflow:'hidden',borderRadius:4}}>
+            <img src={src} style={{position:'absolute',top:0,left:0,
+              width:SCALE*numFrames,height:SCALE,imageRendering:'pixelated',display:'block'}}/>
+            <div style={{position:'absolute',top:0,left:0,
+              width:activeFrame*SCALE,height:SCALE,background:'rgba(0,0,0,.6)',pointerEvents:'none'}}/>
+            <div style={{position:'absolute',top:BOX_Y,left:activeFrame*SCALE,
+              width:BOX_W,height:BOX_H,border:'3px solid #ffcc00',boxSizing:'border-box',pointerEvents:'none'}}>
+              <div style={{position:'absolute',bottom:2,left:0,right:0,textAlign:'center',
+                fontSize:8,color:'#ffcc00',textShadow:'0 0 4px #000'}}>ACTIVE</div>
+            </div>
+            <div style={{position:'absolute',top:0,left:(activeFrame+1)*SCALE,right:0,
+              height:SCALE,background:'rgba(0,0,0,.6)',pointerEvents:'none'}}/>
+          </div>
+          <div style={{display:'flex',width:SCALE*numFrames,marginTop:3}}>
+            {[...Array(numFrames)].map((_,i)=>(
+              <div key={i} style={{width:SCALE,textAlign:'center',fontSize:9,
+                color:i===activeFrame?'#ffcc00':'#444'}}>{i}</div>
+            ))}
+          </div>
+          <div style={{marginTop:6,fontSize:9,color:'#444'}}>
+            phase: {cs.phase} · scale: {SCALE}px/frame · box W:{BOX_W} H:{BOX_H} Y:{BOX_Y}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─── MAIN APP ───────────────────────────────────────────────── */
 function App() {
   const [screen,         setScreen]         = useState("title");
@@ -5959,114 +6048,9 @@ function App() {
       })()}
 
       {/* ── In-Combat Sprite Frame Overlay — visible at ?debug ── */}
-      {window.location.search.includes('debug') && screen==='combat' && cs?.enemySprite && (() => {
-        const sp = cs.enemySprite;
-        const base = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}`;
-
-        // Mirror EnemySpriteSmall animation-selection logic
-        const atkIdxD = React.useRef(0);
-        const prevPhaseD = React.useRef(cs.phase);
-        if (cs.phase==='enemy_turn' && prevPhaseD.current!=='enemy_turn' && sp.attacks?.length>1)
-          atkIdxD.current = (atkIdxD.current+1) % sp.attacks.length;
-        prevPhaseD.current = cs.phase;
-
-        let src, numFrames, fps;
-        if (cs.phase==='won' && sp.deadFile)       { src=`${base}/${sp.deadFile}`; numFrames=sp.deadFrames||3; fps=9; }
-        else if (enemyFlash && sp.hurtFile)         { src=`${base}/${sp.hurtFile}`; numFrames=sp.hurtFrames||2; fps=14; }
-        else if ((cs.phase==='enemy_turn'||cs.phase==='defending') && sp.attacks?.length) {
-          const atk=sp.attacks[atkIdxD.current%sp.attacks.length];
-          src=`${base}/${atk.file}`; numFrames=atk.frames; fps=12;
-        } else { src=`${base}/Idle.png`; numFrames=sp.idleFrames; fps=8; }
-
-        // Frame ticker — mirrors AnimatedSprite
-        const [activeFrame, setActiveFrame] = React.useState(0);
-        React.useEffect(()=>{
-          setActiveFrame(0);
-          const iv = setInterval(()=>setActiveFrame(f=>(f+1)%numFrames), 1000/fps);
-          return ()=>clearInterval(iv);
-        },[src, numFrames, fps]);
-
-        // Strip layout
-        const VW = Math.min(window.innerWidth - 20, 900);
-        const SCALE = Math.floor(VW / numFrames);
-        const STRIP_H = SCALE;
-
-        // Baked box dims (from user calibration: top:55 w:116 h:169 at SCALE=112)
-        const BOX_W = Math.round(116 / 112 * SCALE);
-        const BOX_H = Math.round(169 / 112 * SCALE);
-        const BOX_Y = Math.round(55  / 112 * SCALE);
-
-        const BIG = Math.min(260, window.innerHeight * 0.3);
-
-        return (
-          <div style={{position:'fixed',bottom:0,left:0,right:0,
-            background:'rgba(7,7,15,0.93)',borderTop:'2px solid #2a2a4a',
-            zIndex:88888,padding:'10px 14px 14px',
-            fontFamily:'monospace',backdropFilter:'blur(4px)'}}>
-            <div style={{display:'flex',gap:14,alignItems:'flex-start'}}>
-
-              {/* Big current-frame preview */}
-              <div style={{flexShrink:0}}>
-                <div style={{fontSize:9,color:'#555',letterSpacing:'.1em',marginBottom:4}}>CURRENT FRAME</div>
-                <div style={{width:BIG,height:BIG,overflow:'hidden',position:'relative',
-                  background:'#111122',border:'1px solid #2a2a4a',borderRadius:6,imageRendering:'pixelated'}}>
-                  <img src={src} style={{
-                    position:'absolute',top:0,
-                    left: -(activeFrame * BIG),
-                    width: BIG * numFrames, height: BIG,
-                    imageRendering:'pixelated'}}/>
-                </div>
-                <div style={{fontSize:10,color:'#c8a84b',textAlign:'center',marginTop:4,letterSpacing:'.08em'}}>
-                  frame {activeFrame+1} / {numFrames}
-                </div>
-              </div>
-
-              {/* Strip + info */}
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:9,color:'#555',letterSpacing:'.1em',marginBottom:6}}>
-                  {sp.variant} — {src.split('/').pop()} — {numFrames} frames · {sp.frameW}px
-                </div>
-
-                {/* Sprite strip */}
-                <div style={{position:'relative',display:'inline-block',
-                  width:SCALE*numFrames,height:STRIP_H,overflow:'hidden',borderRadius:4}}>
-                  <img src={src} style={{position:'absolute',top:0,left:0,
-                    width:SCALE*numFrames,height:STRIP_H,imageRendering:'pixelated',display:'block'}}/>
-                  {/* Dim left */}
-                  <div style={{position:'absolute',top:0,left:0,
-                    width:activeFrame*SCALE,height:STRIP_H,background:'rgba(0,0,0,.6)',pointerEvents:'none'}}/>
-                  {/* Active box */}
-                  <div style={{position:'absolute',
-                    top:BOX_Y, left:activeFrame*SCALE,
-                    width:BOX_W, height:BOX_H,
-                    border:'3px solid #ffcc00',boxSizing:'border-box',pointerEvents:'none'}}>
-                    <div style={{position:'absolute',bottom:2,left:0,right:0,
-                      textAlign:'center',fontSize:8,color:'#ffcc00',
-                      textShadow:'0 0 4px #000',letterSpacing:'.05em'}}>ACTIVE</div>
-                  </div>
-                  {/* Dim right */}
-                  <div style={{position:'absolute',top:0,
-                    left:(activeFrame+1)*SCALE,right:0,
-                    height:STRIP_H,background:'rgba(0,0,0,.6)',pointerEvents:'none'}}/>
-                </div>
-
-                {/* Frame numbers */}
-                <div style={{display:'flex',width:SCALE*numFrames,marginTop:3}}>
-                  {[...Array(numFrames)].map((_,i)=>(
-                    <div key={i} style={{width:SCALE,textAlign:'center',fontSize:9,
-                      color:i===activeFrame?'#ffcc00':'#444',fontFamily:'monospace'}}>{i}</div>
-                  ))}
-                </div>
-
-                {/* Meta */}
-                <div style={{marginTop:6,fontSize:9,color:'#444',fontFamily:'monospace'}}>
-                  phase: {cs.phase} · scale: {SCALE}px/frame · box W:{BOX_W} H:{BOX_H} Y:{BOX_Y}
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      {window.location.search.includes('debug') && screen==='combat' && cs?.enemySprite && (
+        <CombatSpriteOverlay cs={cs} enemyFlash={enemyFlash}/>
+      )}
 
       {/* ── Enemy Sprite Inspector — visible at ?debug&enemies ── */}
       {window.location.search.includes('debug') && window.location.search.includes('enemies') && (() => {
