@@ -1339,6 +1339,30 @@ const sfx = (() => {
 })();
 
 /* ─── COMBAT SPRITE FRAME OVERLAY (debug) ───────────────────── */
+// Canvas that draws exactly one cropped frame from a sprite sheet PNG
+function CropFrameCanvas({ src, frameW, frameH, frameIdx, cropX, cropY, cropW, cropH, size }) {
+  const ref = React.useRef(null);
+  React.useEffect(()=>{
+    const cv = ref.current; if (!cv) return;
+    const ctx = cv.getContext('2d');
+    ctx.clearRect(0, 0, size, size);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img,
+        frameIdx * frameW + cropX, cropY, cropW, cropH,  // source rect
+        0, 0, size, size);                                 // dest rect
+    };
+    img.src = src;
+  }, [src, frameIdx, cropX, cropY, cropW, cropH, size]);
+  return (
+    <canvas ref={ref} width={size} height={size}
+      style={{display:'block', background:'#111122', border:'1px solid #2a2a4a',
+        borderRadius:5, imageRendering:'pixelated'}}/>
+  );
+}
+
 function CropSliderRow({ label, value, min, max, onChange }) {
   return (
     <label style={{display:'flex',gap:5,alignItems:'center',fontSize:10,color:'#aaa'}}>
@@ -1478,20 +1502,12 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
 
       <div style={{display:'flex',gap:12,alignItems:'flex-start'}}>
 
-        {/* Big frame preview — cropped exactly as it appears in-game */}
+        {/* Big frame preview — real drawImage from actual PNG */}
         <div style={{flexShrink:0}}>
           <div style={{fontSize:9,color:'#555',letterSpacing:'.08em',marginBottom:3}}>IN-GAME CROP</div>
-          <div style={{width:BIG,height:BIG,overflow:'hidden',position:'relative',
-            background:'#111122',border:'1px solid #2a2a4a',borderRadius:5}}>
-            {/* Show only the crop region of the active frame */}
-            <img src={src} style={{
-              position:'absolute',
-              left: -(activeFrame * sp.frameW / crop.w * BIG + crop.x / crop.w * BIG),
-              top:  -(crop.y / crop.h * BIG),
-              width:  (sp.frameW * numFrames / crop.w) * BIG,
-              height: (sp.frameH / crop.h) * BIG,
-              imageRendering:'pixelated'}}/>
-          </div>
+          <CropFrameCanvas src={src} frameW={sp.frameW} frameH={sp.frameH}
+            frameIdx={activeFrame} cropX={crop.x} cropY={crop.y}
+            cropW={crop.w} cropH={crop.h} size={BIG}/>
           <div style={{fontSize:9,color:'#c8a84b',textAlign:'center',marginTop:3}}>
             frame {activeFrame+1}/{numFrames} · {crop.w}×{crop.h}px
           </div>
