@@ -140,31 +140,40 @@ const ENEMY_DIMS = {
 const ENEMY_SPRITE_POOL = [
   {variant:"Gorgon_1",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7,  headPad:22,
    attacks:[{file:"Attack_1.png",frames:16},{file:"Attack_2.png",frames:7},{file:"Attack_3.png",frames:10}],
-   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:3},
+   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:3,
+   rushApproach:{file:"Run.png",frames:8,fps:10}, rushStrike:{file:"Attack_1.png",frames:16,fps:14,hitFrame:8}},
   {variant:"Gorgon_2",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7,  headPad:22,
    attacks:[{file:"Attack_1.png",frames:16},{file:"Attack_2.png",frames:7},{file:"Attack_3.png",frames:10}],
-   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:3},
+   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:3,
+   rushApproach:{file:"Run.png",frames:8,fps:10}, rushStrike:{file:"Attack_1.png",frames:16,fps:14,hitFrame:8}},
   {variant:"Gorgon_3",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7,  headPad:22,
    attacks:[{file:"Attack_1.png",frames:16},{file:"Attack_2.png",frames:7},{file:"Attack_3.png",frames:10}],
-   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:3},
+   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:3,
+   rushApproach:{file:"Run.png",frames:8,fps:10}, rushStrike:{file:"Attack_1.png",frames:16,fps:14,hitFrame:8}},
   {variant:"Minotaur_1",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10, headPad:18,
    attacks:[{file:"Attack.png",frames:5}],
-   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:5},
+   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:5,
+   rushApproach:{file:"Walk.png",frames:8,fps:8}, rushStrike:{file:"Attack.png",frames:5,fps:10,hitFrame:3}},
   {variant:"Minotaur_2",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10, headPad:18,
    attacks:[{file:"Attack.png",frames:5}],
-   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:5},
+   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:5,
+   rushApproach:{file:"Walk.png",frames:8,fps:8}, rushStrike:{file:"Attack.png",frames:5,fps:10,hitFrame:3}},
   {variant:"Minotaur_3",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10, headPad:18,
    attacks:[{file:"Attack.png",frames:5}],
-   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:5},
+   hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:5,
+   rushApproach:{file:"Walk.png",frames:8,fps:8}, rushStrike:{file:"Attack.png",frames:5,fps:10,hitFrame:3}},
   {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8,  headPad:24,groundPad:10,
    attacks:[{file:"Attack_1.png",frames:6},{file:"Attack_2.png",frames:4},{file:"Attack_3.png",frames:5}],
-   hurtFile:"Hurt.png",hurtFrames:2, deadFile:"Dead.png",deadFrames:2},
+   hurtFile:"Hurt.png",hurtFrames:2, deadFile:"Dead.png",deadFrames:2,
+   rushApproach:{file:"Run.png",frames:8,fps:12}, rushStrike:{file:"Run+Attack.png",frames:9,fps:14,hitFrame:5}},
   {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8,  headPad:24,groundPad:10,
    attacks:[{file:"Attack_1.png",frames:6},{file:"Attack_2.png",frames:4},{file:"Attack_3.png",frames:5}],
-   hurtFile:"Hurt.png",hurtFrames:2, deadFile:"Dead.png",deadFrames:2},
+   hurtFile:"Hurt.png",hurtFrames:2, deadFile:"Dead.png",deadFrames:2,
+   rushApproach:{file:"Run.png",frames:8,fps:12}, rushStrike:{file:"Run+Attack.png",frames:9,fps:14,hitFrame:5}},
   {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8,  headPad:24,groundPad:10,
    attacks:[{file:"Attack_1.png",frames:6},{file:"Attack_2.png",frames:4},{file:"Attack_3.png",frames:5}],
-   hurtFile:"Hurt.png",hurtFrames:2, deadFile:"Dead.png",deadFrames:2},
+   hurtFile:"Hurt.png",hurtFrames:2, deadFile:"Dead.png",deadFrames:2,
+   rushApproach:{file:"Run.png",frames:8,fps:12}, rushStrike:{file:"Run+Attack.png",frames:9,fps:14,hitFrame:5}},
 ];
 
 // Gandalf layered hero sprites — randomized per run
@@ -773,13 +782,12 @@ function DemonSlimeSprite({ renderW=238, renderH=132, enemyFlash=false, phase="a
   );
 }
 
-const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, sprite=null, enemyFlash=false, phase="action", bossAttackPattern=null }) {
+const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, sprite=null, enemyFlash=false, phase="action", bossAttackPattern=null, rushAnim=null }) {
   if (id==="dragon") {
     const bd = ENEMY_DIMS.dragon;
     return <DemonSlimeSprite renderW={Math.round(bd.w*scale)} renderH={Math.round(bd.h*scale)} enemyFlash={enemyFlash} phase={phase} bossAttackPattern={bossAttackPattern}/>;
   }
 
-  // Track which attack variant to play — rotate each time enemy_turn begins
   const atkIdxRef = React.useRef(0);
   const prevPhaseRef = React.useRef(phase);
   if (phase==="enemy_turn" && prevPhaseRef.current!=="enemy_turn" && sprite?.attacks?.length>1) {
@@ -798,10 +806,23 @@ const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, spr
     const cropOffY = Math.round(cropY * scale);
     const base = `${ASSET_BASE}/icons/sprites/${sprite.dir}/${sprite.variant}`;
 
-    // ── Pick animation based on combat state ──
     let src, frames, fps;
     const isAttacking = phase==="enemy_turn" || phase==="defending";
-    if (phase==="won" && sprite.deadFile) {
+
+    // Rush melee overrides normal animation selection
+    if (rushAnim === "approach" && sprite.rushApproach) {
+      src    = `${base}/${sprite.rushApproach.file}`;
+      frames = sprite.rushApproach.frames;
+      fps    = sprite.rushApproach.fps || 10;
+    } else if (rushAnim === "strike" && sprite.rushStrike) {
+      src    = `${base}/${sprite.rushStrike.file}`;
+      frames = sprite.rushStrike.frames;
+      fps    = sprite.rushStrike.fps || 12;
+    } else if (rushAnim === "retreat" && sprite.rushApproach) {
+      src    = `${base}/${sprite.rushApproach.file}`;
+      frames = sprite.rushApproach.frames;
+      fps    = sprite.rushApproach.fps || 10;
+    } else if (phase==="won" && sprite.deadFile) {
       src    = `${base}/${sprite.deadFile}`;
       frames = sprite.deadFrames || 3;
       fps    = 9;
@@ -2317,7 +2338,10 @@ function App() {
       }
       if (!qteRef.current.debugMode) {
         const _defDelay = cs?.enemy?.id==="dragon" ? 300 : 880;
-        qteRef.current.defendTimer = setTimeout(()=>startDefendQTE(bossAtk), _defDelay);
+        // 50% chance to use rush melee when sprite supports it (non-boss, non-pvp)
+        const sprite = cs?.enemySprite;
+        const useRush = sprite?.rushApproach && cs?.enemy?.id!=="dragon" && !cs?.pvpMode && Math.random() < 0.5;
+        qteRef.current.defendTimer = setTimeout(()=> useRush ? startRushMeleeQTE() : startDefendQTE(bossAtk), _defDelay);
       }
       // In debug mode stay in "action" so the panel can re-launch immediately
       const nextPhase = qteRef.current.debugMode ? "action" : "enemy_turn";
@@ -3335,6 +3359,59 @@ function App() {
     requestAnimationFrame(tick);
   };
 
+  /* ── Rush Melee QTE ─────────────────────────────────────── */
+  // Enemy runs/walks to hero, plays strike animation, player times SPACE to block
+  const startRushMeleeQTE = () => {
+    if (cs?.enemy?.id==="dragon" || cs?.pvpMode) { startDefendQTE(); return; }
+    const sprite = cs?.enemySprite;
+    if (!sprite?.rushApproach) { startDefendQTE(); return; } // fallback if no rush data
+
+    const ref = qteRef.current;
+    ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
+
+    // Timeline fractions (all over DUR ms):
+    //   0 → WALK_END     : enemy approaches (walk/run anim)
+    //   WALK_END → ATK_END: enemy strikes (strike anim), hit window in middle
+    //   ATK_END → 1.0    : enemy retreats
+    const DUR      = 2200; // ms total
+    const WALK_END = 0.42;
+    const ATK_END  = 0.72;
+    const ARRIVE   = WALK_END + (ATK_END - WALK_END) * 0.45; // ≈ 0.55 — center of hit window
+    const WINDOW   = 0.065; // half-window for "good" block
+
+    ref.startMs = performance.now(); ref.pressT = null; ref.done = false; ref._rushLastRender = 0;
+    setCs(prev => prev ? {...prev, phase:"defending"} : prev);
+    setQteAnim({ type:"rush_melee", t:0, walkEnd:WALK_END, attackEnd:ATK_END, arrive:ARRIVE, window:WINDOW, rushPhase:"approach" });
+
+    const onKey = (e) => {
+      if (ref.gen !== myGen) { window.removeEventListener("keydown", onKey); return; }
+      if (e.code !== "Space" || ref.pressT !== null) return;
+      e.preventDefault();
+      ref.pressT = (performance.now() - ref.startMs) / DUR;
+      const d = Math.abs(ref.pressT - ARRIVE);
+      if (d < WINDOW * 0.5) { showHit("PERFECT BLOCK!", "#44aaff"); setParryFlash(true); setTimeout(()=>setParryFlash(false), 900); }
+      else if (d < WINDOW)   showHit("BLOCKED!", "#4488ff");
+    };
+    window.addEventListener("keydown", onKey);
+
+    const tick = () => {
+      if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown", onKey); return; }
+      const now2 = performance.now();
+      const t = Math.min(1, (now2 - ref.startMs) / DUR);
+      const rushPhase = t < WALK_END ? "approach" : t < ATK_END ? "strike" : "retreat";
+      if (now2 - ref._rushLastRender >= 20) {
+        ref._rushLastRender = now2;
+        setQteAnim(prev => prev ? {...prev, t, rushPhase} : null);
+      }
+      if (t < 1) { requestAnimationFrame(tick); return; }
+      window.removeEventListener("keydown", onKey);
+      const d = ref.pressT != null ? Math.abs(ref.pressT - ARRIVE) : 99;
+      setQteAnim(null);
+      handleDefend(d < WINDOW * 0.5 ? "perfect" : d < WINDOW ? "good" : "miss");
+    };
+    requestAnimationFrame(tick);
+  };
+
   /* ── Compute hero & enemy positions from qteAnim ─────────── */
   const heroPos = (() => {
     if (!qteAnim) return null;
@@ -3437,6 +3514,15 @@ function App() {
     const prof = DEFEND_PROFILES[cs?.enemy?.id] || { launch:0.28 };
     if (t >= prof.launch) return 0;
     return Math.sin(t * Math.PI * 14) * 5;
+  })();
+  // Rush melee: enemy slides right toward hero, then retreats
+  const enemyRushOffset = (() => {
+    if (!qteAnim || qteAnim.type !== "rush_melee") return 0;
+    const { t, walkEnd=0.42, attackEnd=0.72 } = qteAnim;
+    const RUSH_DIST = HRX - ENX - 95; // stop just left of hero
+    if (t < walkEnd) return RUSH_DIST * easeIO(t / walkEnd);
+    if (t < attackEnd) return RUSH_DIST;
+    return RUSH_DIST * (1 - easeIO((t - attackEnd) / (1 - attackEnd)));
   })();
 
   const showDust      = qteAnim?.type==="stomp"&&qteAnim.t>=0.90&&qteAnim.t<=1.0; // dust at actual visual landing
@@ -4297,7 +4383,7 @@ function App() {
         const eScale    = 1.1;
         const eW        = eDims.w*eScale, eH = eDims.h*eScale;
         const eCenterOffX = Math.round((cs.enemySprite?.centerOffsetX||0) * eScale);
-        const eLeft     = ENX - eW/2 + enemyWindUp + eCenterOffX;
+        const eLeft     = ENX - eW/2 + enemyWindUp + eCenterOffX + enemyRushOffset;
         const groundPad = cs.enemySprite?.groundPad || 0; // per-sprite vertical offset
         const eTop      = GNDY - eH + groundPad;
 
@@ -5151,7 +5237,7 @@ function App() {
                       heroLooks={cs.enemy.pvpHeroLooks}
                       animRow={qteAnim?.type==="defend" ? (cs.enemy.pvpHeroLooks?.atkRow??5) : (cs.enemy.pvpHeroLooks?.idleRow??0)}
                       animFrame={frameTick%4}/>
-                  : <EnemySpriteSmall id={cs.enemy.id} scale={eScale} sprite={cs?.enemySprite} enemyFlash={enemyFlash} phase={cs.phase} bossAttackPattern={cs?.bossAttackPattern}/>
+                  : <EnemySpriteSmall id={cs.enemy.id} scale={eScale} sprite={cs?.enemySprite} enemyFlash={enemyFlash} phase={cs.phase} bossAttackPattern={cs?.bossAttackPattern} rushAnim={qteAnim?.type==="rush_melee"?qteAnim.rushPhase:null}/>
                 }
               </div>
 
@@ -5589,9 +5675,59 @@ function App() {
               )}
 
               {/* particles injected via particleContainerRef (DOM/Web Animations API) */}
-
-            </div>{/* ─── END BATTLEFIELD (zoom wrapper) ── */}
             </div>{/* ─── END BATTLEFIELD (flex centerer) ── */}
+
+            {/* ── RUSH MELEE — approach warning + timing bar ── */}
+            {qteAnim?.type==="rush_melee"&&(()=>{
+              const { t, walkEnd=0.42, attackEnd=0.72, arrive=0.55, window:win=0.065 } = qteAnim;
+              const isApproach = t < walkEnd;
+              const isStrike   = t >= walkEnd && t < attackEnd;
+              const inWindow   = Math.abs(t - arrive) < win;
+              const strikeT    = isStrike ? (t - walkEnd) / (attackEnd - walkEnd) : 0;
+              const markerPct  = isStrike ? strikeT * 100 : t < walkEnd ? 0 : 100;
+              const winStartPct = ((arrive - win - walkEnd) / (attackEnd - walkEnd)) * 100;
+              const winEndPct   = ((arrive + win - walkEnd) / (attackEnd - walkEnd)) * 100;
+
+              return (
+                <div style={{position:"fixed",top:48,left:"50%",transform:"translateX(-50%)",
+                  width:"min(340px,68vw)",zIndex:3000,pointerEvents:"none",textAlign:"center"}}>
+                  {/* Approach phase: warn player */}
+                  {isApproach&&(
+                    <div style={{fontFamily:"Cinzel",fontSize:13,letterSpacing:3,
+                      color:"#ffaa44",textShadow:"0 0 18px #ff880099",
+                      animation:"pulse 0.4s ease-in-out infinite alternate"}}>
+                      ⚔ INCOMING — READY TO BLOCK
+                    </div>
+                  )}
+                  {/* Strike phase: timing bar */}
+                  {isStrike&&(
+                    <>
+                      <div style={{fontFamily:"Cinzel",fontSize:inWindow?15:11,letterSpacing:3,
+                        color:inWindow?"#ffcc00":"#8899cc",marginBottom:6,
+                        textShadow:inWindow?"0 0 22px #ffcc00,0 0 40px #ffaa00":"none",
+                        transition:"font-size .1s,color .1s"}}>
+                        {inWindow?"▶ BLOCK! [SPACE] ◀":"WATCH THE ENEMY"}
+                      </div>
+                      {/* Timing bar */}
+                      <div style={{height:10,background:"#04040c",borderRadius:5,
+                        border:"1px solid #2a2a4a",overflow:"visible",position:"relative"}}>
+                        {/* Hit window */}
+                        <div style={{position:"absolute",top:0,bottom:0,
+                          left:`${winStartPct}%`,width:`${winEndPct-winStartPct}%`,
+                          background:inWindow?"#44aaff55":"#44aaff22",
+                          border:"1px solid #44aaff88",borderRadius:3}}/>
+                        {/* Moving marker */}
+                        <div style={{position:"absolute",top:-3,bottom:-3,width:4,borderRadius:2,
+                          left:`calc(${markerPct}% - 2px)`,
+                          background:inWindow?"#ffcc00":"#ffffff",
+                          boxShadow:inWindow?"0 0 10px #ffcc00,0 0 20px #ffaa00":"none",
+                          transition:"background .05s"}}/>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* ── BEAT TIMER — fixed overlay ── */}
             {qteAnim?.type==="swing_beat"&&(()=>{
