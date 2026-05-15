@@ -1395,6 +1395,192 @@ function CropSliderRow({ label, value, min, max, onChange }) {
   );
 }
 
+/* ── Rush Frame Inspector — live editing panel ──────────────── */
+function RushInspector({ cs, qteAnim }) {
+  const [phase,    setPhase]    = React.useState('strike');
+  const [selFrame, setSelFrame] = React.useState(null);
+  const [frozen,   setFrozen]   = React.useState(false);
+  const [preview,  setPreview]  = React.useState(256);
+  const frozenRef = React.useRef(false);
+
+  const sp = cs?.enemySprite;
+  if (!sp) return null;
+  const anim = phase === 'strike' ? sp.rushStrike : sp.rushApproach;
+  if (!anim) return null;
+
+  const base  = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}`;
+  const src   = `${base}/${anim.file}`;
+  const FW    = sp.frameW || 128;
+  const FH    = sp.frameH || 128;
+  const DUR   = 2200;
+  const WALK_END = 0.42, ATK_END = 0.72;
+
+  // Compute live frame from qteAnim if not frozen
+  let liveFrame = selFrame ?? 0;
+  if (!frozen && qteAnim?.type === 'rush_melee') {
+    const ms = qteAnim.t * DUR;
+    liveFrame = Math.floor((ms / 1000) * anim.fps) % anim.frames;
+  }
+
+  const hitFrame = anim.hitFrame ?? -1;
+  const CELL = 128; // px per frame cell
+
+  function freezeAt(idx) {
+    frozenRef.current = true;
+    setFrozen(true);
+    setSelFrame(idx);
+    // Compute t that shows this frame in the correct phase
+    if (phase === 'approach') {
+      const msFull = (idx / anim.fps) * 1000;
+      const t = Math.min(msFull / DUR, WALK_END - 0.001);
+      window.__setQteAnim(prev => prev ? { ...prev, t, rushPhase:'approach' } : { type:'rush_melee', t, walkEnd:WALK_END, attackEnd:ATK_END, arrive:0.55, hitWindow:0.065, rushPhase:'approach' });
+    } else {
+      const phaseMs = (ATK_END - WALK_END) * DUR;
+      const msInPhase = (idx / anim.fps) * 1000 % phaseMs;
+      const t = Math.min(WALK_END + msInPhase / DUR, ATK_END - 0.001);
+      window.__setQteAnim(prev => prev ? { ...prev, t, rushPhase:'strike' } : { type:'rush_melee', t, walkEnd:WALK_END, attackEnd:ATK_END, arrive:0.55, hitWindow:0.065, rushPhase:'strike' });
+    }
+  }
+
+  function setHitFrame(idx) {
+    // Mutate pool entry directly + force re-render
+    const pool = window.ENEMY_SPRITE_POOL;
+    if (pool) {
+      pool.forEach(e => {
+        if (e.variant === sp.variant && e.rushStrike) e.rushStrike.hitFrame = idx;
+      });
+    }
+    if (sp.rushStrike) sp.rushStrike.hitFrame = idx;
+    if (window.__setCs) window.__setCs(prev => prev ? {
+      ...prev, enemySprite: { ...sp, rushStrike: { ...sp.rushStrike, hitFrame: idx } }
+    } : prev);
+  }
+
+  const PREVIEW = preview;
+
+  return (
+    <div style={{position:'fixed', bottom:0, left:0, right:0, zIndex:9000,
+      background:'rgba(3,3,12,0.97)', borderTop:'2px solid #2a2a5a',
+      padding:'10px 14px 12px', userSelect:'none'}}>
+
+      {/* Header row */}
+      <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10}}>
+        <span style={{fontFamily:'Cinzel', fontSize:10, color:'#6655aa', letterSpacing:2}}>
+          RUSH INSPECTOR · {sp.variant.replace(/_/g,' ')} · {anim.frames} frames · {anim.fps}fps
+        </span>
+        {['approach','strike'].map(p => (
+          <button key={p} onClick={()=>{ setPhase(p); setSelFrame(null); setFrozen(false); frozenRef.current=false; }}
+            style={{fontFamily:'Cinzel', fontSize:10, padding:'3px 12px', cursor:'pointer',
+              background: phase===p ? '#18103a' : 'transparent',
+              border: `1px solid ${phase===p ? '#7755cc' : '#333'}`,
+              color: phase===p ? '#bb88ff' : '#445', borderRadius:3}}>
+            {p.toUpperCase()}
+          </button>
+        ))}
+        <button onClick={()=>{ frozenRef.current=!frozenRef.current; setFrozen(f=>!f); if(!frozenRef.current) setSelFrame(null); }}
+          style={{fontFamily:'Cinzel', fontSize:10, padding:'3px 12px', cursor:'pointer', marginLeft:4,
+            background: frozen ? '#1a0800' : '#081808',
+            border: `1px solid ${frozen ? '#ff6644' : '#446644'}`,
+            color: frozen ? '#ff8866' : '#44aa66', borderRadius:3}}>
+          {frozen ? '⏸ FROZEN' : '▶ LIVE'}
+        </button>
+        {/* Prev / Next when frozen */}
+        {frozen && <>
+          <button onClick={()=> freezeAt(Math.max(0, liveFrame-1))}
+            style={{fontFamily:'Cinzel', fontSize:12, padding:'2px 10px', cursor:'pointer',
+              background:'#0a0a1a', border:'1px solid #3344aa', color:'#6688cc', borderRadius:3}}>◀</button>
+          <button onClick={()=> freezeAt(Math.min(anim.frames-1, liveFrame+1))}
+            style={{fontFamily:'Cinzel', fontSize:12, padding:'2px 10px', cursor:'pointer',
+              background:'#0a0a1a', border:'1px solid #3344aa', color:'#6688cc', borderRadius:3}}>▶</button>
+        </>}
+        {/* Preview size slider */}
+        <label style={{display:'flex',alignItems:'center',gap:5,marginLeft:'auto',fontSize:9,color:'#556',fontFamily:'Cinzel'}}>
+          SIZE
+          <input type="range" min={64} max={512} step={32} value={preview}
+            onChange={e=>setPreview(+e.target.value)}
+            style={{width:80,accentColor:'#7755cc'}}/>
+          <span style={{color:'#9977cc',width:32}}>{preview}</span>
+        </label>
+        <span style={{fontFamily:'monospace', fontSize:12,
+          color: liveFrame===hitFrame ? '#ff6644' : '#aaa', fontWeight:'bold'}}>
+          FRAME {liveFrame+1} / {anim.frames}
+          {hitFrame>=0 ? `   HIT @ ${hitFrame+1}` : ''}
+          {liveFrame===hitFrame ? '  🔥' : ''}
+        </span>
+      </div>
+
+      {/* Main body: big preview + scrollable strip */}
+      <div style={{display:'flex', gap:12, alignItems:'flex-start'}}>
+
+        {/* Big current-frame preview */}
+        <div style={{flexShrink:0, position:'relative'}}>
+          <div style={{
+            width:PREVIEW, height:PREVIEW,
+            backgroundImage:`url(${src})`,
+            backgroundPosition:`-${liveFrame*PREVIEW}px 0px`,
+            backgroundSize:`${anim.frames*PREVIEW}px ${PREVIEW}px`,
+            backgroundRepeat:'no-repeat',
+            imageRendering:'pixelated',
+            border:`2px solid ${liveFrame===hitFrame?'#ff4400':'#ffcc00'}`,
+            borderRadius:6,
+            boxShadow: liveFrame===hitFrame ? '0 0 20px #ff440088' : '0 0 10px #ffcc0044'
+          }}/>
+          <div style={{textAlign:'center', marginTop:4, fontFamily:'monospace', fontSize:11,
+            color: liveFrame===hitFrame ? '#ff6644' : '#ffcc00'}}>
+            {liveFrame===hitFrame ? '🔥 HIT FRAME' : `FRAME ${liveFrame+1}`}
+          </div>
+        </div>
+
+        {/* Scrollable frame strip */}
+        <div style={{flex:1, overflowX:'auto'}}>
+          <div style={{display:'flex', gap:3}}>
+            {[...Array(anim.frames)].map((_, i) => {
+              const isHit = i === hitFrame;
+              const isSel = i === liveFrame;
+              return (
+                <div key={i} onClick={()=> freezeAt(i)}
+                  style={{flexShrink:0, cursor:'pointer', position:'relative', borderRadius:4, overflow:'hidden',
+                    outline: isSel ? '3px solid #ffcc00' : isHit ? '3px solid #ff4400' : '1px solid #2a2a4a',
+                    boxShadow: isSel ? '0 0 12px #ffcc0099' : isHit ? '0 0 12px #ff440099' : 'none',
+                    transition:'outline .07s, box-shadow .07s'}}>
+                  <div style={{
+                    width:CELL, height:CELL,
+                    backgroundImage:`url(${src})`,
+                    backgroundPosition:`-${i*CELL}px 0px`,
+                    backgroundSize:`${anim.frames*CELL}px ${CELL}px`,
+                    backgroundRepeat:'no-repeat',
+                    imageRendering:'pixelated'
+                  }}/>
+                  <div style={{position:'absolute', bottom:0, left:0, right:0, textAlign:'center',
+                    background:'rgba(0,0,0,0.8)', fontSize:10, fontFamily:'monospace', lineHeight:'16px',
+                    color: isSel ? '#ffcc00' : isHit ? '#ff6644' : '#556'}}>
+                    {i+1}{isHit?' 🔥':''}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Action row */}
+      <div style={{marginTop:8, display:'flex', gap:10, alignItems:'center'}}>
+        {phase === 'strike' && (
+          <button onClick={()=> setHitFrame(liveFrame)}
+            style={{fontFamily:'Cinzel', fontSize:11, padding:'5px 16px', cursor:'pointer',
+              background:'#220800', border:'2px solid #ff5533', color:'#ff8866', borderRadius:4,
+              boxShadow:'0 0 10px #ff440055'}}>
+            🔥 SET FRAME {liveFrame+1} AS HIT FRAME
+          </button>
+        )}
+        <span style={{fontSize:9, color:'#334', fontFamily:'Cinzel', letterSpacing:1}}>
+          CLICK FRAME · ◀▶ STEP · SET HIT = PERFECT BLOCK WINDOW
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function CombatSpriteOverlay({ cs, enemyFlash }) {
   // Which pool entry is selected (null = follow live cs.enemySprite)
   const [overrideIdx, setOverrideIdx] = React.useState(null);
@@ -1611,7 +1797,7 @@ function App() {
   const [player,         setPlayer]         = useState(null);
   const [cs,             setCs]             = useState(null);
   const [qteAnim,        setQteAnim]        = useState(null); // all in-scene QTE state
-  React.useEffect(()=>{ window.__setQteAnim = setQteAnim; window.__setScreen = setScreen; window.__setPlayer = setPlayer; window.__setCs = setCs; window.__randomHeroLooks = randomHeroLooks; },[]); // dev debug hook
+  React.useEffect(()=>{ window.__setQteAnim = setQteAnim; window.__setScreen = setScreen; window.__setPlayer = setPlayer; window.__setCs = setCs; window.__randomHeroLooks = randomHeroLooks; window.ENEMY_SPRITE_POOL = ENEMY_SPRITE_POOL; },[]); // dev debug hook
   // Frame ticker for sprite animation cycling (120ms per frame ≈ ~8fps sprite anim)
   const [frameTick, setFrameTick] = React.useState(0);
   React.useEffect(()=>{ const id=setInterval(()=>setFrameTick(t=>(t+1)%1000),120); return ()=>clearInterval(id); },[]);
@@ -5778,6 +5964,9 @@ function App() {
                 </div>
               );
             })()}
+
+            {/* ── RUSH FRAME INSPECTOR ── */}
+            {qteAnim?.type==="rush_melee"&&<RushInspector cs={cs} qteAnim={qteAnim}/>}
 
             {/* ── BEAT TIMER — fixed overlay ── */}
             {qteAnim?.type==="swing_beat"&&(()=>{
