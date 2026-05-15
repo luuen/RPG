@@ -1428,6 +1428,7 @@ function RushInspector({ cs, qteAnim }) {
 
   const hitFrame = anim.hitFrame ?? -1;
   const CELL = 128; // px per frame cell
+  const PREVIEW = preview; // must be declared BEFORE useEffect so deps array doesn't hit TDZ
 
   // Canvas draw — pixel-perfect via drawImage
   React.useEffect(() => {
@@ -1442,7 +1443,8 @@ function RushInspector({ cs, qteAnim }) {
       ctx.drawImage(img, liveFrame * FW + offX, offY, FW, FH, 0, 0, PREVIEW, PREVIEW);
     };
     if (cached) { draw(cached); return; }
-    const img = new Image(); img.crossOrigin = 'anonymous';
+    const img = new Image();
+    img.onerror = () => console.error('[RushInspector] failed to load', src);
     img.onload = () => { imgCache.current[src] = img; draw(img); };
     img.src = src;
   }, [src, liveFrame, PREVIEW, offX, offY, FW, FH]);
@@ -1477,8 +1479,6 @@ function RushInspector({ cs, qteAnim }) {
       ...prev, enemySprite: { ...sp, rushStrike: { ...sp.rushStrike, hitFrame: idx } }
     } : prev);
   }
-
-  const PREVIEW = preview;
 
   return (
     <div style={{position:'fixed', bottom:0, left:0, right:0, zIndex:9000,
