@@ -1403,7 +1403,9 @@ function RushInspector({ cs, qteAnim }) {
   const [preview,  setPreview]  = React.useState(256);
   const [offX,     setOffX]     = React.useState(0);
   const [offY,     setOffY]     = React.useState(0);
-  const frozenRef = React.useRef(false);
+  const frozenRef  = React.useRef(false);
+  const canvasRef  = React.useRef(null);
+  const imgCache   = React.useRef({});
 
   const sp = cs?.enemySprite;
   if (!sp) return null;
@@ -1426,6 +1428,24 @@ function RushInspector({ cs, qteAnim }) {
 
   const hitFrame = anim.hitFrame ?? -1;
   const CELL = 128; // px per frame cell
+
+  // Canvas draw — pixel-perfect via drawImage
+  React.useEffect(() => {
+    const cv = canvasRef.current; if (!cv) return;
+    const ctx = cv.getContext('2d');
+    ctx.clearRect(0, 0, PREVIEW, PREVIEW);
+    const cached = imgCache.current[src];
+    const draw = (img) => {
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, PREVIEW, PREVIEW);
+      // src rect: one frame from the strip, shifted by offX/offY
+      ctx.drawImage(img, liveFrame * FW + offX, offY, FW, FH, 0, 0, PREVIEW, PREVIEW);
+    };
+    if (cached) { draw(cached); return; }
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.onload = () => { imgCache.current[src] = img; draw(img); };
+    img.src = src;
+  }, [src, liveFrame, PREVIEW, offX, offY, FW, FH]);
 
   function freezeAt(idx) {
     frozenRef.current = true;
@@ -1514,17 +1534,12 @@ function RushInspector({ cs, qteAnim }) {
       {/* Main body: big preview + scrollable strip */}
       <div style={{display:'flex', gap:12, alignItems:'flex-start'}}>
 
-        {/* Big current-frame preview */}
+        {/* Big current-frame preview — canvas for pixel-perfect accuracy */}
         <div style={{flexShrink:0, position:'relative'}}>
-          <div style={{
-            width:PREVIEW, height:PREVIEW, overflow:'hidden',
-            backgroundImage:`url(${src})`,
-            backgroundPosition:`${-(liveFrame*PREVIEW) + offX}px ${offY}px`,
-            backgroundSize:`${anim.frames*PREVIEW}px ${PREVIEW}px`,
-            backgroundRepeat:'no-repeat',
-            imageRendering:'pixelated',
+          <canvas ref={canvasRef} width={PREVIEW} height={PREVIEW} style={{
+            display:'block',
             border:`2px solid ${liveFrame===hitFrame?'#ff4400':'#ffcc00'}`,
-            borderRadius:6,
+            borderRadius:6, imageRendering:'pixelated',
             boxShadow: liveFrame===hitFrame ? '0 0 20px #ff440088' : '0 0 10px #ffcc0044'
           }}/>
           <div style={{textAlign:'center', marginTop:4, fontFamily:'monospace', fontSize:11,
