@@ -1401,6 +1401,8 @@ function RushInspector({ cs, qteAnim }) {
   const [selFrame, setSelFrame] = React.useState(null);
   const [frozen,   setFrozen]   = React.useState(false);
   const [preview,  setPreview]  = React.useState(256);
+  const [offX,     setOffX]     = React.useState(0);
+  const [offY,     setOffY]     = React.useState(0);
   const frozenRef = React.useRef(false);
 
   const sp = cs?.enemySprite;
@@ -1515,9 +1517,9 @@ function RushInspector({ cs, qteAnim }) {
         {/* Big current-frame preview */}
         <div style={{flexShrink:0, position:'relative'}}>
           <div style={{
-            width:PREVIEW, height:PREVIEW,
+            width:PREVIEW, height:PREVIEW, overflow:'hidden',
             backgroundImage:`url(${src})`,
-            backgroundPosition:`-${liveFrame*PREVIEW}px 0px`,
+            backgroundPosition:`${-(liveFrame*PREVIEW) + offX}px ${offY}px`,
             backgroundSize:`${anim.frames*PREVIEW}px ${PREVIEW}px`,
             backgroundRepeat:'no-repeat',
             imageRendering:'pixelated',
@@ -1528,6 +1530,21 @@ function RushInspector({ cs, qteAnim }) {
           <div style={{textAlign:'center', marginTop:4, fontFamily:'monospace', fontSize:11,
             color: liveFrame===hitFrame ? '#ff6644' : '#ffcc00'}}>
             {liveFrame===hitFrame ? '🔥 HIT FRAME' : `FRAME ${liveFrame+1}`}
+          </div>
+          {/* X / Y offset sliders */}
+          <div style={{marginTop:6, display:'flex', flexDirection:'column', gap:4}}>
+            {[['X', offX, setOffX], ['Y', offY, setOffY]].map(([lbl, val, set])=>(
+              <label key={lbl} style={{display:'flex', alignItems:'center', gap:6, fontSize:10, color:'#aaa', fontFamily:'monospace'}}>
+                <span style={{width:12, color:'#ffcc00', fontWeight:'bold'}}>{lbl}</span>
+                <input type="range" min={-FW} max={FW} value={val}
+                  onChange={e=>set(+e.target.value)}
+                  style={{flex:1, accentColor:'#ffcc00'}}/>
+                <span style={{width:36, color:'#ffcc00', textAlign:'right'}}>{val}px</span>
+                <button onClick={()=>set(0)}
+                  style={{fontSize:9, padding:'1px 5px', background:'#111', border:'1px solid #333',
+                    color:'#556', cursor:'pointer', borderRadius:2}}>↺</button>
+              </label>
+            ))}
           </div>
         </div>
 
