@@ -1429,25 +1429,28 @@ function RushInspector({ cs, qteAnim }) {
   const hitFrame = anim.hitFrame ?? -1;
   const CELL = 128; // px per frame cell
   const PREVIEW = preview; // must be declared BEFORE useEffect so deps array doesn't hit TDZ
+  // Canvas dims: PREVIEW wide, height preserves FW:FH aspect ratio (landscape if frames are wider)
+  const CVW = PREVIEW;
+  const CVH = Math.round(PREVIEW * FH / FW);
 
   // Canvas draw — pixel-perfect via drawImage
   React.useEffect(() => {
     const cv = canvasRef.current; if (!cv) return;
     const ctx = cv.getContext('2d');
-    ctx.clearRect(0, 0, PREVIEW, PREVIEW);
+    ctx.clearRect(0, 0, CVW, CVH);
     const cached = imgCache.current[src];
     const draw = (img) => {
       ctx.imageSmoothingEnabled = false;
-      ctx.clearRect(0, 0, PREVIEW, PREVIEW);
-      // src rect: one frame from the strip, shifted by offX/offY
-      ctx.drawImage(img, liveFrame * FW + offX, offY, FW, FH, 0, 0, PREVIEW, PREVIEW);
+      ctx.clearRect(0, 0, CVW, CVH);
+      // src rect: one frame from the strip, shifted by offX/offY → dest: full canvas
+      ctx.drawImage(img, liveFrame * FW + offX, offY, FW, FH, 0, 0, CVW, CVH);
     };
     if (cached) { draw(cached); return; }
     const img = new Image();
     img.onerror = () => console.error('[RushInspector] failed to load', src);
     img.onload = () => { imgCache.current[src] = img; draw(img); };
     img.src = src;
-  }, [src, liveFrame, PREVIEW, offX, offY, FW, FH]);
+  }, [src, liveFrame, CVW, CVH, offX, offY, FW, FH]);
 
   function freezeAt(idx) {
     frozenRef.current = true;
@@ -1517,7 +1520,7 @@ function RushInspector({ cs, qteAnim }) {
         </>}
         {/* Preview size slider */}
         <label style={{display:'flex',alignItems:'center',gap:5,marginLeft:'auto',fontSize:9,color:'#556',fontFamily:'Cinzel'}}>
-          SIZE
+          W
           <input type="range" min={64} max={512} step={32} value={preview}
             onChange={e=>setPreview(+e.target.value)}
             style={{width:80,accentColor:'#7755cc'}}/>
@@ -1536,8 +1539,8 @@ function RushInspector({ cs, qteAnim }) {
 
         {/* Big current-frame preview — canvas for pixel-perfect accuracy */}
         <div style={{flexShrink:0, position:'relative'}}>
-          <canvas ref={canvasRef} width={PREVIEW} height={PREVIEW} style={{
-            display:'block',
+          <canvas ref={canvasRef} width={CVW} height={CVH} style={{
+            display:'block', width:CVW, height:CVH,
             border:`2px solid ${liveFrame===hitFrame?'#ff4400':'#ffcc00'}`,
             borderRadius:6, imageRendering:'pixelated',
             boxShadow: liveFrame===hitFrame ? '0 0 20px #ff440088' : '0 0 10px #ffcc0044'
