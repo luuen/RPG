@@ -1399,6 +1399,165 @@ function CropSliderRow({ label, value, min, max, onChange }) {
   );
 }
 
+/* ── Sprite Debug Panel — shows all frames of the active animation ── */
+function SpriteDebugPanel({ cs, qteAnim }) {
+  const [open, setOpen] = React.useState(true);
+  const [frozenFrame, setFrozenFrame] = React.useState(null);
+  const canvasRef = React.useRef(null);
+  const imgCache  = React.useRef({});
+  const rafRef    = React.useRef(null);
+  const startRef  = React.useRef(null);
+
+  const sp = cs?.enemySprite;
+  if (!sp) return null;
+
+  // Determine which animation is active
+  const rushPhase = qteAnim?.type === 'rush_melee' ? qteAnim.rushPhase : null;
+  let animLabel, src, frames, fps;
+  if (rushPhase === 'strike') {
+    animLabel = 'RUSH STRIKE';
+    src    = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}/${sp.rushStrike?.file}`;
+    frames = sp.rushStrike?.frames || 1;
+    fps    = sp.rushStrike?.fps    || 12;
+  } else if (rushPhase === 'approach' || rushPhase === 'retreat') {
+    animLabel = rushPhase === 'retreat' ? 'RUSH RETREAT' : 'RUSH APPROACH';
+    src    = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}/${sp.rushApproach?.file}`;
+    frames = sp.rushApproach?.frames || 1;
+    fps    = sp.rushApproach?.fps    || 10;
+  } else {
+    animLabel = 'IDLE';
+    src    = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}/Idle.png`;
+    frames = sp.idleFrames || 1;
+    fps    = 8;
+  }
+
+  const FW = sp.frameW || 128;
+  const FH = sp.frameH || 128;
+  const CELL = 64; // strip thumbnail size
+  const hitFrame = sp.rushStrike?.hitFrame ?? -1;
+
+  // Live frame index via rAF
+  const [liveIdx, setLiveIdx] = React.useState(0);
+  React.useEffect(() => {
+    if (frozenFrame !== null) return;
+    startRef.current = performance.now();
+    const tick = () => {
+      const ms = performance.now() - startRef.current;
+      setLiveIdx(Math.floor((ms / 1000) * fps) % frames);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [src, fps, frames, frozenFrame]);
+
+  const activeIdx = frozenFrame !== null ? frozenFrame : liveIdx;
+
+  // Canvas big preview
+  React.useEffect(() => {
+    const cv = canvasRef.current; if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const PW = cv.width, PH = cv.height;
+    const draw = (img) => {
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = '#06060f';
+      ctx.fillRect(0, 0, PW, PH);
+      const dw = Math.round(PH * FW / FH);
+      const dx = Math.round((PW - dw) / 2);
+      ctx.drawImage(img, activeIdx * FW, 0, FW, FH, dx, 0, dw, PH);
+    };
+    const cached = imgCache.current[src];
+    if (cached) { draw(cached); return; }
+    const img = new Image();
+    img.onload = () => { imgCache.current[src] = img; draw(img); };
+    img.onerror = () => console.error('[SpriteDebug] load failed', src);
+    img.src = src;
+  }, [src, activeIdx, FW, FH]);
+
+  if (!open) return (
+    <button onClick={() => setOpen(true)} style={{
+      position:'fixed', bottom:8, left:8, zIndex:8900,
+      fontFamily:'Cinzel', fontSize:9, padding:'4px 10px', cursor:'pointer',
+      background:'#0a0a1a', border:'1px solid #334', color:'#445', borderRadius:3
+    }}>🎞 SPRITE DEBUG</button>
+  );
+
+  const PW = 160, PH = 100;
+
+  return (
+    <div style={{position:'fixed', bottom:0, left:0, right:0, zIndex:8900,
+      background:'rgba(3,3,14,0.96)', borderTop:'2px solid #1a1a3a',
+      padding:'8px 12px 10px', userSelect:'none', display:'flex', gap:12, alignItems:'flex-start'}}>
+
+      {/* Big canvas preview */}
+      <div style={{flexShrink:0}}>
+        <div style={{fontSize:9, color:'#446', fontFamily:'Cinzel', letterSpacing:2, marginBottom:3}}>
+          {animLabel} · {sp.variant.replace(/_/g,' ')} · FRAME {activeIdx+1}/{frames}
+          {rushPhase==='strike' && hitFrame>=0 && ` · HIT@${hitFrame+1}`}
+          {activeIdx===hitFrame && '  🔥'}
+        </div>
+        <canvas ref={canvasRef} width={PW} height={PH} style={{
+          display:'block', width:PW, height:PH, imageRendering:'pixelated',
+          border:`2px solid ${activeIdx===hitFrame?'#ff4400':'#222244'}`, borderRadius:4
+        }}/>
+        <div style={{display:'flex', gap:4, marginTop:4}}>
+          <button onClick={() => setFrozenFrame(null)} style={{
+            flex:1, fontFamily:'Cinzel', fontSize:8, padding:'2px 0', cursor:'pointer',
+            background: frozenFrame===null ? '#0a1a0a' : '#0a0a1a',
+            border:`1px solid ${frozenFrame===null?'#44aa66':'#334'}`,
+            color: frozenFrame===null ? '#44cc66' : '#445', borderRadius:2
+          }}>▶ LIVE</button>
+          <button onClick={() => setFrozenFrame(f => Math.max(0, (f??activeIdx)-1))} style={{
+            fontFamily:'Cinzel', fontSize:9, padding:'2px 8px', cursor:'pointer',
+            background:'#0a0a1a', border:'1px solid #334', color:'#556', borderRadius:2
+          }}>◀</button>
+          <button onClick={() => setFrozenFrame(f => Math.min(frames-1, (f??activeIdx)+1))} style={{
+            fontFamily:'Cinzel', fontSize:9, padding:'2px 8px', cursor:'pointer',
+            background:'#0a0a1a', border:'1px solid #334', color:'#556', borderRadius:2
+          }}>▶</button>
+          <button onClick={() => setOpen(false)} style={{
+            fontFamily:'Cinzel', fontSize:8, padding:'2px 6px', cursor:'pointer',
+            background:'#0a0a1a', border:'1px solid #334', color:'#334', borderRadius:2
+          }}>✕</button>
+        </div>
+      </div>
+
+      {/* Scrollable frame strip */}
+      <div style={{flex:1, overflowX:'auto'}}>
+        <div style={{display:'flex', gap:2}}>
+          {[...Array(frames)].map((_, i) => {
+            const isActive = i === activeIdx;
+            const isHit    = i === hitFrame && rushPhase === 'strike';
+            return (
+              <div key={i} onClick={() => setFrozenFrame(i)}
+                style={{flexShrink:0, cursor:'pointer', position:'relative',
+                  outline: isActive ? '2px solid #ffcc00' : isHit ? '2px solid #ff4400' : '1px solid #1a1a2a',
+                  borderRadius:3, overflow:'hidden',
+                  boxShadow: isActive ? '0 0 8px #ffcc0066' : isHit ? '0 0 8px #ff440066' : 'none'}}>
+                <div style={{
+                  width:CELL, height:CELL,
+                  backgroundImage:`url(${src})`,
+                  backgroundPosition:`-${i*CELL}px 0px`,
+                  backgroundSize:`${frames*CELL}px ${CELL}px`,
+                  backgroundRepeat:'no-repeat', imageRendering:'pixelated'
+                }}/>
+                <div style={{
+                  position:'absolute', bottom:1, right:2,
+                  fontFamily:'monospace', fontSize:8,
+                  color: isHit ? '#ff6644' : isActive ? '#ffcc00' : '#336'
+                }}>{i+1}</div>
+                {isHit && <div style={{
+                  position:'absolute', top:1, left:1,
+                  fontSize:8, lineHeight:1
+                }}>🔥</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Rush Frame Inspector — live editing panel ──────────────── */
 function RushInspector({ cs, qteAnim }) {
   const [phase,    setPhase]    = React.useState('strike');
@@ -6009,6 +6168,9 @@ function App() {
                 </div>
               );
             })()}
+
+            {/* ── SPRITE DEBUG PANEL — always visible in combat ── */}
+            {cs?.enemySprite&&<SpriteDebugPanel cs={cs} qteAnim={qteAnim}/>}
 
             {/* ── RUSH FRAME INSPECTOR ── */}
             {qteAnim?.type==="rush_melee"&&<RushInspector cs={cs} qteAnim={qteAnim}/>}
