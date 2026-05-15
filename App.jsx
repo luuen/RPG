@@ -1429,28 +1429,34 @@ function RushInspector({ cs, qteAnim }) {
   const hitFrame = anim.hitFrame ?? -1;
   const CELL = 128; // px per frame cell
   const PREVIEW = preview; // must be declared BEFORE useEffect so deps array doesn't hit TDZ
-  // Canvas dims: PREVIEW wide, height preserves FW:FH aspect ratio (landscape if frames are wider)
-  const CVW = PREVIEW;
-  const CVH = Math.round(PREVIEW * FH / FW);
+  // Always landscape: SIZE = height, width = 16:9
+  const CVH = PREVIEW;
+  const CVW = Math.round(PREVIEW * 16 / 9);
+  // Frame dest: scaled to fit height, centered horizontally
+  const frameDestH = CVH;
+  const frameDestW = Math.round(CVH * FW / FH);
+  const frameDestX = Math.round((CVW - frameDestW) / 2);
 
   // Canvas draw — pixel-perfect via drawImage
   React.useEffect(() => {
     const cv = canvasRef.current; if (!cv) return;
     const ctx = cv.getContext('2d');
-    ctx.clearRect(0, 0, CVW, CVH);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, CVW, CVH);
     const cached = imgCache.current[src];
     const draw = (img) => {
       ctx.imageSmoothingEnabled = false;
-      ctx.clearRect(0, 0, CVW, CVH);
-      // src rect: one frame from the strip, shifted by offX/offY → dest: full canvas
-      ctx.drawImage(img, liveFrame * FW + offX, offY, FW, FH, 0, 0, CVW, CVH);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, CVW, CVH);
+      // src: one frame offset by X/Y sliders; dest: centered in landscape canvas
+      ctx.drawImage(img, liveFrame * FW + offX, offY, FW, FH, frameDestX, 0, frameDestW, frameDestH);
     };
     if (cached) { draw(cached); return; }
     const img = new Image();
     img.onerror = () => console.error('[RushInspector] failed to load', src);
     img.onload = () => { imgCache.current[src] = img; draw(img); };
     img.src = src;
-  }, [src, liveFrame, CVW, CVH, offX, offY, FW, FH]);
+  }, [src, liveFrame, CVW, CVH, frameDestX, frameDestW, frameDestH, offX, offY, FW, FH]);
 
   function freezeAt(idx) {
     frozenRef.current = true;
@@ -1520,7 +1526,7 @@ function RushInspector({ cs, qteAnim }) {
         </>}
         {/* Preview size slider */}
         <label style={{display:'flex',alignItems:'center',gap:5,marginLeft:'auto',fontSize:9,color:'#556',fontFamily:'Cinzel'}}>
-          W
+          H
           <input type="range" min={64} max={512} step={32} value={preview}
             onChange={e=>setPreview(+e.target.value)}
             style={{width:80,accentColor:'#7755cc'}}/>
@@ -1540,7 +1546,7 @@ function RushInspector({ cs, qteAnim }) {
         {/* Big current-frame preview — canvas for pixel-perfect accuracy */}
         <div style={{flexShrink:0, position:'relative'}}>
           <canvas ref={canvasRef} width={CVW} height={CVH} style={{
-            display:'block', width:CVW, height:CVH,
+            display:'block', width:CVW+'px', height:CVH+'px',
             border:`2px solid ${liveFrame===hitFrame?'#ff4400':'#ffcc00'}`,
             borderRadius:6, imageRendering:'pixelated',
             boxShadow: liveFrame===hitFrame ? '0 0 20px #ff440088' : '0 0 10px #ffcc0044'
@@ -3883,7 +3889,7 @@ function App() {
 
   /* ─────────────────────────────────────────────────────────── */
   return (
-    <div style={{minHeight:"100vh",background:"#020205",color:"#e8d5a3"}}>
+    <div style={{minHeight:"100vh",minWidth:"100vw",background:"#020205",color:"#e8d5a3",overflowX:"hidden"}}>
       <style>{GS}</style>
 
       {/* ── OPPONENT DISCONNECTED OVERLAY ── */}
@@ -4242,7 +4248,7 @@ function App() {
 
       {/* ══ TITLE ══ */}
       {screen==="title"&&(
-        <div style={{height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+        <div style={{width:"100vw",height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
           {/* Title background — plays once at normal speed, holds last frame (no loop attr) */}
           <video ref={titleVidRef} src={`${ASSET_BASE}/icons/title/title.mp4`}
             muted playsInline preload="auto"
