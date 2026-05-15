@@ -1579,8 +1579,8 @@ function RushInspector({ cs, qteAnim }) {
   const src   = `${base}/${anim.file}`;
   const FW    = sp.frameW || 128;
   const FH    = sp.frameH || 128;
-  const DUR   = 2200;
-  const WALK_END = 0.42, ATK_END = 0.72;
+  const DUR   = 3000;
+  const WALK_END = 0.40, ATK_END = 0.82;
 
   // Compute live frame from qteAnim if not frozen
   let liveFrame = selFrame ?? 0;
@@ -3760,14 +3760,19 @@ function App() {
     ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
 
     // Timeline fractions (all over DUR ms):
-    //   0 → WALK_END     : enemy approaches (walk/run anim)
-    //   WALK_END → ATK_END: enemy strikes (strike anim), hit window in middle
-    //   ATK_END → 1.0    : enemy retreats
-    const DUR      = 2200; // ms total
-    const WALK_END = 0.42;
-    const ATK_END  = 0.72;
-    const ARRIVE   = WALK_END + (ATK_END - WALK_END) * 0.45; // ≈ 0.55 — center of hit window
-    const WINDOW   = 0.065; // half-window for "good" block
+    //   0 → WALK_END      : enemy approaches (walk/run anim)
+    //   WALK_END → ATK_END: enemy strikes (strike anim), parry window at hit frame
+    //   ATK_END → 1.0     : enemy retreats
+    const DUR      = 3000; // ms total — longer gives strike anim room to breathe
+    const WALK_END = 0.40;
+    const ATK_END  = 0.82;
+    // ARRIVE = moment the hit frame actually plays — computed from sprite data
+    const strikeFps    = sprite.rushStrike?.fps    ?? 12;
+    const hitFrameIdx  = sprite.rushStrike?.hitFrame ?? 3;
+    const strikePhaseMs = (ATK_END - WALK_END) * DUR;         // ms allocated for strike
+    const hitFrameMs   = Math.min((hitFrameIdx / strikeFps) * 1000, strikePhaseMs * 0.85);
+    const ARRIVE   = WALK_END + hitFrameMs / DUR;
+    const WINDOW   = 0.07; // half-window for "good" block (~210ms total window)
 
     ref.startMs = performance.now(); ref.pressT = null; ref.done = false; ref._rushLastRender = 0;
     setCs(prev => prev ? {...prev, phase:"defending"} : prev);
@@ -3908,7 +3913,7 @@ function App() {
   // Rush melee: enemy slides right toward hero, then retreats
   const enemyRushOffset = (() => {
     if (!qteAnim || qteAnim.type !== "rush_melee") return 0;
-    const { t, walkEnd=0.42, attackEnd=0.72 } = qteAnim;
+    const { t, walkEnd=0.40, attackEnd=0.82 } = qteAnim;
     const RUSH_DIST = HRX - ENX - 95; // stop just left of hero
     if (t < walkEnd) return RUSH_DIST * easeIO(t / walkEnd);
     if (t < attackEnd) return RUSH_DIST;
@@ -6119,7 +6124,7 @@ function App() {
 
             {/* ── RUSH MELEE — approach warning + timing bar ── */}
             {qteAnim?.type==="rush_melee"&&(()=>{
-              const { t, walkEnd=0.42, attackEnd=0.72, arrive=0.55, hitWindow:win=0.065 } = qteAnim;
+              const { t, walkEnd=0.40, attackEnd=0.82, arrive=0.55, hitWindow:win=0.065 } = qteAnim;
               const isApproach = t < walkEnd;
               const isStrike   = t >= walkEnd && t < attackEnd;
               const inWindow   = Math.abs(t - arrive) < win;
