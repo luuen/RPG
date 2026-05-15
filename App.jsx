@@ -5231,7 +5231,7 @@ function App() {
                   :`drop-shadow(0 0 22px ${enemyData.color}bb) drop-shadow(0 8px 4px #00000088)`,
                 animation:enemyFlash?`hitFlash .35s ease-out, squish .3s ease-out`:"none",
                 transformOrigin:"bottom center",
-                transform:cs.enemy.id==="dragon"||cs.enemy.id==="pvp_opp"?"scaleX(-1)":"none"}}>
+                transform:(qteAnim?.type==="rush_melee"&&qteAnim.rushPhase==="retreat")?"scaleX(-1)":cs.enemy.id==="dragon"||cs.enemy.id==="pvp_opp"?"scaleX(-1)":"none"}}>
                 {cs.enemy.id==="pvp_opp"
                   ? <HeroSprite className={cs.enemy.pvpClass??'Knight'} scale={eScale} weapons={cs.enemy.pvpWeapons??['sword']}
                       heroLooks={cs.enemy.pvpHeroLooks}
@@ -5673,6 +5673,55 @@ function App() {
                   </div>
                 </div>
               )}
+
+              {/* ── RUSH MELEE sprite-sheet overlay — bottom of battlefield ── */}
+              {qteAnim?.type==="rush_melee"&&cs?.enemySprite&&(()=>{
+                const sp    = cs.enemySprite;
+                const phase = qteAnim.rushPhase;
+                const anim  = phase==="strike" ? sp.rushStrike : sp.rushApproach;
+                if (!anim) return null;
+                const base  = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}`;
+                const src   = `${base}/${anim.file}`;
+                const FW    = sp.frameW||128, FH = sp.frameH||128;
+                const fps   = anim.fps||10;
+                // Which frame is playing right now?
+                const msElapsed = qteAnim.t * 2200; // DUR=2200
+                const frameIdx  = Math.floor((msElapsed / 1000) * fps) % anim.frames;
+                const hitFrame  = anim.hitFrame ?? -1;
+                const isHit     = frameIdx === hitFrame;
+                const stripW    = anim.frames * FW;
+                const DISP      = 48; // display size per frame
+                return (
+                  <div style={{
+                    position:"absolute",bottom:6,left:8,zIndex:50,
+                    background:"rgba(4,4,16,0.82)",border:`1px solid ${isHit?"#ff4400":"#2a2a4a"}`,
+                    borderRadius:6,padding:"4px 6px",pointerEvents:"none",
+                    boxShadow:isHit?"0 0 10px #ff440099":"none"
+                  }}>
+                    <div style={{fontSize:8,fontFamily:"Cinzel",color:isHit?"#ff6644":"#5566aa",letterSpacing:2,marginBottom:3}}>
+                      {phase.toUpperCase()} · f{frameIdx+1}/{anim.frames}{isHit?" 🔥 HIT":""}
+                    </div>
+                    {/* Full strip — scroll to show active frame */}
+                    <div style={{position:"relative",width:DISP*Math.min(anim.frames,8),height:DISP,overflow:"hidden",borderRadius:3}}>
+                      <img src={src} alt="" style={{
+                        position:"absolute",
+                        left: -frameIdx*DISP,
+                        top:0,
+                        width: anim.frames*DISP,
+                        height:DISP,
+                        imageRendering:"pixelated"
+                      }}/>
+                      {/* Active frame highlight */}
+                      <div style={{
+                        position:"absolute",top:0,left:0,width:DISP,height:DISP,
+                        border:`2px solid ${isHit?"#ff4400":"#ffcc00"}`,borderRadius:2,
+                        boxShadow:isHit?"inset 0 0 8px #ff440066":"inset 0 0 6px #ffcc0033",
+                        pointerEvents:"none"
+                      }}/>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* particles injected via particleContainerRef (DOM/Web Animations API) */}
             </div>{/* ─── END BATTLEFIELD (zoom wrapper) ── */}
