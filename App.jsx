@@ -5675,6 +5675,7 @@ function App() {
               )}
 
               {/* particles injected via particleContainerRef (DOM/Web Animations API) */}
+            </div>{/* ─── END BATTLEFIELD (zoom wrapper) ── */}
             </div>{/* ─── END BATTLEFIELD (flex centerer) ── */}
 
             {/* ── RUSH MELEE — approach warning + timing bar ── */}
