@@ -6972,6 +6972,7 @@ function App() {
         const activeType = qteAnim?.type;
         const activeWpn  = qteAnim?.weapon?.id;
         const [_qteOpen, _setQteOpen] = React.useState(false);
+        const [_cropOpen, _setCropOpen] = React.useState(false);
         return (
           <div ref={el=>{ if(el) _dbgSetup(); }}
             style={{position:'fixed',top:8,left:8,zIndex:9999,fontFamily:'monospace',fontSize:10}}>
@@ -7084,7 +7085,42 @@ function App() {
                   border:'1px solid #226622',borderRadius:3,cursor:'pointer',fontFamily:'monospace',fontSize:9}}>
                 👾 enemies
               </button>
+              <button onClick={()=>_setCropOpen(true)}
+                style={{flex:1,padding:'3px 0',background:'#1a1a0a',color:'#ffdd88',
+                  border:'1px solid #444422',borderRadius:3,cursor:'pointer',fontFamily:'monospace',fontSize:9}}>
+                ✏ crop
+              </button>
             </div>
+
+            {/* Crop Editor modal — CropEditor renders its own fixed overlay */}
+            {_cropOpen && (
+              <CropEditor
+                sp={cs?.enemySprite || ENEMY_SPRITE_POOL[0]}
+                onApply={(crop, spEntry, animFile) => {
+                  // Persist into pool entry animCrops keyed by file
+                  if (spEntry) {
+                    if (!spEntry.animCrops) spEntry.animCrops = {};
+                    spEntry.animCrops[animFile] = crop;
+                    spEntry.cropX = crop.x; spEntry.cropY = crop.y;
+                    spEntry.cropW = crop.w; spEntry.cropH = crop.h;
+                    // Save to localStorage for persistence
+                    try {
+                      const saved = JSON.parse(localStorage.getItem('__animCrops')||'{}');
+                      if (!saved[spEntry.variant]) saved[spEntry.variant] = {};
+                      saved[spEntry.variant][animFile] = crop;
+                      localStorage.setItem('__animCrops', JSON.stringify(saved));
+                    } catch(e) {}
+                  }
+                  // Push live update if this is the active enemy
+                  if (cs?.enemySprite?.variant === spEntry?.variant) {
+                    setCs(prev => prev ? {...prev, enemySprite:{...prev.enemySprite,
+                      cropX:crop.x,cropY:crop.y,cropW:crop.w,cropH:crop.h,
+                      animCrops:{...prev.enemySprite?.animCrops,[animFile]:crop}}} : prev);
+                  }
+                }}
+                onClose={()=>_setCropOpen(false)}
+              />
+            )}
 
             {/* Randomize hero looks */}
             <button onClick={()=>{
