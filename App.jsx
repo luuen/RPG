@@ -6991,6 +6991,40 @@ function App() {
               </div>
             </div>
 
+            {/* Enemy selector */}
+            <div style={{marginBottom:6}}>
+              <div style={{color:'#667',fontSize:9,letterSpacing:1,marginBottom:2,
+                borderBottom:'1px solid #222',paddingBottom:1}}>ENEMY</div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:2}}>
+                {[
+                  {label:'👺 Goblin', id:'goblin', spriteIdx:0},
+                  {label:'🐍 Gorgon', id:'gorgon', spriteIdx:0},
+                  {label:'🐂 Mino',   id:'minotaur',spriteIdx:3},
+                  {label:'🐺 Wolf',   id:'werewolf',spriteIdx:6},
+                  {label:'🟢 Boss',   id:'dragon',  spriteIdx:-1},
+                ].map(({label,id,spriteIdx})=>{
+                  const active = cs?.enemy?.id===id;
+                  return (
+                    <button key={id} onClick={()=>{
+                      const e = ENEMIES[id] || ENEMIES.goblin;
+                      const sp = spriteIdx>=0 ? {...ENEMY_SPRITE_POOL[spriteIdx]} : null;
+                      setCs(prev=>prev?{...prev,
+                        enemy:{...e,id,hp:99999,maxHp:99999},
+                        enemySprite:sp, enemyAtkIdx:-1,
+                        bossAttackPattern: id==='dragon'?'cleave':null}:prev);
+                    }}
+                      style={{padding:'2px 5px',fontSize:9,
+                        background:active?'#1a2240':'#111',
+                        color:active?'#ffcc44':'#999',
+                        border:`1px solid ${active?'#ffcc44':'#2a2a2a'}`,
+                        borderRadius:3,cursor:'pointer',fontFamily:'monospace'}}>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* QTE groups */}
             {QTE_GROUPS.map(({label,type,ids})=>(
               <div key={type} style={{marginBottom:6}}>
