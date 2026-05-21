@@ -2266,11 +2266,20 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
 
   const isBoss = cs?.enemy?.id === 'dragon';
 
-  // ── Boss GIF frame editor ──────────────────────────────────────
-  const [bossW,        setBossW]        = React.useState(ENEMY_DIMS.dragon?.w       || 216);
-  const [bossH,        setBossH]        = React.useState(ENEMY_DIMS.dragon?.h       || 120);
-  const [bossHitFrame, setBossHitFrame] = React.useState(ENEMY_DIMS.dragon?.hitFrame ?? 3);
-  const [bossHitFps,   setBossHitFps]   = React.useState(ENEMY_DIMS.dragon?.hitFps   ?? 12);
+  // ── Boss GIF frame editor — all hooks unconditional (Rules of Hooks) ──
+  const [bossW,          setBossW]          = React.useState(ENEMY_DIMS.dragon?.w            || 216);
+  const [bossH,          setBossH]          = React.useState(ENEMY_DIMS.dragon?.h            || 120);
+  const [bossHitFrame,   setBossHitFrame]   = React.useState(ENEMY_DIMS.dragon?.hitFrame     ?? 3);
+  const [bossHitFps,     setBossHitFps]     = React.useState(ENEMY_DIMS.dragon?.hitFps       ?? 12);
+  const [bossAnimIdx,    setBossAnimIdx]    = React.useState(2); // 2 = CLEAVE
+  const [bossTotalFrames,setBossTotalFrames]= React.useState(ENEMY_DIMS.dragon?.totalFrames  ?? 8);
+  const [bossLiveFrame,  setBossLiveFrame]  = React.useState(0);
+  React.useEffect(() => {
+    if (!isBoss) return;
+    setBossLiveFrame(0);
+    const iv = setInterval(() => setBossLiveFrame(f => (f+1) % bossTotalFrames), 1000/bossHitFps);
+    return () => clearInterval(iv);
+  }, [isBoss, bossAnimIdx, bossTotalFrames, bossHitFps]);
   const activeBossGif = (() => {
     if (cs?.phase === 'won') return '05_d_death.webp';
     if (enemyFlash)          return '04_d_take_hit.webp';
@@ -2288,19 +2297,7 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
   );
 
   if (isBoss) {
-    // Which boss anim is selected for inspection (default to cleave since that has the hit frame)
-    const [bossAnimIdx, setBossAnimIdx] = React.useState(2); // 2 = CLEAVE
     const bossAnim = _BOSS_GIFS[bossAnimIdx];
-    // Total frames in selected anim — user sets this by watching the GIF loop
-    const [bossTotalFrames, setBossTotalFrames] = React.useState(ENEMY_DIMS.dragon?.totalFrames ?? 8);
-    // Live frame counter — cycles based on bossHitFps
-    const [bossLiveFrame, setBossLiveFrame] = React.useState(0);
-    React.useEffect(() => {
-      setBossLiveFrame(0);
-      const iv = setInterval(() => setBossLiveFrame(f => (f+1) % bossTotalFrames), 1000/bossHitFps);
-      return () => clearInterval(iv);
-    }, [bossAnimIdx, bossTotalFrames, bossHitFps]);
-
     const BIG = Math.min(220, window.innerHeight*0.27);
 
     return (
