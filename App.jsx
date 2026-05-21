@@ -916,27 +916,20 @@ const HeroSprite = React.memo(function HeroSprite({ className="Knight", scale=1,
 const BOSS_GIF_BASE = ASSET_BASE+"/icons/sprites/boss/boss_demon_slime_FREE_v1.0/gifs";
 // Boss GIF natural frame size is 288×160. renderW/renderH come from ENEMY_DIMS.dragon × eScale.
 function DemonSlimeSprite({ renderW=238, renderH=132, enemyFlash=false, phase="action", bossAttackPattern=null }) {
-  // Priority: dying > hit > charge-attack > cleave-attack > idle
-  // "defending" = player's defend QTE — boss mid-attack, keep attack animation playing
+  // Priority: dying > hit > attacking (cleave) > idle. Charge removed — boss is melee-only.
+  // "defending" = player's defend QTE — boss mid-attack, keep cleave animation playing.
   const isAttacking = phase==="enemy_turn" || phase==="defending";
-  const src = phase==="won"                                   ? `${BOSS_GIF_BASE}/05_d_death.webp`
-            : enemyFlash                                      ? `${BOSS_GIF_BASE}/04_d_take_hit.webp`
-            : isAttacking&&bossAttackPattern==="charge"       ? `${BOSS_GIF_BASE}/02_d_walk.webp`
-            : isAttacking                                     ? `${BOSS_GIF_BASE}/03_d_cleave.webp`
-            : `${BOSS_GIF_BASE}/01_d_idle.webp`;
-  // Key on src so browser reloads/restarts gif when animation changes
-  const isCharge = isAttacking && bossAttackPattern==="charge";
+  const src = phase==="won"   ? `${BOSS_GIF_BASE}/05_d_death.webp`
+            : enemyFlash      ? `${BOSS_GIF_BASE}/04_d_take_hit.webp`
+            : isAttacking     ? `${BOSS_GIF_BASE}/03_d_cleave.webp`
+            :                   `${BOSS_GIF_BASE}/01_d_idle.webp`;
   return (
     <div style={{position:"relative",width:renderW,height:renderH}}>
       <img key={src} src={src} width={renderW} height={renderH}
         style={{display:"block",imageRendering:"pixelated",objectFit:"fill"}}/>
-      {/* Glow under boss — red tint during charge, green normally */}
       <div style={{position:"absolute",bottom:-6,left:"50%",transform:"translateX(-50%)",
         width:renderW*0.7,height:10,borderRadius:"50%",
-        background:isCharge
-          ? "radial-gradient(ellipse,#dd222266 0%,transparent 70%)"
-          : "radial-gradient(ellipse,#22dd4466 0%,transparent 70%)",
-        transition:"background .3s",
+        background:"radial-gradient(ellipse,#22dd4466 0%,transparent 70%)",
         pointerEvents:"none"}}/>
     </div>
   );
@@ -3062,7 +3055,7 @@ function App() {
     setTimeout(()=>setEnemyFlash(false), 450);
 
     // Pick boss attack pattern now so we can close over it in setTimeout
-    const bossAtk = cs?.enemy?.id === "dragon" ? (Math.random() < 0.5 ? "cleave" : "charge") : null;
+    const bossAtk = cs?.enemy?.id === "dragon" ? "cleave" : null; // boss is melee-only
     // Compute next attack index OUTSIDE setCs — cs.enemyAtkIdx is stable during "action" phase.
     // setTimeout must NOT be inside setCs: React 18 concurrent mode re-invokes state updaters,
     // causing a second setTimeout → double attack. Keep setCs callback pure (no side effects).
@@ -3153,7 +3146,7 @@ function App() {
     const _sp2 = cs?.enemySprite;
     const _nextIdx2 = _elitePending ? ((cs?.enemyAtkIdx??-1)+1) % (_sp2?.attacks?.length||1) : 0;
     const _nextType2 = _elitePending ? _sp2?.attacks?.[_nextIdx2]?.type : null;
-    const _nextBossAtk2 = _elitePending && cs?.enemy?.id==="dragon" ? (Math.random()<.5?"cleave":"charge") : null;
+    const _nextBossAtk2 = _elitePending && cs?.enemy?.id==="dragon" ? "cleave" : null;
     if (_elitePending) {
       const _secondFn = (_nextType2==='rush' && _sp2?.rushApproach && cs?.enemy?.id!=='dragon' && !cs?.pvpMode)
         ? ()=>startRushMeleeQTE(_nextIdx2)
@@ -7268,6 +7261,37 @@ function App() {
                 })()}
               </div>
             ))}
+
+            {/* ── BOSS (Demon Slime) — webp GIFs, not sprite sheets ── */}
+            <div style={{marginBottom:40}}>
+              <div style={{fontFamily:'Cinzel',color:'#ff8844',fontSize:11,letterSpacing:3,
+                marginBottom:12,borderBottom:'1px solid #2a1a0a',paddingBottom:6}}>
+                BOSS — DEMON SLIME
+              </div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:20,alignItems:'flex-end'}}>
+                {[
+                  {label:'IDLE',   file:'01_d_idle.webp'},
+                  {label:'WALK',   file:'02_d_walk.webp'},
+                  {label:'CLEAVE', file:'03_d_cleave.webp'},
+                  {label:'HIT',    file:'04_d_take_hit.webp'},
+                  {label:'DEAD',   file:'05_d_death.webp'},
+                ].map(({label, file}) => (
+                  <div key={file} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
+                    <div style={{fontSize:9,fontFamily:'Cinzel',color:'#ff8844',letterSpacing:2}}>
+                      {label}
+                    </div>
+                    <img
+                      src={`${BOSS_GIF_BASE}/${file}`}
+                      width={216} height={120}
+                      style={{imageRendering:'pixelated',border:'1px solid #2a1a0a',
+                        background:'#080808',display:'block'}}
+                    />
+                    <div style={{fontSize:8,color:'#555',fontFamily:'monospace'}}>{file}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         );
       })()}
