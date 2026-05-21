@@ -1652,11 +1652,20 @@ function CropSliderRow({ label, value, min, max, onChange }) {
   );
 }
 
+const _BOSS_CROP_ENTRY = { variant:'demon_slime_boss', name:'Demon Slime', isBoss:true };
+const _BOSS_GIFS = [
+  {label:'IDLE',   file:'01_d_idle.webp'},
+  {label:'WALK',   file:'02_d_walk.webp'},
+  {label:'CLEAVE', file:'03_d_cleave.webp'},
+  {label:'HIT',    file:'04_d_take_hit.webp'},
+  {label:'DEAD',   file:'05_d_death.webp'},
+];
+
 /* ── Crop Editor — modal, uses actual image dimensions for accuracy ─── */
 function CropEditor({ sp: initSp, onApply, onClose }) {
   // Monster picker — defaults to whatever enemy is active but can be changed
   const pool = window.ENEMY_SPRITE_POOL || [];
-  const [sp, setSp] = React.useState(initSp || pool[0]);
+  const [sp, setSp] = React.useState((initSp?.isBoss ? initSp : null) || pool[0]);
 
   const FW = sp.frameW || 128;
   const FH = sp.frameH || 128;
@@ -1987,7 +1996,7 @@ function CropEditor({ sp: initSp, onApply, onClose }) {
               {groups.map((grp, gi) => (
                 <div key={gi} style={{display:'flex', gap:2, alignItems:'center'}}>
                   {grp.map((e, vi) => {
-                    const active = e.variant === sp.variant;
+                    const active = !sp?.isBoss && e.variant === sp?.variant;
                     // Derive suffix: numeric last segment (Gorgon_1→"1") or first segment (Black_Werewolf→"Black")
                     const segs = e.variant.split('_');
                     const lastSeg = segs[segs.length - 1];
@@ -2007,6 +2016,19 @@ function CropEditor({ sp: initSp, onApply, onClose }) {
                   })}
                 </div>
               ))}
+              {/* Boss entry */}
+              {(() => {
+                const active = !!sp?.isBoss;
+                return (
+                  <button onClick={() => setSp(_BOSS_CROP_ENTRY)}
+                    style={{fontFamily:'Cinzel', fontSize:8, padding:'2px 7px', cursor:'pointer', borderRadius:2,
+                      background: active ? '#1a0a00' : 'transparent',
+                      border: `1px solid ${active ? '#ff8844' : '#222233'}`,
+                      color: active ? '#ff8844' : '#445'}}>
+                    🟢 Boss
+                  </button>
+                );
+              })()}
             </div>
           );
         })()}
@@ -2014,11 +2036,13 @@ function CropEditor({ sp: initSp, onApply, onClose }) {
         {/* Header: anim tabs + close */}
         <div style={{display:'flex', alignItems:'center', gap:8, padding:'5px 12px',
           borderBottom:'1px solid #1a1a3a', flexShrink:0, flexWrap:'wrap'}}>
-          <span style={{fontFamily:'Cinzel', fontSize:10, color:'#ffcc00'}}>{sp.variant.replace(/_/g,' ')}</span>
-          {info && <span style={{fontFamily:'monospace', fontSize:8, color:'#334'}}>
+          <span style={{fontFamily:'Cinzel', fontSize:10, color: sp?.isBoss ? '#ff8844' : '#ffcc00'}}>
+            {sp?.isBoss ? 'Demon Slime — Boss' : (sp?.variant||'').replace(/_/g,' ')}
+          </span>
+          {!sp?.isBoss && info && <span style={{fontFamily:'monospace', fontSize:8, color:'#334'}}>
             {info.iw}×{info.ih}px · {NF}f · {info.zoom.toFixed(1)}×
           </span>}
-          <div style={{display:'flex', gap:3, flexWrap:'wrap'}}>
+          {!sp?.isBoss && <div style={{display:'flex', gap:3, flexWrap:'wrap'}}>
             {anims.map((a,i) => (
               <button key={i} onClick={()=>setAnimIdx(i)}
                 style={{fontFamily:'Cinzel', fontSize:8, padding:'1px 6px', cursor:'pointer', borderRadius:2,
@@ -2028,7 +2052,7 @@ function CropEditor({ sp: initSp, onApply, onClose }) {
                 {a.label}
               </button>
             ))}
-          </div>
+          </div>}
           <div style={{flex:1}}/>
           <button onClick={onClose} style={{fontFamily:'Cinzel', fontSize:9, padding:'2px 10px',
             cursor:'pointer', background:'#1a0a0a', border:'1px solid #553333', color:'#cc5555', borderRadius:3}}>
@@ -2039,22 +2063,39 @@ function CropEditor({ sp: initSp, onApply, onClose }) {
         {/* Body */}
         <div style={{display:'flex', flex:1, overflow:'hidden', minHeight:0}}>
 
-          {/* Canvas — scrollable */}
+          {/* Canvas — scrollable (or GIF viewer for boss) */}
           <div style={{flex:1, overflow:'auto', padding:10, background:'#030310'}}>
-            {!info && <div style={{fontFamily:'monospace', fontSize:10, color:'#446', padding:20}}>loading…</div>}
-            <div style={{display:'inline-block', background:'#050510', border:'1px solid #1a1a3a', borderRadius:3}}>
-              <canvas ref={canvasRef}
-                style={{display:'block', imageRendering:'pixelated', cursor:'crosshair'}}
-                onMouseDown={onDown}
-              />
-            </div>
-            {info && <div style={{fontFamily:'monospace', fontSize:8, color:'#334', marginTop:4}}>
-              frame size in sheet: {Math.round(info.frameW)}×{info.ih}px · drag gold lines to reposition
-            </div>}
+            {sp?.isBoss ? (
+              /* Boss: show all 5 webp GIFs */
+              <div style={{display:'flex', flexWrap:'wrap', gap:20, padding:8}}>
+                {_BOSS_GIFS.map(({label, file}) => (
+                  <div key={file} style={{display:'flex', flexDirection:'column', alignItems:'center', gap:6}}>
+                    <div style={{fontFamily:'Cinzel', fontSize:9, color:'#ff8844', letterSpacing:2}}>{label}</div>
+                    <img src={`${BOSS_GIF_BASE}/${file}`} width={216} height={120}
+                      style={{imageRendering:'pixelated', border:'1px solid #2a1a0a',
+                        background:'#080808', display:'block'}}/>
+                    <div style={{fontFamily:'monospace', fontSize:8, color:'#555'}}>{file}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <>
+                {!info && <div style={{fontFamily:'monospace', fontSize:10, color:'#446', padding:20}}>loading…</div>}
+                <div style={{display:'inline-block', background:'#050510', border:'1px solid #1a1a3a', borderRadius:3}}>
+                  <canvas ref={canvasRef}
+                    style={{display:'block', imageRendering:'pixelated', cursor:'crosshair'}}
+                    onMouseDown={onDown}
+                  />
+                </div>
+                {info && <div style={{fontFamily:'monospace', fontSize:8, color:'#334', marginTop:4}}>
+                  frame size in sheet: {Math.round(info.frameW)}×{info.ih}px · drag gold lines to reposition
+                </div>}
+              </>
+            )}
           </div>
 
-          {/* Controls */}
-          <div style={{width:210, flexShrink:0, borderLeft:'1px solid #1a1a3a', padding:'10px 12px',
+          {/* Controls — hidden for boss (GIFs need no crop) */}
+          {!sp?.isBoss && <div style={{width:210, flexShrink:0, borderLeft:'1px solid #1a1a3a', padding:'10px 12px',
             display:'flex', flexDirection:'column', gap:5, overflowY:'auto', background:'rgba(0,0,10,0.5)'}}>
 
             {/* Frame selector */}
@@ -2123,7 +2164,7 @@ function CropEditor({ sp: initSp, onApply, onClose }) {
                 background:'#0a0a1a', border:'1px solid #334', color:'#445', borderRadius:3}}>
               RESET
             </button>
-          </div>
+          </div>}
         </div>
       </div>
     </div>
