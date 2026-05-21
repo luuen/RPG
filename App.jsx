@@ -915,14 +915,14 @@ const HeroSprite = React.memo(function HeroSprite({ className="Knight", scale=1,
 
 const BOSS_GIF_BASE = ASSET_BASE+"/icons/sprites/boss/boss_demon_slime_FREE_v1.0/gifs";
 // Boss GIF natural frame size is 288×160. renderW/renderH come from ENEMY_DIMS.dragon × eScale.
-function DemonSlimeSprite({ renderW=238, renderH=132, enemyFlash=false, phase="action", bossAttackPattern=null }) {
-  // Priority: dying > hit > attacking (cleave) > idle. Charge removed — boss is melee-only.
-  // "defending" = player's defend QTE — boss mid-attack, keep cleave animation playing.
-  const isAttacking = phase==="enemy_turn" || phase==="defending";
-  const src = phase==="won"   ? `${BOSS_GIF_BASE}/05_d_death.webp`
-            : enemyFlash      ? `${BOSS_GIF_BASE}/04_d_take_hit.webp`
-            : isAttacking     ? `${BOSS_GIF_BASE}/03_d_cleave.webp`
-            :                   `${BOSS_GIF_BASE}/01_d_idle.webp`;
+function DemonSlimeSprite({ renderW=238, renderH=132, enemyFlash=false, phase="action", bossAttackPattern=null, rushAnim=null }) {
+  // rushAnim: "approach"|"retreat" → walk GIF, "strike" → cleave GIF
+  const src = phase==="won"                              ? `${BOSS_GIF_BASE}/05_d_death.webp`
+            : enemyFlash                                 ? `${BOSS_GIF_BASE}/04_d_take_hit.webp`
+            : (rushAnim==="approach"||rushAnim==="retreat") ? `${BOSS_GIF_BASE}/02_d_walk.webp`
+            : rushAnim==="strike"                        ? `${BOSS_GIF_BASE}/03_d_cleave.webp`
+            : (phase==="enemy_turn"||phase==="defending") ? `${BOSS_GIF_BASE}/03_d_cleave.webp`
+            :                                              `${BOSS_GIF_BASE}/01_d_idle.webp`;
   return (
     <div style={{position:"relative",width:renderW,height:renderH}}>
       <img key={src} src={src} width={renderW} height={renderH}
@@ -985,7 +985,7 @@ const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, spr
 
   if (id==="dragon") {
     const bd = ENEMY_DIMS.dragon;
-    return <DemonSlimeSprite renderW={Math.round(bd.w*scale)} renderH={Math.round(bd.h*scale)} enemyFlash={enemyFlash} phase={phase} bossAttackPattern={bossAttackPattern}/>;
+    return <DemonSlimeSprite renderW={Math.round(bd.w*scale)} renderH={Math.round(bd.h*scale)} enemyFlash={enemyFlash} phase={phase} bossAttackPattern={bossAttackPattern} rushAnim={rushAnim}/>;
   }
 
   if (sprite) {
@@ -3066,15 +3066,18 @@ function App() {
       const atkEntry = sprite?.attacks?.[nextIdx];
       const atkType  = atkEntry?.type;
       let defendFn;
-      if (atkType === 'rush' && sprite?.rushApproach && cs?.enemy?.id!=="dragon" && !cs?.pvpMode) {
+      if (cs?.enemy?.id === "dragon" && !cs?.pvpMode) {
+        // Boss always walks up and melees
+        defendFn = () => startRushMeleeQTE(nextIdx);
+      } else if (atkType === 'rush' && sprite?.rushApproach && !cs?.pvpMode) {
         defendFn = () => startRushMeleeQTE(nextIdx);
       } else if (atkType === 'slow_proj') {
-        defendFn = () => startDefendQTE(bossAtk, 'slow');
+        defendFn = () => startDefendQTE(null, 'slow');
       } else if (atkType === 'projectile' || atkType) {
-        defendFn = () => startDefendQTE(bossAtk);
+        defendFn = () => startDefendQTE(null);
       } else {
-        const useRush = sprite?.rushApproach && cs?.enemy?.id!=="dragon" && !cs?.pvpMode && Math.random() < 0.5;
-        defendFn = useRush ? () => startRushMeleeQTE(nextIdx) : () => startDefendQTE(bossAtk);
+        const useRush = sprite?.rushApproach && !cs?.pvpMode && Math.random() < 0.5;
+        defendFn = useRush ? () => startRushMeleeQTE(nextIdx) : () => startDefendQTE(null);
       }
       qteRef.current.defendTimer = setTimeout(defendFn, _defDelay);
     }
@@ -3148,9 +3151,11 @@ function App() {
     const _nextType2 = _elitePending ? _sp2?.attacks?.[_nextIdx2]?.type : null;
     const _nextBossAtk2 = _elitePending && cs?.enemy?.id==="dragon" ? "cleave" : null;
     if (_elitePending) {
-      const _secondFn = (_nextType2==='rush' && _sp2?.rushApproach && cs?.enemy?.id!=='dragon' && !cs?.pvpMode)
+      const _secondFn = (cs?.enemy?.id==='dragon' && !cs?.pvpMode)
         ? ()=>startRushMeleeQTE(_nextIdx2)
-        : (_nextType2==='slow_proj' ? ()=>startDefendQTE(null,'slow') : ()=>startDefendQTE(_nextBossAtk2));
+        : (_nextType2==='rush' && _sp2?.rushApproach && !cs?.pvpMode)
+          ? ()=>startRushMeleeQTE(_nextIdx2)
+          : (_nextType2==='slow_proj' ? ()=>startDefendQTE(null,'slow') : ()=>startDefendQTE(null));
       qteRef.current.defendTimer = setTimeout(_secondFn, 550);
     }
     setPlayer(p=>{
@@ -4167,9 +4172,10 @@ function App() {
   /* ── Rush Melee QTE ─────────────────────────────────────── */
   // Enemy runs/walks to hero, plays strike animation, player times SPACE to block
   const startRushMeleeQTE = (atkIdx = null) => {
-    if (cs?.enemy?.id==="dragon" || cs?.pvpMode) { startDefendQTE(); return; }
+    if (cs?.pvpMode) { startDefendQTE(); return; }
+    const isBoss = cs?.enemy?.id === "dragon";
     const sprite = cs?.enemySprite;
-    if (!sprite?.rushApproach) { startDefendQTE(); return; } // fallback if no rush data
+    if (!isBoss && !sprite?.rushApproach) { startDefendQTE(); return; } // fallback if no rush data
     const _rushAtkIdx = atkIdx ?? cs?.enemyAtkIdx ?? 0;
 
     const ref = qteRef.current;
