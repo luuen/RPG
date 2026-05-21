@@ -3054,8 +3054,30 @@ function App() {
     setEnemyFlash(true);
     setTimeout(()=>setEnemyFlash(false), 450);
 
-    // Pick boss attack pattern now so we can close over it in setCs + setTimeout
+    // Pick boss attack pattern now so we can close over it in setTimeout
     const bossAtk = cs?.enemy?.id === "dragon" ? (Math.random() < 0.5 ? "cleave" : "charge") : null;
+    // Compute next attack index OUTSIDE setCs — cs.enemyAtkIdx is stable during "action" phase.
+    // setTimeout must NOT be inside setCs: React 18 concurrent mode re-invokes state updaters,
+    // causing a second setTimeout → double attack. Keep setCs callback pure (no side effects).
+    const sprite   = cs?.enemySprite;
+    const nextIdx  = ((cs?.enemyAtkIdx??-1)+1) % (sprite?.attacks?.length||1);
+    if (!qteRef.current.debugMode) {
+      const _defDelay = cs?.enemy?.id==="dragon" ? 300 : 880;
+      const atkEntry = sprite?.attacks?.[nextIdx];
+      const atkType  = atkEntry?.type;
+      let defendFn;
+      if (atkType === 'rush' && sprite?.rushApproach && cs?.enemy?.id!=="dragon" && !cs?.pvpMode) {
+        defendFn = () => startRushMeleeQTE(nextIdx);
+      } else if (atkType === 'slow_proj') {
+        defendFn = () => startDefendQTE(bossAtk, 'slow');
+      } else if (atkType === 'projectile' || atkType) {
+        defendFn = () => startDefendQTE(bossAtk);
+      } else {
+        const useRush = sprite?.rushApproach && cs?.enemy?.id!=="dragon" && !cs?.pvpMode && Math.random() < 0.5;
+        defendFn = useRush ? () => startRushMeleeQTE(nextIdx) : () => startDefendQTE(bossAtk);
+      }
+      qteRef.current.defendTimer = setTimeout(defendFn, _defDelay);
+    }
     setCs(prev=>{
       if(!prev) return prev;
       const newHp  = Math.max(0, prev.enemy.hp - dmg);
@@ -3065,6 +3087,8 @@ function App() {
       if (newHp <= 0) {
         sfx.enemyDie();
         if (prev.enemy.id === "dragon") sfx.slimeDeath();
+        // Cancel the defend timer — enemy is dead, no counter-attack needed
+        clearTimeout(qteRef.current.defendTimer); qteRef.current.defendTimer = null;
         setTimeout(()=>{
           setPlayer(p=>p?({...p,xp:p.xp+prev.enemy.xp,floor:p.floor+1,visited:[...p.visited,prev.nodeId]}):p);
           if (prev.enemy.id === "dragon") {
@@ -3092,27 +3116,6 @@ function App() {
         }, 1100);
         return {...prev, enemy:{...prev.enemy,hp:0}, phase:"won", log:[...prev.log,logMsg]};
       }
-      const sprite = cs?.enemySprite;
-      const nextIdx  = ((prev.enemyAtkIdx??-1)+1) % (sprite?.attacks?.length||1);
-      if (!qteRef.current.debugMode) {
-        const _defDelay = cs?.enemy?.id==="dragon" ? 300 : 880;
-        // Derive attack type from sprite data; fall back to random rush for untyped sprites
-        const atkEntry = sprite?.attacks?.[nextIdx];
-        const atkType  = atkEntry?.type;
-        let defendFn;
-        if (atkType === 'rush' && sprite?.rushApproach && cs?.enemy?.id!=="dragon" && !cs?.pvpMode) {
-          defendFn = () => startRushMeleeQTE(nextIdx);
-        } else if (atkType === 'slow_proj') {
-          defendFn = () => startDefendQTE(bossAtk, 'slow');
-        } else if (atkType === 'projectile' || atkType) {
-          defendFn = () => startDefendQTE(bossAtk);
-        } else {
-          // No type annotation — keep legacy random-rush for backwards compat
-          const useRush = sprite?.rushApproach && cs?.enemy?.id!=="dragon" && !cs?.pvpMode && Math.random() < 0.5;
-          defendFn = useRush ? () => startRushMeleeQTE(nextIdx) : () => startDefendQTE(bossAtk);
-        }
-        qteRef.current.defendTimer = setTimeout(defendFn, _defDelay);
-      }
       // In debug mode stay in "action" so the panel can re-launch immediately
       const nextPhase = qteRef.current.debugMode ? "action" : "enemy_turn";
       const pendingAttacks = (!qteRef.current.debugMode && prev.elite && newHp>0) ? 1 : 0;
@@ -3137,6 +3140,19 @@ function App() {
       showHit(q==="perfect"?"PARRIED!":q==="good"?`BLOCKED −${dmg}hp`:`HIT −${dmg}hp`,
               q==="perfect"?"#44aaff":q==="good"?"#4488ff":"#ff4444");
     }
+    // Compute elite second-attack params OUTSIDE setCs — same concurrent-mode safety rule:
+    // setTimeout inside a state updater gets doubled when React re-invokes the updater.
+    const _elitePending = (cs?.pendingAttacks||0) > 0;
+    const _sp2 = cs?.enemySprite;
+    const _nextIdx2 = _elitePending ? ((cs?.enemyAtkIdx??-1)+1) % (_sp2?.attacks?.length||1) : 0;
+    const _nextType2 = _elitePending ? _sp2?.attacks?.[_nextIdx2]?.type : null;
+    const _nextBossAtk2 = _elitePending && cs?.enemy?.id==="dragon" ? (Math.random()<.5?"cleave":"charge") : null;
+    if (_elitePending) {
+      const _secondFn = (_nextType2==='rush' && _sp2?.rushApproach && cs?.enemy?.id!=='dragon' && !cs?.pvpMode)
+        ? ()=>startRushMeleeQTE(_nextIdx2)
+        : (_nextType2==='slow_proj' ? ()=>startDefendQTE(null,'slow') : ()=>startDefendQTE(_nextBossAtk2));
+      qteRef.current.defendTimer = setTimeout(_secondFn, 550);
+    }
     setPlayer(p=>{
       if(!p) return p;
       const nhp = Math.max(0, p.hp-dmg);
@@ -3148,18 +3164,8 @@ function App() {
       const logMsg = q==="perfect"?"⚡ Perfect parry! 0 damage.":
                      q==="good"   ?`Blocked — ${dmg} through.`:
                                    `${prev.enemy.name} slams for ${dmg}!`;
-      if((prev.pendingAttacks||0)>0){
-        const nextPending = prev.pendingAttacks-1;
-        const nextBossAtk = prev.enemy.id==="dragon"?(Math.random()<.5?"cleave":"charge"):null;
-        // Respect enemy attack type for elite second hit — rush enemies stay rush
-        const _sp2 = prev.enemySprite;
-        const _nextIdx2 = ((prev.enemyAtkIdx??-1)+1+1) % (_sp2?.attacks?.length||1);
-        const _nextType2 = _sp2?.attacks?.[_nextIdx2]?.type;
-        const _secondFn = (_nextType2==='rush' && _sp2?.rushApproach && prev.enemy?.id!=='dragon' && !prev.pvpMode)
-          ? ()=>startRushMeleeQTE(_nextIdx2)
-          : (_nextType2==='slow_proj' ? ()=>startDefendQTE(null,'slow') : ()=>startDefendQTE(nextBossAtk));
-        qteRef.current.defendTimer = setTimeout(_secondFn, 550);
-        return {...prev, phase:"enemy_turn", enemyAtkIdx:_nextIdx2, pendingAttacks:nextPending, bossAttackPattern:nextBossAtk,
+      if(_elitePending){
+        return {...prev, phase:"enemy_turn", enemyAtkIdx:_nextIdx2, pendingAttacks:(prev.pendingAttacks||1)-1, bossAttackPattern:_nextBossAtk2,
           log:[...prev.log, logMsg, "⚔ ELITE attacks again!"].slice(-8)};
       }
       return {...prev, phase:"action", pendingAttacks:0,
