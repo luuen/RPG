@@ -143,42 +143,78 @@ const ENEMY_SPRITE_POOL = [
   // Minotaur: content y≈34-127 → cropY=30,cropH=98; walk is only 71px wide so cropX=12,cropW=104
   // Werewolf: content y≈48-127 → cropY=44,cropH=84
   {variant:"Gorgon_1",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7,  headPad:22, cropY:35,cropH:93,
-   attacks:[{file:"Attack_1.png",frames:16},{file:"Attack_2.png",frames:7},{file:"Attack_3.png",frames:10}],
+   attacks:[{file:"Attack_1.png",frames:16,type:"slow_proj"},{file:"Attack_2.png",frames:7,type:"projectile"},{file:"Attack_3.png",frames:10,type:"rush"}],
    hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:3,
-   rushApproach:{file:"Run.png",frames:8,fps:10}, rushStrike:{file:"Attack_1.png",frames:16,fps:14,hitFrame:8}},
+   rushApproach:{file:"Run.png",frames:7,fps:10}, rushStrike:{file:"Attack_3.png",frames:10,fps:14,hitFrame:5}},
   {variant:"Gorgon_2",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7,  headPad:22, cropY:35,cropH:93,
-   attacks:[{file:"Attack_1.png",frames:16},{file:"Attack_2.png",frames:7},{file:"Attack_3.png",frames:10}],
+   attacks:[{file:"Attack_1.png",frames:16,type:"slow_proj"},{file:"Attack_2.png",frames:7,type:"projectile"},{file:"Attack_3.png",frames:10,type:"rush"}],
    hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:3,
-   rushApproach:{file:"Run.png",frames:8,fps:10}, rushStrike:{file:"Attack_1.png",frames:16,fps:14,hitFrame:8}},
+   rushApproach:{file:"Run.png",frames:7,fps:10}, rushStrike:{file:"Attack_3.png",frames:10,fps:14,hitFrame:5}},
   {variant:"Gorgon_3",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7,  headPad:22, cropY:35,cropH:93,
-   attacks:[{file:"Attack_1.png",frames:16},{file:"Attack_2.png",frames:7},{file:"Attack_3.png",frames:10}],
+   attacks:[{file:"Attack_1.png",frames:16,type:"slow_proj"},{file:"Attack_2.png",frames:7,type:"projectile"},{file:"Attack_3.png",frames:10,type:"rush"}],
    hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:3,
-   rushApproach:{file:"Run.png",frames:8,fps:10}, rushStrike:{file:"Attack_1.png",frames:16,fps:14,hitFrame:8}},
+   rushApproach:{file:"Run.png",frames:7,fps:10}, rushStrike:{file:"Attack_3.png",frames:10,fps:14,hitFrame:5}},
   {variant:"Minotaur_1",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10, headPad:18, cropY:30,cropH:98,
-   attacks:[{file:"Attack.png",frames:5}],
+   attacks:[{file:"Attack.png",frames:5,type:"rush"}],
    hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:5,
-   rushApproach:{file:"Walk.png",frames:8,fps:8}, rushStrike:{file:"Attack.png",frames:5,fps:10,hitFrame:3}},
+   rushApproach:{file:"Walk.png",frames:12,fps:8}, rushStrike:{file:"Attack.png",frames:5,fps:10,hitFrame:4}},
   {variant:"Minotaur_2",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10, headPad:18, cropY:30,cropH:98,
-   attacks:[{file:"Attack.png",frames:5}],
+   attacks:[{file:"Attack.png",frames:5,type:"rush"}],
    hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:5,
-   rushApproach:{file:"Walk.png",frames:8,fps:8}, rushStrike:{file:"Attack.png",frames:5,fps:10,hitFrame:3}},
+   rushApproach:{file:"Walk.png",frames:12,fps:8}, rushStrike:{file:"Attack.png",frames:5,fps:10,hitFrame:4}},
   {variant:"Minotaur_3",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10, headPad:18, cropY:30,cropH:98,
-   attacks:[{file:"Attack.png",frames:5}],
+   attacks:[{file:"Attack.png",frames:4,type:"rush",fps:10,hitFrame:3}],
    hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:5,
-   rushApproach:{file:"Walk.png",frames:8,fps:8}, rushStrike:{file:"Attack.png",frames:5,fps:10,hitFrame:3}},
+   rushApproach:{file:"Walk.png",frames:12,fps:8}},
   {variant:"Black_Werewolf",name:"Black Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8,  headPad:24,groundPad:10, cropY:44,cropH:84,
-   attacks:[{file:"Attack_1.png",frames:6},{file:"Attack_2.png",frames:4},{file:"Attack_3.png",frames:5}],
+   attacks:[{file:"Attack_1.png",frames:6,type:"rush",fps:12,hitFrame:5},{file:"Attack_2.png",frames:4,type:"rush",fps:12,hitFrame:3},{file:"Attack_3.png",frames:5,type:"rush",fps:12,hitFrame:4},{file:"Run+Attack.png",frames:7,type:"rush",fps:14,hitFrame:5}],
    hurtFile:"Hurt.png",hurtFrames:2, deadFile:"Dead.png",deadFrames:2,
-   rushApproach:{file:"Run.png",frames:8,fps:12}, rushStrike:{file:"Run+Attack.png",frames:9,fps:14,hitFrame:5}},
+   rushApproach:{file:"Run.png",frames:8,fps:12},
+   animCrops:{"Run.png":{x:-93,y:44,w:202,h:84,perFrame:[{x:-13,y:44,w:122,h:84},{x:-18,y:44,w:106,h:84},{x:-24,y:44,w:101,h:84},{x:-29,y:44,w:90,h:84},{x:-45,y:44,w:95,h:84},{x:-61,y:44,w:96,h:84},{x:-77,y:44,w:96,h:84},{x:-93,y:44,w:106,h:84}]}}},
   {variant:"Red_Werewolf",  name:"Red Werewolf",  dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8,  headPad:24,groundPad:10, cropY:44,cropH:84,
-   attacks:[{file:"Attack_1.png",frames:6},{file:"Attack_2.png",frames:4},{file:"Attack_3.png",frames:5}],
+   attacks:[{file:"Attack_1.png",frames:6,type:"rush",fps:12,hitFrame:5},{file:"Attack_2.png",frames:4,type:"rush",fps:12,hitFrame:3},{file:"Attack_3.png",frames:5,type:"rush",fps:12,hitFrame:4},{file:"Run+Attack.png",frames:7,type:"rush",fps:14,hitFrame:5}],
    hurtFile:"Hurt.png",hurtFrames:2, deadFile:"Dead.png",deadFrames:2,
-   rushApproach:{file:"Run.png",frames:8,fps:12}, rushStrike:{file:"Run+Attack.png",frames:9,fps:14,hitFrame:5}},
+   rushApproach:{file:"Run.png",frames:8,fps:12},
+   animCrops:{"Run.png":{x:-93,y:44,w:202,h:84,perFrame:[{x:-13,y:44,w:122,h:84},{x:-18,y:44,w:106,h:84},{x:-24,y:44,w:101,h:84},{x:-29,y:44,w:90,h:84},{x:-45,y:44,w:95,h:84},{x:-61,y:44,w:96,h:84},{x:-77,y:44,w:96,h:84},{x:-93,y:44,w:106,h:84}]}}},
   {variant:"White_Werewolf",name:"White Werewolf",dir:"free-werewolf-sprite-sheets-pixel-art",       frameW:128,frameH:128,idleFrames:8,  headPad:24,groundPad:10, cropY:44,cropH:84,
-   attacks:[{file:"Attack_1.png",frames:6},{file:"Attack_2.png",frames:4},{file:"Attack_3.png",frames:5}],
+   attacks:[{file:"Attack_1.png",frames:6,type:"rush",fps:12,hitFrame:5},{file:"Attack_2.png",frames:4,type:"rush",fps:12,hitFrame:3},{file:"Attack_3.png",frames:5,type:"rush",fps:12,hitFrame:4},{file:"Run+Attack.png",frames:7,type:"rush",fps:14,hitFrame:5}],
    hurtFile:"Hurt.png",hurtFrames:2, deadFile:"Dead.png",deadFrames:2,
-   rushApproach:{file:"Run.png",frames:8,fps:12}, rushStrike:{file:"Run+Attack.png",frames:9,fps:14,hitFrame:5}},
+   rushApproach:{file:"Run.png",frames:8,fps:12},
+   animCrops:{"Run.png":{x:-93,y:44,w:202,h:84,perFrame:[{x:-13,y:44,w:122,h:84},{x:-18,y:44,w:106,h:84},{x:-24,y:44,w:101,h:84},{x:-29,y:44,w:90,h:84},{x:-45,y:44,w:95,h:84},{x:-61,y:44,w:96,h:84},{x:-77,y:44,w:96,h:84},{x:-93,y:44,w:106,h:84}]}}},
 ];
+
+// Restore user-applied animCrops from localStorage so edits survive page reloads.
+// Accepts any entry that has perFrame data (user's manual crop edits).
+try {
+  const _saved = JSON.parse(localStorage.getItem('__animCrops') || '{}');
+  for (const _e of ENEMY_SPRITE_POOL) {
+    if (_saved[_e.variant]) {
+      if (!_e.animCrops) _e.animCrops = {};
+      for (const [_file, _crop] of Object.entries(_saved[_e.variant])) {
+        if (!_crop || typeof _crop !== 'object') continue;
+        if (!_crop.perFrame?.length && !_crop._v) continue; // skip empty/corrupt entries
+        _e.animCrops[_file] = _crop;
+      }
+    }
+  }
+} catch(_) {}
+
+// Helper: get rush strike config for a given attack index
+// Uses explicit rushStrike if present, otherwise reads from attacks[atkIdx] (must be type:"rush")
+// Falls back to first rush attack entry if atkIdx not specified or out of range
+function getRushStrike(sp, atkIdx = null) {
+  if (!sp) return null;
+  // If explicit rushStrike and no per-attack setup, use it
+  if (sp.rushStrike && !sp.attacks?.some(a => a.type === 'rush')) return sp.rushStrike;
+  // Find the attack at atkIdx (or first rush attack)
+  const atk = (atkIdx != null && sp.attacks?.[atkIdx]?.type === 'rush')
+    ? sp.attacks[atkIdx]
+    : sp.attacks?.find(a => a.type === 'rush');
+  if (atk) return { file: atk.file, frames: atk.frames, fps: atk.fps || 12,
+                    hitFrame: atk.hitFrame ?? (atk.frames - 1) };
+  // Final fallback to explicit rushStrike
+  return sp.rushStrike ?? null;
+}
 
 // Gandalf layered hero sprites — randomized per run
 // Path helpers
@@ -513,22 +549,69 @@ if (!document.getElementById('__stompImpactKF')) {
 }
 
 // Animates a horizontal sprite strip — JS-driven frame counter
-// React.memo prevents re-renders during QTE rAF loops (props stable; only qteAnim.t changes)
-// Crop support: when imgW/imgH are provided (full strip px), the div clips to displayW×displayH
-// and each frame is offset by (frame * frameStride + cropOffX, cropOffY) in display pixels.
-// Without crop props the behaviour is identical to before.
+// Per-frame canvas sprite image cache
+const _spriteImgCache = {};
+
+// AnimatedSprite — two render modes:
+// 1. CSS sliding-div (default): for uniform crops, fast.
+// 2. Canvas per-frame (when perFrameOps provided): for sprites where each frame has its own
+//    crop region on the strip (including negative x = borrowing from previous frame's pixels).
 const AnimatedSprite = React.memo(function AnimatedSprite({
   src, numFrames, fps=8, displayW, displayH, flip=false,
-  imgW=null, imgH=null, cropOffX=0, cropOffY=0,
+  imgW=null, imgH=null, cropOffX=0, cropOffY=0, loop=true,
+  perFrameOps=null, // [{srcX,srcY,srcW,srcH,dstX,dstY,dstW,dstH}] — canvas mode
+  onComplete=null,  // fired once when loop=false animation reaches last frame
 }) {
   const [frame, setFrame] = React.useState(0);
+  const canvasRef = React.useRef(null);
+  const [, forceUpdate] = React.useReducer(x=>x+1, 0);
+  const onCompleteRef = React.useRef(onComplete);
+  React.useEffect(()=>{ onCompleteRef.current = onComplete; }, [onComplete]);
+
   React.useEffect(()=>{
-    const iv = setInterval(()=>setFrame(f=>(f+1)%numFrames), 1000/fps);
+    setFrame(0);
+    const iv = setInterval(()=>setFrame(f=>{
+      if (!loop && f >= numFrames - 1) {
+        clearInterval(iv);
+        onCompleteRef.current?.();
+        return numFrames - 1;
+      }
+      return (f + 1) % numFrames;
+    }), 1000/fps);
     return ()=>clearInterval(iv);
-  },[src, numFrames, fps]);
-  const totalW     = imgW ?? numFrames * displayW;  // full strip display width
-  const totalH     = imgH ?? displayH;
-  const frameStride = totalW / numFrames;            // display px per raw frame
+  },[src, numFrames, fps, loop]);
+
+  // Canvas mode: load image once, draw per-frame crop on each frame change
+  React.useEffect(()=>{
+    if (!perFrameOps) return;
+    if (_spriteImgCache[src]) { forceUpdate(); return; }
+    const img = new Image();
+    img.onload = ()=>{ _spriteImgCache[src] = img; forceUpdate(); };
+    img.src = src;
+  },[src, !!perFrameOps]);
+
+  React.useEffect(()=>{
+    if (!perFrameOps) return;
+    const cv = canvasRef.current; if (!cv) return;
+    const img = _spriteImgCache[src]; if (!img) return;
+    const ctx = cv.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, displayW, displayH);
+    const op = perFrameOps[frame % perFrameOps.length];
+    if (op && op.srcW > 0 && op.srcH > 0)
+      ctx.drawImage(img, op.srcX, op.srcY, op.srcW, op.srcH, op.dstX, op.dstY, op.dstW, op.dstH);
+  },[frame, src, perFrameOps, displayW, displayH]);
+
+  if (perFrameOps) {
+    return <canvas ref={canvasRef} width={displayW} height={displayH}
+      style={{display:'block', imageRendering:'pixelated',
+        transform:flip?'scaleX(-1)':'none'}}/>;
+  }
+
+  // CSS sliding-div mode (uniform crop)
+  const totalW      = imgW ?? numFrames * displayW;
+  const totalH      = imgH ?? displayH;
+  const frameStride = totalW / numFrames;
   return (
     <div style={{width:displayW,height:displayH,overflow:"hidden",position:"relative",
       transform:flip?"scaleX(-1)":"none",imageRendering:"pixelated"}}>
@@ -542,6 +625,79 @@ const AnimatedSprite = React.memo(function AnimatedSprite({
     </div>
   );
 });
+
+// PerFrameCanvas — dedicated per-frame sprite renderer that reads animCrops directly.
+// Bypasses AnimatedSprite / perFrameOps useMemo completely.
+// Same draw logic as CropEditor preview — guaranteed to show the exact saved crops.
+const _pfImgCache = {};
+function PerFrameCanvas({ src, animCrops, fw=128, fps=12, scale=1, loop=true, flip=false }) {
+  const pf    = animCrops?.perFrame;
+  const uTop  = animCrops?.y ?? 0;
+  const uH    = animCrops?.h ?? fw;
+  const nf    = pf?.length || 1;
+  const maxW      = pf ? Math.max(...pf.map(p => p.w)) : fw;
+  const maxSrcXL  = pf ? Math.max(...pf.map((p, n) => Math.max(0, -(n * fw + p.x)))) : 0;
+  const canvasW   = maxW + maxSrcXL;
+  const displayW  = Math.round(canvasW * scale);
+  const displayH  = Math.round(uH * scale);
+  const sx        = displayW / canvasW;
+  const sy        = displayH / uH;
+  const fixedDstX = Math.round(maxSrcXL * sx);
+
+  const [frame, setFrame] = React.useState(0);
+  const canvasRef = React.useRef(null);
+  const pfRef     = React.useRef(pf);  pfRef.current = pf;   // always latest, no stale closure
+  const acRef     = React.useRef(animCrops); acRef.current = animCrops;
+  const [, bump]  = React.useReducer(x => x+1, 0);
+
+  // Animation tick
+  React.useEffect(() => {
+    setFrame(0);
+    if (nf <= 1) return;
+    const iv = setInterval(() => setFrame(f => loop ? (f+1)%nf : Math.min(f+1, nf-1)), 1000/fps);
+    return () => clearInterval(iv);
+  }, [src, nf, fps, loop]);
+
+  // Image load (once per src)
+  React.useEffect(() => {
+    if (_pfImgCache[src]) { bump(); return; }
+    const img = new Image();
+    img.onload = () => { _pfImgCache[src] = img; bump(); };
+    img.src = src;
+  }, [src]);
+
+  // Draw on every frame tick
+  React.useEffect(() => {
+    const cv = canvasRef.current; if (!cv) return;
+    const img = _pfImgCache[src]; if (!img) return;
+    const _pf = pfRef.current;
+    const _ac = acRef.current;
+    const _uTop = _ac?.y ?? 0;
+    const ctx = cv.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, displayW, displayH);
+    if (!_pf || !_pf.length) return;
+    const fi   = frame % _pf.length;
+    const p    = _pf[fi];
+    const aFW = img.naturalWidth / _pf.length;  // actual frame width in image pixels
+    const iSx = aFW / fw;                         // logical → image pixel scale (x only)
+    // pf.y/pf.h are in image pixel coords (sy=1 for single-row sprite sheets)
+    const absL = fi * aFW + p.x * iSx;
+    const absR = fi * aFW + (p.x + p.w) * iSx;
+    const srcX = Math.max(0, absL);
+    const srcW = Math.max(0, Math.min(img.naturalWidth, absR) - srcX);
+    const srcY = p.y ?? _uTop;
+    const srcH = p.h ?? uH;
+    const dstW = Math.round(srcW / iSx * sx);
+    const dstH = Math.round(srcH * sy);
+    if (srcW > 0 && srcH > 0)
+      ctx.drawImage(img, srcX, srcY, srcW, srcH, fixedDstX, 0, dstW, dstH);
+  }, [frame, src]);
+
+  if (!pf || !pf.length) return null;
+  return <canvas ref={canvasRef} width={displayW} height={displayH}
+    style={{display:'block', imageRendering:'pixelated', transform:flip?'scaleX(-1)':'none'}}/>;
+}
 
 // Hero sprite — layered skin + clothing + hair, all same spritesheet layout.
 // ── Global image cache — loaded once, reused forever ──────────────────────────
@@ -786,42 +942,94 @@ function DemonSlimeSprite({ renderW=238, renderH=132, enemyFlash=false, phase="a
   );
 }
 
-const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, sprite=null, enemyFlash=false, phase="action", bossAttackPattern=null, rushAnim=null }) {
+const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, sprite=null, enemyFlash=false, phase="action", bossAttackPattern=null, rushAnim=null, atkIdx=0 }) {
+  // Hooks must be called unconditionally — compute perFrameOps at top level always
+  const perFrameOps = React.useMemo(() => {
+    if (!sprite) return null;
+    const animFile = (() => {
+      if (rushAnim === "approach" || rushAnim === "retreat") return sprite.rushApproach?.file;
+      if (rushAnim === "strike") return getRushStrike(sprite, 0)?.file;
+      if (phase === "won") return sprite.deadFile;
+      if (phase === "enemy_turn" || phase === "defending") return sprite.attacks?.[0]?.file;
+      return "Idle.png";
+    })();
+    const ac = sprite.animCrops?.[animFile];
+    const pf = ac?.perFrame;
+    if (!pf || !pf.length) return null;
+    const fw = sprite.frameW || 128;
+    const frames = (() => {
+      if (rushAnim === "approach" || rushAnim === "retreat") return sprite.rushApproach?.frames || 8;
+      return pf.length;
+    })();
+    const totalStripW = fw * frames;
+    const uTop = ac.y, uH = ac.h;
+    const pfSlice = pf.slice(0, frames);
+    const maxW = Math.max(...pfSlice.map(p => p.w));
+    // maxSrcXL: largest left-overflow across all frames → fixed dstX anchor eliminates per-frame jitter
+    const maxSrcXL = Math.max(...pfSlice.map((p, n) => Math.max(0, -(n * fw + p.x))));
+    const canvasW  = maxW + maxSrcXL;
+    const displayW = Math.round(canvasW * scale), displayH = Math.round(uH * scale);
+    const sx = displayW / canvasW, sy = displayH / uH;
+    const fixedDstX = Math.round(maxSrcXL * sx); // same for every frame → no horizontal jitter
+    return pfSlice.map((p, n) => {
+      const absLeft  = n * fw + p.x;
+      const absRight = n * fw + p.x + p.w;
+      const srcX  = Math.max(0, absLeft);
+      const srcRight = Math.min(totalStripW, absRight);
+      const srcW  = Math.max(0, srcRight - srcX);
+      const srcY  = p.y ?? uTop;
+      const srcH  = p.h ?? uH;
+      const dstX  = fixedDstX;
+      const dstY  = Math.round((srcY - uTop) * sy);
+      const dstW  = Math.round(srcW * sx);
+      const dstH  = Math.round(srcH * sy);
+      return { srcX, srcY, srcW, srcH, dstX, dstY, dstW, dstH };
+    });
+  }, [sprite, rushAnim, phase, scale]);
+
+  const [slowProjDone, setSlowProjDone] = React.useState(false);
+  React.useEffect(() => { setSlowProjDone(false); }, [sprite?.variant, atkIdx, phase]);
+
   if (id==="dragon") {
     const bd = ENEMY_DIMS.dragon;
     return <DemonSlimeSprite renderW={Math.round(bd.w*scale)} renderH={Math.round(bd.h*scale)} enemyFlash={enemyFlash} phase={phase} bossAttackPattern={bossAttackPattern}/>;
   }
 
-  const atkIdxRef = React.useRef(0);
-  const prevPhaseRef = React.useRef(phase);
-  if (phase==="enemy_turn" && prevPhaseRef.current!=="enemy_turn" && sprite?.attacks?.length>1) {
-    atkIdxRef.current = (atkIdxRef.current + 1) % sprite.attacks.length;
-  }
-  prevPhaseRef.current = phase;
-
   if (sprite) {
-    const cropX  = sprite.cropX  || 0;
-    const cropY  = sprite.cropY  || 0;
-    const cropW  = sprite.cropW  || sprite.frameW;
-    const cropH  = sprite.cropH  || sprite.frameH;
-    const displayW = Math.round(cropW * scale);
-    const displayH = Math.round(cropH * scale);
-    const cropOffX = Math.round(cropX * scale);
-    const cropOffY = Math.round(cropY * scale);
     const base = `${ASSET_BASE}/icons/sprites/${sprite.dir}/${sprite.variant}`;
 
-    let src, frames, fps;
+    let src, frames, fps, atkType=null;
     const isAttacking = phase==="enemy_turn" || phase==="defending";
+
+    // Rush approach/retreat: use PerFrameCanvas directly if perFrame data exists.
+    // Bypasses AnimatedSprite + perFrameOps useMemo entirely — reads animCrops straight.
+    if ((rushAnim === "approach" || rushAnim === "retreat") && sprite.rushApproach) {
+      const _rapFile = sprite.rushApproach.file;
+      const _rapAC   = sprite.animCrops?.[_rapFile];
+      if (_rapAC?.perFrame?.length) {
+        const _rapSrc = `${base}/${_rapFile}`;
+        return <PerFrameCanvas
+          src={_rapSrc}
+          animCrops={_rapAC}
+          fw={sprite.frameW || 128}
+          fps={sprite.rushApproach.fps || 12}
+          scale={scale}
+          loop={true}
+          flip={rushAnim === "retreat"}
+        />;
+      }
+    }
 
     // Rush melee overrides normal animation selection
     if (rushAnim === "approach" && sprite.rushApproach) {
       src    = `${base}/${sprite.rushApproach.file}`;
       frames = sprite.rushApproach.frames;
       fps    = sprite.rushApproach.fps || 10;
-    } else if (rushAnim === "strike" && sprite.rushStrike) {
-      src    = `${base}/${sprite.rushStrike.file}`;
-      frames = sprite.rushStrike.frames;
-      fps    = sprite.rushStrike.fps || 12;
+    } else if (rushAnim === "strike" && getRushStrike(sprite, atkIdx)) {
+      const _rs = getRushStrike(sprite, atkIdx);
+      src    = `${base}/${_rs.file}`;
+      frames = _rs.frames;
+      fps    = _rs.fps || 12;
     } else if (rushAnim === "retreat" && sprite.rushApproach) {
       src    = `${base}/${sprite.rushApproach.file}`;
       frames = sprite.rushApproach.frames;
@@ -835,21 +1043,56 @@ const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, spr
       frames = sprite.hurtFrames || 2;
       fps    = 14;
     } else if (isAttacking && sprite.attacks?.length) {
-      const atk = sprite.attacks[atkIdxRef.current % sprite.attacks.length];
-      src    = `${base}/${atk.file}`;
-      frames = atk.frames;
-      fps    = 12;
+      const atk = sprite.attacks[atkIdx % sprite.attacks.length];
+      src     = `${base}/${atk.file}`;
+      frames  = atk.frames;
+      fps     = 12;
+      atkType = atk.type || null;
+      // slow_proj plays once — when done, revert to idle
+      if (atkType === 'slow_proj' && slowProjDone) {
+        src    = `${base}/Idle.png`;
+        frames = sprite.idleFrames;
+        fps    = 8;
+        atkType = null;
+      }
     } else {
       src    = `${base}/Idle.png`;
       frames = sprite.idleFrames;
       fps    = 8;
     }
 
+    // Per-animation crop: check animCrops[file] first, fall back to global crop
+    const _animFile = src.split('/').pop();
+    const _ac = sprite.animCrops?.[_animFile];
+    const cropX  = _ac?.x ?? (sprite.cropX  || 0);
+    const cropY  = _ac?.y ?? (sprite.cropY  || 0);
+    const cropH  = _ac?.h ?? (sprite.cropH  || sprite.frameH);
+    // When perFrame present, canvas = maxW + maxSrcXL (matches perFrameOps useMemo fixed-dstX logic)
+    const _pf = _ac?.perFrame;
+    const cropW  = _pf?.length
+      ? (() => {
+          const _fw2 = sprite.frameW || 128;
+          const _maxW2 = Math.max(..._pf.map(p => p.w));
+          const _maxSrcXL2 = Math.max(..._pf.map((p, n) => Math.max(0, -(n * _fw2 + p.x))));
+          return _maxW2 + _maxSrcXL2;
+        })()
+      : (_ac?.w ?? (sprite.cropW  || sprite.frameW));
+    const displayW = Math.round(cropW * scale);
+    const displayH = Math.round(cropH * scale);
+    const cropOffX = Math.round(cropX * scale);
+    const cropOffY = Math.round(cropY * scale);
+
     const imgW = Math.round(sprite.frameW * scale) * frames;
     const imgH = Math.round(sprite.frameH * scale);
+    const isDead = phase === 'won' && !!sprite.deadFile;
+    const playOnce = rushAnim === 'strike' || atkType === 'slow_proj'; // strike and slow_proj play once
+
     return <AnimatedSprite src={src} numFrames={frames} fps={fps}
       displayW={displayW} displayH={displayH}
-      imgW={imgW} imgH={imgH} cropOffX={cropOffX} cropOffY={cropOffY}/>;
+      imgW={imgW} imgH={imgH} cropOffX={cropOffX} cropOffY={cropOffY}
+      perFrameOps={perFrameOps}
+      loop={!isDead && !playOnce}
+      onComplete={atkType === 'slow_proj' ? () => setSlowProjDone(true) : null}/>;
   }
   const dims = ENEMY_DIMS[id]||{w:64,h:78};
   return <div style={{width:dims.w*scale,height:dims.h*scale}}/>;
@@ -1399,34 +1642,531 @@ function CropSliderRow({ label, value, min, max, onChange }) {
   );
 }
 
+/* ── Crop Editor — modal, uses actual image dimensions for accuracy ─── */
+function CropEditor({ sp: initSp, onApply, onClose }) {
+  // Monster picker — defaults to whatever enemy is active but can be changed
+  const pool = window.ENEMY_SPRITE_POOL || [];
+  const [sp, setSp] = React.useState(initSp || pool[0]);
+
+  const FW = sp.frameW || 128;
+  const FH = sp.frameH || 128;
+  const TOL = 8;
+
+  const base = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}`;
+
+  const anims = React.useMemo(() => {
+    const list = [];
+    list.push({label:'IDLE',   file:'Idle.png',            frames:sp.idleFrames||8});
+    if (sp.rushApproach) list.push({label:'RUN',    file:sp.rushApproach.file, frames:sp.rushApproach.frames});
+    const _rs = getRushStrike(sp);
+    if (_rs && !sp.attacks?.some(a => a.file === _rs.file)) list.push({label:'STRIKE', file:_rs.file, frames:_rs.frames});
+    (sp.attacks||[]).forEach((a,i)=>list.push({label:`ATK${i+1}`, file:a.file, frames:a.frames}));
+    if (sp.hurtFile) list.push({label:'HURT', file:sp.hurtFile, frames:sp.hurtFrames||2});
+    if (sp.deadFile) list.push({label:'DEAD', file:sp.deadFile, frames:sp.deadFrames||3});
+    return list;
+  }, [sp.variant]);
+
+  const defaultAnim = Math.max(0, anims.findIndex(a=>a.label==='RUN'));
+  const [animIdx,   setAnimIdx]   = React.useState(defaultAnim);
+  const [selFrame,  setSelFrame]  = React.useState(0);   // which frame's controls are shown
+  const [imgInfo,   setImgInfo]   = React.useState(null);
+  const [drawTick,  setDrawTick]  = React.useState(0);
+  const [applyFlash, setApplyFlash] = React.useState(null); // 'done' when flashing
+
+  const anim = anims[Math.min(animIdx, anims.length-1)];
+  const src  = `${base}/${anim.file}`;
+  const NF   = anim.frames;
+
+  // Per-frame independent lines — array of NF objects
+  // file: if provided, checks sp.animCrops[file] before falling back to global crop
+  const makeFrameLines = (nf, s, file) => {
+    const ac = file ? s.animCrops?.[file] : null;
+    // If per-frame crops saved, restore each frame individually so CropEditor shows
+    // the actual saved state instead of the bounding box (which would wipe perFrame on Apply)
+    if (ac?.perFrame?.length) {
+      return Array.from({length: nf}, (_, i) => {
+        const pf = ac.perFrame[i] ?? ac.perFrame[ac.perFrame.length - 1];
+        return { top: pf.y, bottom: pf.y + pf.h, left: pf.x, right: pf.x + pf.w };
+      });
+    }
+    const top    = ac ? ac.y           : (s.cropY ?? 0);
+    const bottom = ac ? ac.y + ac.h    : (s.cropY ?? 0) + (s.cropH ?? (s.frameH||128));
+    const left   = ac ? ac.x           : (s.cropX ?? 0);
+    const right  = ac ? ac.x + ac.w    : (s.cropX ?? 0) + (s.cropW ?? (s.frameW||128));
+    return Array.from({length: nf}, () => ({top, bottom, left, right}));
+  };
+  const [perFrame, setPerFrame] = React.useState(() => makeFrameLines(NF, sp, anim.file));
+
+  // Reset when monster changes
+  React.useEffect(() => {
+    const da = anims.findIndex(a=>a.label==='RUN');
+    const idx = Math.max(0, da);
+    setAnimIdx(idx);
+    setSelFrame(0);
+    setPerFrame(makeFrameLines(NF, sp, anims[idx]?.file));
+    infoRef.current = null;
+    setImgInfo(null);
+  }, [sp.variant]);
+
+  // Resize perFrame when animation changes
+  // If this anim has a saved animCrop, restore it; otherwise carry over current crop values
+  React.useEffect(() => {
+    setSelFrame(0);
+    setPerFrame(prev => {
+      const ac = sp.animCrops?.[anim.file];
+      if (ac) {
+        // Restore saved per-animation crop — use per-frame data if present
+        if (ac.perFrame && ac.perFrame.length === NF) {
+          return ac.perFrame.map(pf => ({
+            top: pf.y, bottom: pf.y + pf.h,
+            left: pf.x, right: pf.x + pf.w,
+          }));
+        }
+        const line = {top: ac.y, bottom: ac.y + ac.h, left: ac.x, right: ac.x + ac.w};
+        return Array.from({length: NF}, () => ({...line}));
+      }
+      // No saved crop — carry over current values from frame 0 as starting point
+      const L = prev[0];
+      const template = L ? {...L} : makeFrameLines(1, sp, anim.file)[0];
+      return Array.from({length: NF}, () => ({...template}));
+    });
+  }, [src, NF]);
+
+  const canvasRef    = React.useRef(null);
+  const previewRef   = React.useRef(null);
+  const dragRef      = React.useRef(null);
+  const perFrameRef  = React.useRef(perFrame);
+  const infoRef      = React.useRef(null);
+  const moveHandler  = React.useRef(null);
+  perFrameRef.current = perFrame;
+
+  const doApply = () => {
+    const crop = framesToCrop(perFrame);
+    onApply(crop, sp, anim.file);
+    setApplyFlash('done');
+    setTimeout(() => setApplyFlash(null), 1400);
+  };
+
+  /* ── layout from actual image dimensions ── */
+  const makeLayout = (img, nf) => {
+    const iw = img.naturalWidth, ih = img.naturalHeight;
+    const frameW = iw / nf;
+    const zoom   = Math.min(5, Math.max(2, Math.floor((window.innerHeight * 0.55) / ih)));
+    const cw = Math.round(iw * zoom), ch = Math.round(ih * zoom);
+    const sx = frameW / FW, sy = ih / FH;
+    return {img, iw, ih, frameW, zoom, cw, ch, sx, sy, nf};
+  };
+
+  /* ── draw — per-frame independent lines ── */
+  const doDraw = (info, pf, sel) => {
+    const cv = canvasRef.current; if (!cv || !info) return;
+    const {img, iw, ih, frameW, zoom, cw, ch, sx, sy, nf} = info;
+    const ctx = cv.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, cw, ch);
+    ctx.drawImage(img, 0, 0, iw, ih, 0, 0, cw, ch);
+    const fwz = frameW * zoom;
+
+    // Per-frame: dim + lines
+    for (let f = 0; f < nf; f++) {
+      const L  = pf[f] || pf[0];
+      const fx = f * fwz;
+      const ty = L.top    * sy * zoom,  by = L.bottom * sy * zoom;
+      const lx = L.left   * sx * zoom,  rx = L.right  * sx * zoom;
+      const minY = Math.min(ty, by), maxY = Math.max(ty, by);
+      const minX = Math.min(lx, rx), maxX = Math.max(lx, rx);
+      const isSel = f === sel;
+
+      // Dim outside this frame's crop box
+      ctx.fillStyle = 'rgba(0,0,0,0.50)';
+      if (minY > 0)      ctx.fillRect(fx,          0,     fwz, minY);
+      if (maxY < ch)     ctx.fillRect(fx,        maxY,    fwz, ch - maxY);
+      if (minX > 0)      ctx.fillRect(fx,        minY,    minX, maxY - minY);
+      if (maxX < fwz)    ctx.fillRect(fx + maxX, minY,    fwz - maxX, maxY - minY);
+
+      // Lines — brighter for selected frame
+      const alpha = isSel ? 'ff' : '88';
+      ctx.lineWidth = isSel ? 2 : 1;
+      ctx.strokeStyle = '#44ccff' + alpha;
+      ctx.beginPath(); ctx.moveTo(fx,       ty); ctx.lineTo(fx + fwz, ty); ctx.stroke();
+      ctx.strokeStyle = '#ff8844' + alpha;
+      ctx.beginPath(); ctx.moveTo(fx,       by); ctx.lineTo(fx + fwz, by); ctx.stroke();
+      ctx.strokeStyle = '#44ff88' + alpha;
+      ctx.beginPath(); ctx.moveTo(fx + lx,  ty); ctx.lineTo(fx + lx,  by); ctx.stroke();
+      ctx.strokeStyle = '#ff4488' + alpha;
+      ctx.beginPath(); ctx.moveTo(fx + rx,  ty); ctx.lineTo(fx + rx,  by); ctx.stroke();
+    }
+
+    // Frame dividers on top
+    ctx.strokeStyle = 'rgba(255,255,255,0.30)'; ctx.lineWidth = 1;
+    for (let f = 1; f < nf; f++) {
+      ctx.beginPath(); ctx.moveTo(f * fwz, 0); ctx.lineTo(f * fwz, ch); ctx.stroke();
+    }
+    // Selected frame highlight border
+    if (sel >= 0 && sel < nf) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2;
+      ctx.strokeRect(sel * fwz + 1, 1, fwz - 2, ch - 2);
+    }
+  };
+
+  // Load image
+  React.useEffect(() => {
+    infoRef.current = null;
+    setImgInfo(null);
+    const img = new Image();
+    img.onload = () => {
+      const info = makeLayout(img, NF);
+      infoRef.current = info;
+      setImgInfo(info);
+      setDrawTick(t => t + 1);
+    };
+    img.onerror = () => console.error('[CropEditor] load fail', src);
+    img.src = src;
+  }, [src, NF]);
+
+  // Post-render draw (after React commits, so canvas width/height won't be reset by React)
+  React.useEffect(() => {
+    const info = infoRef.current, cv = canvasRef.current;
+    if (!info || !cv) return;
+    cv.width = info.cw; cv.height = info.ch;
+    doDraw(info, perFrameRef.current, selFrame);
+  }, [drawTick]);
+
+  React.useEffect(() => {
+    if (infoRef.current) doDraw(infoRef.current, perFrame, selFrame);
+  }, [perFrame, selFrame]);
+
+  // Preview canvas — shows the SELECTED FRAME's own crop (not union) so edits are immediately visible
+  React.useEffect(() => {
+    const cv = previewRef.current;
+    const info = infoRef.current;
+    if (!cv || !info) return;
+    const L = perFrameRef.current[selFrame] || perFrameRef.current[0];
+    if (!L) return;
+    // Use this frame's own lines directly
+    const cx = Math.min(L.left,  L.right);
+    const cy = Math.min(L.top,   L.bottom);
+    const cw = Math.abs(L.right  - L.left);
+    const ch = Math.abs(L.bottom - L.top);
+    const { img, frameW, sx, sy } = info;
+    const ctx = cv.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#06060f';
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    if (cw > 0 && ch > 0) {
+      const srcX = selFrame * frameW + cx * sx;
+      const srcY = cy * sy;
+      const srcW = cw * sx;
+      const srcH = ch * sy;
+      ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, cv.width, cv.height);
+    }
+  }, [perFrame, selFrame, drawTick]);
+
+  /* ── coords ── */
+  const toCanvas = (e) => {
+    const r = canvasRef.current.getBoundingClientRect();
+    return {x: e.clientX - r.left, y: e.clientY - r.top};
+  };
+
+  // Hit-test: returns {frameIdx, line} or null
+  const getHit = (cx, cy, pf, info) => {
+    if (!info) return null;
+    const {frameW, zoom, sx, sy, nf} = info;
+    const fwz = frameW * zoom;
+    const fi = Math.max(0, Math.min(nf - 1, Math.floor(cx / fwz)));
+    const L  = pf[fi] || pf[0];
+    const fx = fi * fwz;
+    const ty = L.top    * sy * zoom,  by = L.bottom * sy * zoom;
+    const lx = L.left   * sx * zoom,  rx = L.right  * sx * zoom;
+    const cxF = cx - fx;  // x within frame
+    if (Math.abs(cy - ty) <= TOL) return {fi, line:'top'};
+    if (Math.abs(cy - by) <= TOL) return {fi, line:'bottom'};
+    if (Math.abs(cxF - lx) <= TOL) return {fi, line:'left'};
+    if (Math.abs(cxF - rx) <= TOL) return {fi, line:'right'};
+    return null;
+  };
+
+  /* ── global mouse handlers ── */
+  moveHandler.current = (e) => {
+    const cv = canvasRef.current; if (!cv) return;
+    const {x, y} = toCanvas(e);
+    const info = infoRef.current;
+    if (!dragRef.current) {
+      const hit = getHit(x, y, perFrameRef.current, info);
+      cv.style.cursor = hit
+        ? (hit.line==='top'||hit.line==='bottom' ? 'ns-resize' : 'ew-resize')
+        : 'crosshair';
+      return;
+    }
+    if (!info) return;
+    const {fi, line, startX, startY, origVal} = dragRef.current;
+    const {zoom, sx, sy} = info;
+    const isVert = line === 'top' || line === 'bottom';
+    const delta  = isVert ? (y - startY) / zoom / sy : (x - startX) / zoom / sx;
+    const val    = Math.round(origVal + delta);
+    setPerFrame(prev => prev.map((L, i) => i === fi ? {...L, [line]: val} : L));
+  };
+
+  React.useEffect(() => {
+    const gMove = (e) => moveHandler.current(e);
+    const gUp   = ()  => { dragRef.current = null; };
+    document.addEventListener('mousemove', gMove);
+    document.addEventListener('mouseup',   gUp);
+    return () => {
+      document.removeEventListener('mousemove', gMove);
+      document.removeEventListener('mouseup',   gUp);
+    };
+  }, []);
+
+  const onDown = (e) => {
+    e.preventDefault();
+    const {x, y} = toCanvas(e);
+    const info = infoRef.current;
+    const hit  = getHit(x, y, perFrameRef.current, info);
+    if (hit) {
+      setSelFrame(hit.fi);
+      dragRef.current = {fi: hit.fi, line: hit.line, startX: x, startY: y,
+        origVal: perFrameRef.current[hit.fi][hit.line]};
+    } else if (info) {
+      // Click in frame → select it
+      const fi = Math.max(0, Math.min(NF-1, Math.floor(x / (info.frameW * info.zoom))));
+      setSelFrame(fi);
+    }
+  };
+
+  // Produce a single crop from all frames (bounding union)
+  const framesToCrop = (pf) => {
+    const tops    = pf.map(L => Math.min(L.top, L.bottom));
+    const bottoms = pf.map(L => Math.max(L.top, L.bottom));
+    const lefts   = pf.map(L => Math.min(L.left, L.right));
+    const rights  = pf.map(L => Math.max(L.left, L.right));
+    const y = Math.min(...tops), b = Math.max(...bottoms);
+    const x = Math.min(...lefts), r = Math.max(...rights);
+    const perFrame = pf.map((_, i) => ({
+      x: lefts[i], y: tops[i], w: rights[i] - lefts[i], h: bottoms[i] - tops[i],
+    }));
+    return {x, y, w: r - x, h: b - y, perFrame};
+  };
+
+  const enemyBase = sp.variant.replace(/_\d+$/, '');
+  const info = imgInfo;
+
+  /* ── compact modal ── */
+  return (
+    <div style={{position:'fixed', inset:0, zIndex:9500,
+      background:'rgba(0,0,8,0.82)', display:'flex', alignItems:'center', justifyContent:'center'}}
+      onClick={(e)=>{ if(e.target===e.currentTarget) onClose(); }}>
+
+      <div style={{background:'#040415', border:'2px solid #2a2a4a', borderRadius:8,
+        width:'94vw', maxHeight:'88vh', display:'flex', flexDirection:'column', overflow:'hidden',
+        boxShadow:'0 10px 50px rgba(0,0,0,0.9)'}}>
+
+        {/* Monster picker — all variants, grouped by dir */}
+        {(() => {
+          // Group pool entries by dir (same sprite sheet = same group)
+          const groups = [];
+          const dirIdx = {};
+          pool.forEach(e => {
+            if (dirIdx[e.dir] === undefined) { dirIdx[e.dir] = groups.length; groups.push([]); }
+            groups[dirIdx[e.dir]].push(e);
+          });
+          return (
+            <div style={{display:'flex', gap:8, padding:'6px 12px', borderBottom:'1px solid #111130',
+              flexWrap:'wrap', background:'rgba(0,0,0,0.3)', flexShrink:0, alignItems:'center'}}>
+              <span style={{fontFamily:'Cinzel', fontSize:8, color:'#446', marginRight:2}}>SKIN</span>
+              {groups.map((grp, gi) => (
+                <div key={gi} style={{display:'flex', gap:2, alignItems:'center'}}>
+                  {grp.map((e, vi) => {
+                    const active = e.variant === sp.variant;
+                    // Derive suffix: numeric last segment (Gorgon_1→"1") or first segment (Black_Werewolf→"Black")
+                    const segs = e.variant.split('_');
+                    const lastSeg = segs[segs.length - 1];
+                    const isNumeric = /^\d+$/.test(lastSeg);
+                    const suffix = isNumeric ? lastSeg : segs[0]; // "1"/"2"/"3" or "Black"/"Red"/"White"
+                    // First button in group shows full name (e.g. "Gorgon 1", "Black Werewolf")
+                    const firstLabel = isNumeric ? `${e.name} ${suffix}` : e.name;
+                    return (
+                      <button key={vi} onClick={() => setSp(e)}
+                        style={{fontFamily:'Cinzel', fontSize:8, padding:'2px 7px', cursor:'pointer', borderRadius:2,
+                          background: active ? '#1a1030' : 'transparent',
+                          border: `1px solid ${active ? '#9955ee' : '#222233'}`,
+                          color: active ? '#cc99ff' : '#445'}}>
+                        {vi === 0 ? firstLabel : suffix}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
+        {/* Header: anim tabs + close */}
+        <div style={{display:'flex', alignItems:'center', gap:8, padding:'5px 12px',
+          borderBottom:'1px solid #1a1a3a', flexShrink:0, flexWrap:'wrap'}}>
+          <span style={{fontFamily:'Cinzel', fontSize:10, color:'#ffcc00'}}>{sp.variant.replace(/_/g,' ')}</span>
+          {info && <span style={{fontFamily:'monospace', fontSize:8, color:'#334'}}>
+            {info.iw}×{info.ih}px · {NF}f · {info.zoom.toFixed(1)}×
+          </span>}
+          <div style={{display:'flex', gap:3, flexWrap:'wrap'}}>
+            {anims.map((a,i) => (
+              <button key={i} onClick={()=>setAnimIdx(i)}
+                style={{fontFamily:'Cinzel', fontSize:8, padding:'1px 6px', cursor:'pointer', borderRadius:2,
+                  background:i===animIdx?'#18103a':'transparent',
+                  border:`1px solid ${i===animIdx?'#8855cc':'#2a2a3a'}`,
+                  color:i===animIdx?'#cc99ff':'#446'}}>
+                {a.label}
+              </button>
+            ))}
+          </div>
+          <div style={{flex:1}}/>
+          <button onClick={onClose} style={{fontFamily:'Cinzel', fontSize:9, padding:'2px 10px',
+            cursor:'pointer', background:'#1a0a0a', border:'1px solid #553333', color:'#cc5555', borderRadius:3}}>
+            ✕
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{display:'flex', flex:1, overflow:'hidden', minHeight:0}}>
+
+          {/* Canvas — scrollable */}
+          <div style={{flex:1, overflow:'auto', padding:10, background:'#030310'}}>
+            {!info && <div style={{fontFamily:'monospace', fontSize:10, color:'#446', padding:20}}>loading…</div>}
+            <div style={{display:'inline-block', background:'#050510', border:'1px solid #1a1a3a', borderRadius:3}}>
+              <canvas ref={canvasRef}
+                style={{display:'block', imageRendering:'pixelated', cursor:'crosshair'}}
+                onMouseDown={onDown}
+              />
+            </div>
+            {info && <div style={{fontFamily:'monospace', fontSize:8, color:'#334', marginTop:4}}>
+              frame size in sheet: {Math.round(info.frameW)}×{info.ih}px · drag gold lines to reposition
+            </div>}
+          </div>
+
+          {/* Controls */}
+          <div style={{width:210, flexShrink:0, borderLeft:'1px solid #1a1a3a', padding:'10px 12px',
+            display:'flex', flexDirection:'column', gap:5, overflowY:'auto', background:'rgba(0,0,10,0.5)'}}>
+
+            {/* Frame selector */}
+            <div style={{fontFamily:'Cinzel', fontSize:8, color:'#8866cc', letterSpacing:1}}>
+              FRAME {selFrame+1} / {NF}
+            </div>
+            <div style={{display:'flex', gap:2, flexWrap:'wrap', marginBottom:2}}>
+              {Array.from({length:NF},(_,i)=>(
+                <button key={i} onClick={()=>setSelFrame(i)}
+                  style={{fontFamily:'monospace', fontSize:8, padding:'1px 5px', cursor:'pointer',
+                    borderRadius:2, background:i===selFrame?'#1a1030':'transparent',
+                    border:`1px solid ${i===selFrame?'#7744cc':'#222233'}`,
+                    color:i===selFrame?'#cc99ff':'#445'}}>
+                  {i+1}
+                </button>
+              ))}
+            </div>
+
+            {/* 4 lines for selected frame */}
+            {[
+              ['TOP',    'top',    '#44ccff', -FH*3, FH*4],
+              ['BOTTOM', 'bottom', '#ff8844', -FH*3, FH*4],
+              ['LEFT',   'left',   '#44ff88', -FW*3, FW*4],
+              ['RIGHT',  'right',  '#ff4488', -FW*3, FW*4],
+            ].map(([lbl, key, col, mn, mx]) => (
+              <label key={key} style={{display:'flex', flexDirection:'column', gap:2}}>
+                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                  <span style={{fontFamily:'monospace', fontSize:9, color:col, fontWeight:'bold'}}>{lbl}</span>
+                  <input type="number" value={perFrame[selFrame]?.[key] ?? 0}
+                    onChange={e=>setPerFrame(prev=>prev.map((L,i)=>i===selFrame?{...L,[key]:+e.target.value}:L))}
+                    style={{width:50, background:'#0a0a18', border:`1px solid ${col}55`, color:col,
+                      fontFamily:'monospace', fontSize:10, padding:'2px 3px', borderRadius:2, textAlign:'right'}}/>
+                </div>
+                <input type="range" min={mn} max={mx} value={perFrame[selFrame]?.[key] ?? 0}
+                  onChange={e=>setPerFrame(prev=>prev.map((L,i)=>i===selFrame?{...L,[key]:+e.target.value}:L))}
+                  style={{width:'100%', accentColor:col}}/>
+              </label>
+            ))}
+
+            {/* Live crop preview */}
+            {(()=>{
+              const c = framesToCrop(perFrame);
+              return (
+                <div style={{borderTop:'1px solid #1a1a2a', paddingTop:5}}>
+                  <div style={{fontFamily:'monospace', fontSize:8, color:'#446', lineHeight:1.7, marginBottom:4}}>
+                    union: {c.w}×{c.h} @ ({c.x},{c.y})
+                  </div>
+                  <div style={{fontSize:8, color:'#556', marginBottom:3, letterSpacing:1}}>FRAME {selFrame+1} PREVIEW</div>
+                  <canvas ref={previewRef} width={120} height={120}
+                    style={{display:'block', imageRendering:'pixelated',
+                      border:'1px solid #2a2a4a', borderRadius:4, background:'#06060f'}}/>
+                </div>
+              );
+            })()}
+
+            <button onClick={doApply}
+              style={{fontFamily:'Cinzel', fontSize:9, padding:'5px 8px', cursor:'pointer',
+                borderRadius:3, transition:'background .15s,border-color .15s,color .15s',
+                background: applyFlash==='done' ? '#0a3a0a' : '#0a1a0a',
+                border:`1px solid ${applyFlash==='done' ? '#88ff44' : '#44aa44'}`,
+                color: applyFlash==='done' ? '#88ff44' : '#44ff88'}}>
+              {applyFlash==='done' ? `✓✓ ${anim.label} SAVED!` : `✓ APPLY TO ${anim.label}`}
+            </button>
+            <button onClick={()=>setPerFrame(makeFrameLines(NF,sp,anim.file))}
+              style={{fontFamily:'Cinzel', fontSize:8, padding:'3px 8px', cursor:'pointer',
+                background:'#0a0a1a', border:'1px solid #334', color:'#445', borderRadius:3}}>
+              RESET
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Sprite Debug Panel — shows all frames of the active animation ── */
 function SpriteDebugPanel({ cs, qteAnim }) {
-  const [open, setOpen] = React.useState(true);
+  const [open, setOpen] = React.useState(false);
   const [frozenFrame, setFrozenFrame] = React.useState(null);
+  const [editCrop, setEditCrop] = React.useState(false);
+  const [debugAtkIdx, setDebugAtkIdx] = React.useState(0);
+  const [forcedVariant, setForcedVariant] = React.useState(window.__forcedEnemyVariant ?? null);
   const canvasRef = React.useRef(null);
   const imgCache  = React.useRef({});
   const rafRef    = React.useRef(null);
   const startRef  = React.useRef(null);
 
-  const sp = cs?.enemySprite;
+  // Use module-level ENEMY_SPRITE_POOL (always defined at load) — window version set later via useEffect
+  const sp = cs?.enemySprite || ENEMY_SPRITE_POOL[0];
   if (!sp) return null;
 
+  const base = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}`;
+
   // Determine which animation is active
-  const rushPhase = qteAnim?.type === 'rush_melee' ? qteAnim.rushPhase : null;
-  let animLabel, src, frames, fps;
+  const rushPhase  = qteAnim?.type === 'rush_melee' ? qteAnim.rushPhase : null;
+  const isEnemyAtk = !rushPhase && cs?.phase === 'enemy_turn';
+  let animLabel, src, frames, fps, animFile;
   if (rushPhase === 'strike') {
+    const _rs = getRushStrike(sp, qteAnim?.atkIdx);
     animLabel = 'RUSH STRIKE';
-    src    = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}/${sp.rushStrike?.file}`;
-    frames = sp.rushStrike?.frames || 1;
-    fps    = sp.rushStrike?.fps    || 12;
+    animFile  = _rs?.file;
+    src    = `${base}/${animFile}`;
+    frames = _rs?.frames || 1;
+    fps    = _rs?.fps    || 12;
   } else if (rushPhase === 'approach' || rushPhase === 'retreat') {
     animLabel = rushPhase === 'retreat' ? 'RUSH RETREAT' : 'RUSH APPROACH';
-    src    = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}/${sp.rushApproach?.file}`;
+    animFile  = sp.rushApproach?.file;
+    src    = `${base}/${animFile}`;
     frames = sp.rushApproach?.frames || 1;
     fps    = sp.rushApproach?.fps    || 10;
+  } else if (isEnemyAtk && sp.attacks?.length) {
+    const atkI = debugAtkIdx % sp.attacks.length;
+    const atk  = sp.attacks[atkI];
+    animLabel  = `ATTACK ${atkI+1} / ${sp.attacks.length}`;
+    animFile   = atk.file;
+    src    = `${base}/${animFile}`;
+    frames = atk.frames || 1;
+    fps    = atk.fps    || 12;
   } else {
     animLabel = 'IDLE';
-    src    = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}/Idle.png`;
+    animFile  = 'Idle.png';
+    src    = `${base}/${animFile}`;
     frames = sp.idleFrames || 1;
     fps    = 8;
   }
@@ -1434,7 +2174,7 @@ function SpriteDebugPanel({ cs, qteAnim }) {
   const FW = sp.frameW || 128;
   const FH = sp.frameH || 128;
   const CELL = 64; // strip thumbnail size
-  const hitFrame = sp.rushStrike?.hitFrame ?? -1;
+  const hitFrame = getRushStrike(sp)?.hitFrame ?? -1;
 
   // Live frame index via rAF
   const [liveIdx, setLiveIdx] = React.useState(0);
@@ -1473,6 +2213,44 @@ function SpriteDebugPanel({ cs, qteAnim }) {
     img.src = src;
   }, [src, activeIdx, FW, FH]);
 
+  // CropEditor open = full-screen, hide everything else
+  if (editCrop) return (
+    <CropEditor
+      sp={sp}
+      onApply={(crop, targetSp, animFile) => {
+        const tsp = targetSp || sp;
+        const _vCrop = {...crop, _v:1};
+        // Update ALL same-dir pool entries (including tsp's variant — tsp may be a copy, not the real pool entry)
+        const _pool = window.ENEMY_SPRITE_POOL || ENEMY_SPRITE_POOL;
+        _pool.forEach(poolEntry => {
+          if (poolEntry.dir !== tsp.dir) return;
+          if (!poolEntry.animCrops) poolEntry.animCrops = {};
+          poolEntry.animCrops[animFile] = _vCrop;
+        });
+        // Save all same-dir variants to localStorage in one shot
+        try {
+          const stored = JSON.parse(localStorage.getItem('__animCrops') || '{}');
+          _pool.forEach(poolEntry => {
+            if (poolEntry.dir !== tsp.dir) return;
+            if (!stored[poolEntry.variant]) stored[poolEntry.variant] = {};
+            stored[poolEntry.variant][animFile] = _vCrop;
+          });
+          localStorage.setItem('__animCrops', JSON.stringify(stored));
+        } catch(e) {}
+        if (window.__setCs) window.__setCs(prev => {
+          if (!prev) return prev;
+          const es = prev.enemySprite;
+          // Match on dir (same species) OR exact variant — covers case where CropEditor
+          // is showing a different variant than the enemy currently fighting
+          if (!es || (es.dir !== tsp.dir && es.variant !== tsp.variant)) return prev;
+          const merged = {...(es.animCrops || {}), [animFile]: crop};
+          return {...prev, enemySprite: {...es, animCrops: merged}};
+        });
+      }}
+      onClose={() => setEditCrop(false)}
+    />
+  );
+
   if (!open) return (
     <button onClick={() => setOpen(true)} style={{
       position:'fixed', bottom:8, left:8, zIndex:8900,
@@ -1483,10 +2261,61 @@ function SpriteDebugPanel({ cs, qteAnim }) {
 
   const PW = 160, PH = 100;
 
+  const forceMonster = (variant) => {
+    const v = forcedVariant === variant ? null : variant; // toggle off if same
+    window.__forcedEnemyVariant = v;
+    setForcedVariant(v);
+    // Also swap live enemy if in combat
+    if (v && window.__setCs) window.__setCs(prev => {
+      if (!prev) return prev;
+      const ep = ENEMY_SPRITE_POOL.find(e => e.variant === v);
+      return ep ? {...prev, enemySprite: ep} : prev;
+    });
+  };
+
+  const _poolGroups = [
+    {label:'GORGON',    variants:['Gorgon_1','Gorgon_2','Gorgon_3'],          short:['1','2','3']},
+    {label:'MINOTAUR',  variants:['Minotaur_1','Minotaur_2','Minotaur_3'],    short:['1','2','3']},
+    {label:'WEREWOLF',  variants:['Black_Werewolf','Red_Werewolf','White_Werewolf'], short:['Black','Red','White']},
+  ];
+
   return (
     <div style={{position:'fixed', bottom:0, left:0, right:0, zIndex:8900,
       background:'rgba(3,3,14,0.96)', borderTop:'2px solid #1a1a3a',
-      padding:'8px 12px 10px', userSelect:'none', display:'flex', gap:12, alignItems:'flex-start'}}>
+      padding:'8px 12px 10px', userSelect:'none', display:'flex', flexDirection:'column', gap:8}}>
+
+      {/* ── Monster force-picker ── */}
+      <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap',
+        borderBottom:'1px solid #111128', paddingBottom:6}}>
+        <span style={{fontFamily:'Cinzel', fontSize:8, color:'#ff6644', letterSpacing:2, flexShrink:0}}>ENEMY</span>
+        <button onClick={() => forceMonster(null)}
+          style={{fontFamily:'Cinzel', fontSize:8, padding:'2px 8px', cursor:'pointer', borderRadius:2,
+            background: !forcedVariant ? '#1a0a00' : 'transparent',
+            border:`1px solid ${!forcedVariant ? '#ff6622' : '#222233'}`,
+            color: !forcedVariant ? '#ff8844' : '#445'}}>RANDOM</button>
+        {_poolGroups.map(g => (
+          <div key={g.label} style={{display:'flex', gap:2, alignItems:'center'}}>
+            <span style={{fontFamily:'Cinzel', fontSize:7, color:'#2a2a4a', marginRight:1}}>{g.label}</span>
+            {g.variants.map((v, vi) => {
+              const active = forcedVariant === v;
+              return (
+                <button key={v} onClick={() => forceMonster(v)}
+                  style={{fontFamily:'Cinzel', fontSize:8, padding:'2px 7px', cursor:'pointer', borderRadius:2,
+                    background: active ? '#1a1030' : 'transparent',
+                    border:`1px solid ${active ? '#cc44ff' : '#222233'}`,
+                    color: active ? '#dd88ff' : '#445'}}>
+                  {vi === 0 ? `${g.short[0]}` : g.short[vi]}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+        {forcedVariant && <span style={{fontFamily:'Cinzel', fontSize:7, color:'#cc44ff', marginLeft:4}}>
+          ⚠ LOCKED: {forcedVariant.replace(/_/g,' ')}
+        </span>}
+      </div>
+
+      <div style={{display:'flex', gap:12, alignItems:'flex-start'}}>
 
       {/* Big canvas preview */}
       <div style={{flexShrink:0}}>
@@ -1514,6 +2343,56 @@ function SpriteDebugPanel({ cs, qteAnim }) {
             fontFamily:'Cinzel', fontSize:9, padding:'2px 8px', cursor:'pointer',
             background:'#0a0a1a', border:'1px solid #334', color:'#556', borderRadius:2
           }}>▶</button>
+          {/* ⚔ ATK debug — cycle + launch full QTE */}
+          {(sp.attacks?.length||0) > 1 && (() => {
+            const atkCount = sp.attacks.length;
+            const curIdx   = debugAtkIdx % atkCount;
+            const atkLabel = [`SLOW`,`PROJ`,`RUSH`][curIdx] ?? `ATK${curIdx+1}`;
+            const isActive = cs?.phase === 'enemy_turn' || cs?.phase === 'defending';
+            return (<>
+              {/* ‹ prev */}
+              <button onClick={() => {
+                const ni = (curIdx - 1 + atkCount) % atkCount;
+                setDebugAtkIdx(ni); setFrozenFrame(null);
+              }} style={{fontFamily:'Cinzel',fontSize:8,padding:'2px 5px',cursor:'pointer',
+                background:'#0a0a1a',border:'1px solid #334',color:'#556',borderRadius:2}}>‹</button>
+              {/* LAUNCH / CANCEL */}
+              <button onClick={() => {
+                if (isActive) { if (window.__cancelQTE) window.__cancelQTE(); }
+                else { setFrozenFrame(null); if (window.__startEnemyAtk) window.__startEnemyAtk(curIdx); }
+              }} style={{fontFamily:'Cinzel',fontSize:8,padding:'2px 8px',cursor:'pointer',
+                background: isActive ? '#1a0808' : '#081a08',
+                border:`1px solid ${isActive ? '#cc2222' : '#226622'}`,
+                color: isActive ? '#ff4444' : '#44cc44', borderRadius:2,minWidth:60}}>
+                {isActive ? `✕ ${atkLabel}` : `▶ ${atkLabel}`}
+              </button>
+              {/* › next */}
+              <button onClick={() => {
+                const ni = (curIdx + 1) % atkCount;
+                setDebugAtkIdx(ni); setFrozenFrame(null);
+              }} style={{fontFamily:'Cinzel',fontSize:8,padding:'2px 5px',cursor:'pointer',
+                background:'#0a0a1a',border:'1px solid #334',color:'#556',borderRadius:2}}>›</button>
+            </>);
+          })()}
+          {/* fallback for single-attack enemies */}
+          {(sp.attacks?.length||0) <= 1 && (
+            <button onClick={() => {
+              const isActive = cs?.phase === 'enemy_turn' || cs?.phase === 'defending';
+              if (isActive) { if (window.__cancelQTE) window.__cancelQTE(); }
+              else { setFrozenFrame(null); if (window.__startEnemyAtk) window.__startEnemyAtk(0); }
+            }} style={{fontFamily:'Cinzel',fontSize:8,padding:'2px 8px',cursor:'pointer',
+              background: (cs?.phase==='enemy_turn'||cs?.phase==='defending') ? '#1a0808' : '#081a08',
+              border:`1px solid ${(cs?.phase==='enemy_turn'||cs?.phase==='defending') ? '#cc2222' : '#226622'}`,
+              color: (cs?.phase==='enemy_turn'||cs?.phase==='defending') ? '#ff4444' : '#44cc44', borderRadius:2}}>
+              {(cs?.phase==='enemy_turn'||cs?.phase==='defending') ? `✕ ${(sp.attacks?.[0]?.type??'atk').toUpperCase()}` : `▶ ${(sp.attacks?.[0]?.type??'atk').toUpperCase()}`}
+            </button>
+          )}
+          <button onClick={() => setEditCrop(v=>!v)} style={{
+            fontFamily:'Cinzel', fontSize:8, padding:'2px 8px', cursor:'pointer',
+            background: editCrop ? '#0a1a2a' : '#0a0a1a',
+            border:`1px solid ${editCrop?'#5588cc':'#334'}`,
+            color: editCrop ? '#88bbff' : '#445', borderRadius:2
+          }}>✏ CROP</button>
           <button onClick={() => setOpen(false)} style={{
             fontFamily:'Cinzel', fontSize:8, padding:'2px 6px', cursor:'pointer',
             background:'#0a0a1a', border:'1px solid #334', color:'#334', borderRadius:2
@@ -1533,13 +2412,12 @@ function SpriteDebugPanel({ cs, qteAnim }) {
                   outline: isActive ? '2px solid #ffcc00' : isHit ? '2px solid #ff4400' : '1px solid #1a1a2a',
                   borderRadius:3, overflow:'hidden',
                   boxShadow: isActive ? '0 0 8px #ffcc0066' : isHit ? '0 0 8px #ff440066' : 'none'}}>
-                <div style={{
-                  width:CELL, height:CELL,
-                  backgroundImage:`url(${src})`,
-                  backgroundPosition:`-${i*CELL}px 0px`,
-                  backgroundSize:`${frames*CELL}px ${CELL}px`,
-                  backgroundRepeat:'no-repeat', imageRendering:'pixelated'
-                }}/>
+                <FrameThumbCanvas
+                  src={src}
+                  frameIdx={i}
+                  pf={animFile ? (sp.animCrops?.[animFile]?.perFrame?.[i] ?? null) : null}
+                  fw={FW} fh={FH} nf={frames} size={CELL}
+                />
                 <div style={{
                   position:'absolute', bottom:1, right:2,
                   fontFamily:'monospace', fontSize:8,
@@ -1554,25 +2432,63 @@ function SpriteDebugPanel({ cs, qteAnim }) {
           })}
         </div>
       </div>
+
+      </div>{/* end inner flex row */}
     </div>
   );
 }
 
+// FrameThumbCanvas — per-frame cropped thumbnail for frame strips
+const _thumbImgCache = {};
+function FrameThumbCanvas({ src, frameIdx, pf, fw=128, fh=128, nf=8, size=64 }) {
+  const cvRef = React.useRef(null);
+  // Merge load + draw into one effect so draw always fires after image loads
+  React.useEffect(()=>{
+    const cv = cvRef.current; if (!cv) return;
+    const doDraw = (img) => {
+      const ctx = cv.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0,0,size,size);
+      if (pf) {
+        const aFW = img.naturalWidth / nf;   // actual frame width in image pixels
+        const iSx = aFW / fw;                // logical → image pixel scale (e.g. 144/128)
+        const iSy = img.naturalHeight / fh;
+        const absL = frameIdx*aFW + pf.x*iSx;
+        const absR = frameIdx*aFW + (pf.x+pf.w)*iSx;
+        const srcX = Math.max(0, absL);
+        const srcW = Math.max(0, Math.min(img.naturalWidth, absR) - srcX);
+        const srcY = pf.y*iSy, srcH = pf.h*iSy;
+        if (srcW>0&&srcH>0) ctx.drawImage(img,srcX,srcY,srcW,srcH,0,0,size,size);
+      } else {
+        const aFW = img.naturalWidth / nf;
+        ctx.drawImage(img,frameIdx*aFW,0,aFW,img.naturalHeight,0,0,size,size);
+      }
+    };
+    if (_thumbImgCache[src]) { doDraw(_thumbImgCache[src]); return; }
+    const img = new Image();
+    img.onload = ()=>{ _thumbImgCache[src]=img; doDraw(img); };
+    img.src = src;
+  },[src,frameIdx,pf,size]);
+  return <canvas ref={cvRef} width={size} height={size} style={{display:'block',imageRendering:'pixelated'}}/>;
+}
+
 /* ── Rush Frame Inspector — live editing panel ──────────────── */
 function RushInspector({ cs, qteAnim }) {
-  const [phase,    setPhase]    = React.useState('strike');
-  const [selFrame, setSelFrame] = React.useState(null);
-  const [frozen,   setFrozen]   = React.useState(false);
-  const [preview,  setPreview]  = React.useState(256);
-  const [offX,     setOffX]     = React.useState(0);
-  const [offY,     setOffY]     = React.useState(0);
+  const [phase,      setPhase]    = React.useState('strike');
+  const [selFrame,   setSelFrame] = React.useState(null);
+  const [frozen,     setFrozen]   = React.useState(false);
+  const [preview,    setPreview]  = React.useState(120);
+  const [offX,       setOffX]     = React.useState(0);
+  const [offY,       setOffY]     = React.useState(0);
+  const [hitSaved,   setHitSaved] = React.useState(null); // {frame, ts} flash confirmation
   const frozenRef  = React.useRef(false);
   const canvasRef  = React.useRef(null);
   const imgCache   = React.useRef({});
 
   const sp = cs?.enemySprite;
   if (!sp) return null;
-  const anim = phase === 'strike' ? sp.rushStrike : sp.rushApproach;
+  const _atkIdx = qteAnim?.atkIdx ?? cs?.enemyAtkIdx ?? 0;
+  const anim = phase === 'strike' ? getRushStrike(sp, _atkIdx) : sp.rushApproach;
   if (!anim) return null;
 
   const base  = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}`;
@@ -1590,7 +2506,7 @@ function RushInspector({ cs, qteAnim }) {
   }
 
   const hitFrame = anim.hitFrame ?? -1;
-  const CELL = 128; // px per frame cell
+  const CELL = 64; // px per frame cell
   const PREVIEW = preview; // must be declared BEFORE useEffect so deps array doesn't hit TDZ
   // Always landscape: SIZE = height, width = 16:9
   const CVH = PREVIEW;
@@ -1611,15 +2527,36 @@ function RushInspector({ cs, qteAnim }) {
       ctx.imageSmoothingEnabled = false;
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, CVW, CVH);
-      // src: one frame offset by X/Y sliders; dest: centered in landscape canvas
-      ctx.drawImage(img, liveFrame * FW + offX, offY, FW, FH, frameDestX, 0, frameDestW, frameDestH);
+      // Use per-frame crop if available, else full frame
+      const pfArr = sp.animCrops?.[anim.file]?.perFrame;
+      const pf = pfArr && pfArr.length > liveFrame ? pfArr[liveFrame] : null;
+      if (pf) {
+        const totalW = img.naturalWidth;
+        // Fixed anchor dstX: use maxSrcXL across all frames so inspector is jitter-free too
+        const _maxSrcXL = pfArr
+          ? Math.max(...pfArr.map((p, n) => Math.max(0, -(n * FW + p.x))))
+          : 0;
+        const absL = liveFrame * FW + pf.x;
+        const absR = liveFrame * FW + pf.x + pf.w;
+        const srcX = Math.max(0, absL);
+        const srcRight = Math.min(totalW, absR);
+        const srcW = Math.max(0, srcRight - srcX);
+        const srcY = pf.y, srcH = pf.h;
+        const sc = frameDestH / srcH;
+        const dW = Math.round(srcW * sc);
+        const dX = frameDestX + Math.round(_maxSrcXL * sc); // fixed across all frames
+        ctx.drawImage(img, srcX, srcY, srcW, srcH, dX, 0, dW, frameDestH);
+      } else {
+        // fallback: full frame with offX/offY sliders
+        ctx.drawImage(img, liveFrame * FW + offX, offY, FW, FH, frameDestX, 0, frameDestW, frameDestH);
+      }
     };
     if (cached) { draw(cached); return; }
     const img = new Image();
     img.onerror = () => console.error('[RushInspector] failed to load', src);
     img.onload = () => { imgCache.current[src] = img; draw(img); };
     img.src = src;
-  }, [src, liveFrame, CVW, CVH, frameDestX, frameDestW, frameDestH, offX, offY, FW, FH]);
+  }, [src, liveFrame, CVW, CVH, frameDestX, frameDestW, frameDestH, offX, offY, FW, FH, sp]);
 
   function freezeAt(idx) {
     frozenRef.current = true;
@@ -1639,16 +2576,48 @@ function RushInspector({ cs, qteAnim }) {
   }
 
   function setHitFrame(idx) {
-    // Mutate pool entry directly + force re-render
     const pool = window.ENEMY_SPRITE_POOL;
-    if (pool) {
-      pool.forEach(e => {
-        if (e.variant === sp.variant && e.rushStrike) e.rushStrike.hitFrame = idx;
-      });
+    const curFile = anim.file; // only update the attack matching the current strike anim file
+    if (pool) pool.forEach(e => { if (e.dir === sp.dir) {
+      if (e.rushStrike && e.rushStrike.file === curFile) e.rushStrike.hitFrame = idx;
+      const ra = e.attacks?.find(a => a.type === 'rush' && a.file === curFile);
+      if (ra) ra.hitFrame = idx;
+    }});
+    if (window.__setCs) window.__setCs(prev => {
+      if (!prev) return prev;
+      const es = prev.enemySprite;
+      if (!es) return prev;
+      return {
+        ...prev, enemySprite: {
+          ...es,
+          rushStrike: es.rushStrike?.file === curFile ? { ...es.rushStrike, hitFrame: idx } : es.rushStrike,
+          attacks: es.attacks?.map(a => a.type==='rush' && a.file===curFile ? {...a, hitFrame:idx} : a)
+        }
+      };
+    });
+    // Sync QTE arrive time immediately so parry window moves live
+    if (window.__setQteAnim) {
+      const strikeFps = anim.fps || 12;
+      const strikePhaseMs = (ATK_END - WALK_END) * DUR;
+      const hitFrameMs = Math.min((idx / strikeFps) * 1000, strikePhaseMs * 0.85);
+      const newArrive = WALK_END + hitFrameMs / DUR;
+      window.__setQteAnim(prev => prev ? { ...prev, arrive: newArrive } : prev);
     }
-    if (sp.rushStrike) sp.rushStrike.hitFrame = idx;
+    setHitSaved({ frame: idx + 1 });
+    setTimeout(() => setHitSaved(null), 2200);
+  }
+
+  function setStrikeFile(file, frames) {
+    const pool = window.ENEMY_SPRITE_POOL;
+    if (pool) pool.forEach(e => { if (e.dir === sp.dir) {
+      if (e.rushStrike) { e.rushStrike.file = file; e.rushStrike.frames = frames; }
+      else { const ra = e.attacks?.find(a=>a.type==='rush'); if (ra) { ra.file = file; ra.frames = frames; } }
+    }});
+    const _rs2 = getRushStrike(sp);
+    if (_rs2) { _rs2.file = file; _rs2.frames = frames; }
     if (window.__setCs) window.__setCs(prev => prev ? {
-      ...prev, enemySprite: { ...sp, rushStrike: { ...sp.rushStrike, hitFrame: idx } }
+      ...prev, enemySprite: { ...sp, rushStrike: sp.rushStrike ? { ...sp.rushStrike, file, frames } : undefined,
+        attacks: sp.attacks?.map(a => a.type==='rush' ? {...a, file, frames} : a) }
     } : prev);
   }
 
@@ -1660,7 +2629,10 @@ function RushInspector({ cs, qteAnim }) {
       {/* Header row */}
       <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:10}}>
         <span style={{fontFamily:'Cinzel', fontSize:10, color:'#6655aa', letterSpacing:2}}>
-          RUSH INSPECTOR · {sp.variant.replace(/_/g,' ')} · {anim.frames} frames · {anim.fps}fps
+          RUSH INSPECTOR · {sp.variant.replace(/_/g,' ')}
+        </span>
+        <span style={{fontFamily:'monospace', fontSize:11, color:'#ffcc44', background:'#1a1400', border:'1px solid #443300', borderRadius:3, padding:'1px 7px'}}>
+          {anim.file} · {anim.frames}f · {anim.fps}fps
         </span>
         {['approach','strike'].map(p => (
           <button key={p} onClick={()=>{ setPhase(p); setSelFrame(null); setFrozen(false); frozenRef.current=false; }}
@@ -1671,6 +2643,24 @@ function RushInspector({ cs, qteAnim }) {
             {p.toUpperCase()}
           </button>
         ))}
+        {/* Strike file switcher — lets you pick which attack animation plays during rush strike */}
+        {phase === 'strike' && (sp.attacks||[]).length > 0 && (
+          <span style={{display:'flex', gap:3, marginLeft:4}}>
+            <span style={{fontFamily:'Cinzel', fontSize:9, color:'#445', alignSelf:'center'}}>STRIKE ANIM:</span>
+            {(sp.attacks||[]).map((atk, i) => {
+              const active = anim.file === atk.file;
+              return (
+                <button key={i} onClick={()=> setStrikeFile(atk.file, atk.frames)}
+                  style={{fontFamily:'Cinzel', fontSize:9, padding:'2px 8px', cursor:'pointer',
+                    background: active ? '#1a0a00' : 'transparent',
+                    border: `1px solid ${active ? '#ff8833' : '#333'}`,
+                    color: active ? '#ffaa44' : '#445', borderRadius:3}}>
+                  ATK{i+1}{active ? ' ✓' : ''}
+                </button>
+              );
+            })}
+          </span>
+        )}
         <button onClick={()=>{ frozenRef.current=!frozenRef.current; setFrozen(f=>!f); if(!frozenRef.current) setSelFrame(null); }}
           style={{fontFamily:'Cinzel', fontSize:10, padding:'3px 12px', cursor:'pointer', marginLeft:4,
             background: frozen ? '#1a0800' : '#081808',
@@ -1772,9 +2762,12 @@ function RushInspector({ cs, qteAnim }) {
         {phase === 'strike' && (
           <button onClick={()=> setHitFrame(liveFrame)}
             style={{fontFamily:'Cinzel', fontSize:11, padding:'5px 16px', cursor:'pointer',
-              background:'#220800', border:'2px solid #ff5533', color:'#ff8866', borderRadius:4,
-              boxShadow:'0 0 10px #ff440055'}}>
-            🔥 SET FRAME {liveFrame+1} AS HIT FRAME
+              background: hitSaved ? '#082208' : '#220800',
+              border:`2px solid ${hitSaved ? '#44cc44' : '#ff5533'}`,
+              color: hitSaved ? '#66ff66' : '#ff8866', borderRadius:4,
+              boxShadow: hitSaved ? '0 0 12px #44ff4466' : '0 0 10px #ff440055',
+              transition:'all 0.15s'}}>
+            {hitSaved ? `✓ SAVED — HIT FRAME ${hitSaved.frame}` : `🔥 SET FRAME ${liveFrame+1} AS HIT FRAME`}
           </button>
         )}
         <span style={{fontSize:9, color:'#334', fontFamily:'Cinzel', letterSpacing:1}}>
@@ -1786,6 +2779,7 @@ function RushInspector({ cs, qteAnim }) {
 }
 
 function CombatSpriteOverlay({ cs, enemyFlash }) {
+  const [open, setOpen] = React.useState(false);
   // Which pool entry is selected (null = follow live cs.enemySprite)
   const [overrideIdx, setOverrideIdx] = React.useState(null);
   // cropMap: { [poolIdx]: {x,y,w,h} } — per-sprite crop calibration
@@ -1875,10 +2869,25 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
     { label:'WEREWOLF', indices:[6,7,8] },
   ];
 
+  if (!open) return (
+    <button onClick={()=>setOpen(true)} style={{
+      position:'fixed',bottom:8,right:8,zIndex:88888,
+      fontFamily:'monospace',fontSize:10,padding:'4px 10px',cursor:'pointer',
+      background:'rgba(7,7,15,0.9)',border:'1px solid #2a2a4a',borderRadius:5,color:'#555',
+      boxShadow:'0 2px 8px #000'
+    }}>🖼 SPRITE</button>
+  );
+
   return (
     <div style={{position:'fixed',bottom:0,left:0,right:0,
       background:'rgba(7,7,15,0.94)',borderTop:'2px solid #2a2a4a',
       zIndex:88888,padding:'8px 14px 12px',fontFamily:'monospace',backdropFilter:'blur(4px)'}}>
+
+      {/* close button */}
+      <button onClick={()=>setOpen(false)} style={{
+        position:'absolute',top:6,right:10,background:'none',border:'none',
+        color:'#445',cursor:'pointer',fontSize:14,lineHeight:1,padding:'2px 4px'
+      }}>✕</button>
 
       {/* ── Sprite picker ── */}
       <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:7,
@@ -2423,7 +3432,7 @@ function App() {
       const mult = q==="perfect"?0:q==="good"?0.4:1.0;
       const finalDmg = Math.floor(inDmg * mult);
       triggerProjectileTrail(ENX, GNDY-40, HR_L+HSW/2, HR_T+HSH/2, q==="miss"?"#ff4444":"#4488ff");
-      if (q==="perfect") { showHit("PARRIED!", "#44aaff"); setParryFlash(true); setTimeout(()=>setParryFlash(false),900); }
+      if (q==="perfect") showHit("PARRIED!", "#44aaff");
       else showHit(q==="good"?`BLOCKED −${finalDmg}`:`HIT −${finalDmg}`, q==="good"?"#4488ff":"#ff4444");
       setPvpMyHp(h => {
         const nh = Math.max(0, h - finalDmg);
@@ -2656,11 +3665,15 @@ function App() {
     const atk = elite ? Math.round(e.atk * 1.6) : e.atk;
     const xp  = elite ? Math.round(e.xp  * 3.0) : e.xp;
     if (node.enemy==="dragon") sfx.bossStart();
-    const eSprite = node.enemy!=="dragon" ? ENEMY_SPRITE_POOL[Math.floor(Math.random()*ENEMY_SPRITE_POOL.length)] : null;
+    const eSprite = node.enemy!=="dragon"
+      ? (window.__forcedEnemyVariant
+          ? (ENEMY_SPRITE_POOL.find(e=>e.variant===window.__forcedEnemyVariant) ?? ENEMY_SPRITE_POOL[Math.floor(Math.random()*ENEMY_SPRITE_POOL.length)])
+          : ENEMY_SPRITE_POOL[Math.floor(Math.random()*ENEMY_SPRITE_POOL.length)])
+      : null;
     const eName = eSprite ? eSprite.name : e.name;
     setCs({ enemy:{...e,id:node.enemy,name:eName,maxHp:hp,hp,atk,xp}, elite,
             log:[`${elite?"⚠️ ELITE — ":""}A ${eName} materialises before you!`],
-            phase:"action", nodeId:node.id, nodeFloor:node.fl, enemySprite:eSprite });
+            phase:"action", nodeId:node.id, nodeFloor:node.fl, enemySprite:eSprite, enemyAtkIdx:-1 });
     setEnemyFlash(false);
     setQteAnim(null);
     setScreen("combat");
@@ -2728,32 +3741,49 @@ function App() {
       }
       if (!qteRef.current.debugMode) {
         const _defDelay = cs?.enemy?.id==="dragon" ? 300 : 880;
-        // 50% chance to use rush melee when sprite supports it (non-boss, non-pvp)
         const sprite = cs?.enemySprite;
-        const useRush = sprite?.rushApproach && cs?.enemy?.id!=="dragon" && !cs?.pvpMode && Math.random() < 0.5;
-        qteRef.current.defendTimer = setTimeout(()=> useRush ? startRushMeleeQTE() : startDefendQTE(bossAtk), _defDelay);
+        // Derive attack type from sprite data; fall back to random rush for untyped sprites
+        const nextIdx  = ((prev.enemyAtkIdx??-1)+1) % (sprite?.attacks?.length||1);
+        const atkEntry = sprite?.attacks?.[nextIdx];
+        const atkType  = atkEntry?.type;
+        let defendFn;
+        if (atkType === 'rush' && sprite?.rushApproach && cs?.enemy?.id!=="dragon" && !cs?.pvpMode) {
+          defendFn = () => startRushMeleeQTE();
+        } else if (atkType === 'slow_proj') {
+          defendFn = () => startDefendQTE(bossAtk, 'slow');
+        } else if (atkType === 'projectile' || atkType) {
+          defendFn = () => startDefendQTE(bossAtk);
+        } else {
+          // No type annotation — keep legacy random-rush for backwards compat
+          const useRush = sprite?.rushApproach && cs?.enemy?.id!=="dragon" && !cs?.pvpMode && Math.random() < 0.5;
+          defendFn = useRush ? () => startRushMeleeQTE() : () => startDefendQTE(bossAtk);
+        }
+        qteRef.current.defendTimer = setTimeout(defendFn, _defDelay);
       }
       // In debug mode stay in "action" so the panel can re-launch immediately
       const nextPhase = qteRef.current.debugMode ? "action" : "enemy_turn";
       const pendingAttacks = (!qteRef.current.debugMode && prev.elite && newHp>0) ? 1 : 0;
-      return {...prev, enemy:{...prev.enemy,hp:newHp}, phase:nextPhase, bossAttackPattern:qteRef.current.debugMode?null:bossAtk, pendingAttacks, log:[...prev.log,logMsg]};
+      const nextAtkIdx = qteRef.current.debugMode ? (prev.enemyAtkIdx??0) : (prev.enemyAtkIdx??-1) + 1;
+      return {...prev, enemy:{...prev.enemy,hp:newHp}, phase:nextPhase, enemyAtkIdx:nextAtkIdx, bossAttackPattern:qteRef.current.debugMode?null:bossAtk, pendingAttacks, log:[...prev.log,logMsg]};
     });
   };
 
-  const handleDefend = (q) => {
+  const handleDefend = (q, suppressIndicator=false) => {
     // PvP routing
     if (pvpModeRef.current && pvpDefCbRef.current) { pvpDefCbRef.current(q); return; }
     const atk = (cs?.enemy?.atk||0) * (cs?.enemyAtkMult||1);
     const mult = q==="perfect"?0:q==="good"?.4:1.0;
     const dmg  = Math.floor(atk*mult);
-    // Projectile trail enemy → hero, then burst
-    triggerProjectileTrail(ENX, GNDY-40, HR_L+HSW/2, HR_T+HSH/2, q==="miss"?"#ff4444":"#4488ff");
-    if (q==="miss") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ff4444", 36);
-    else if (q==="good") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#4488ff", 28);
-    else { triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#88ddff", 52); setTimeout(()=>triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ffffff", 24), 80); }
-    if(q==="perfect") sfx.parry(); else if(q==="good") sfx.blockHit(); else sfx.takeDmg();
-    showHit(q==="perfect"?"PARRIED!":q==="good"?`BLOCKED −${dmg}hp`:`HIT −${dmg}hp`,
-            q==="perfect"?"#44aaff":q==="good"?"#4488ff":"#ff4444");
+    if (!suppressIndicator) {
+      // Projectile trail enemy → hero, then burst
+      triggerProjectileTrail(ENX, GNDY-40, HR_L+HSW/2, HR_T+HSH/2, q==="miss"?"#ff4444":"#4488ff");
+      if (q==="miss") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ff4444", 36);
+      else if (q==="good") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#4488ff", 28);
+      else { triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#88ddff", 52); setTimeout(()=>triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ffffff", 24), 80); }
+      if(q==="perfect") sfx.parry(); else if(q==="good") sfx.blockHit(); else sfx.takeDmg();
+      showHit(q==="perfect"?"PARRIED!":q==="good"?`BLOCKED −${dmg}hp`:`HIT −${dmg}hp`,
+              q==="perfect"?"#44aaff":q==="good"?"#4488ff":"#ff4444");
+    }
     setPlayer(p=>{
       if(!p) return p;
       const nhp = Math.max(0, p.hp-dmg);
@@ -2769,7 +3799,7 @@ function App() {
         const nextPending = prev.pendingAttacks-1;
         const nextBossAtk = prev.enemy.id==="dragon"?(Math.random()<.5?"cleave":"charge"):null;
         qteRef.current.defendTimer = setTimeout(()=>startDefendQTE(nextBossAtk), 550);
-        return {...prev, phase:"enemy_turn", pendingAttacks:nextPending, bossAttackPattern:nextBossAtk,
+        return {...prev, phase:"enemy_turn", enemyAtkIdx:(prev.enemyAtkIdx??-1)+1, pendingAttacks:nextPending, bossAttackPattern:nextBossAtk,
           log:[...prev.log, logMsg, "⚔ ELITE attacks again!"].slice(-8)};
       }
       return {...prev, phase:"action", pendingAttacks:0,
@@ -3681,6 +4711,7 @@ function App() {
     dragon:        { dur:1800, launch:0.72, arrive:0.95, projPath:"loop"        }, // fireball released after cleave animation peaks
     dragon_charge: { dur:1300, launch:0.68, arrive:0.94, projPath:"ground_rush" }, // surge released after charge winds up
     pvp_opp:       { dur:1100, launch:0.20, arrive:0.82, projPath:"straight"    }, // pvp opponent attack
+    gorgon_slow:   { dur:3400, launch:0.06, arrive:0.90, projPath:"zigzag"      }, // Gorgon ATK3 — cursed serpent curse, crawls across screen
   };
   // Per-QTE-type defend timing (for PvP projectile variety)
   const PVP_PROJ_PROFILES = {
@@ -3694,12 +4725,15 @@ function App() {
     sequence_reveal: { dur:1500, launch:0.28, arrive:0.82 },
     dual_action:     { dur: 500, launch:0.16, arrive:0.80 },
   };
-  const startDefendQTE = (bossAtkPattern = null) => {
+  const startDefendQTE = (bossAtkPattern = null, variant = null) => {
     const ref = qteRef.current;
     ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
     const isPvp = cs?.pvpMode && cs?.enemy?.id === "pvp_opp";
     let prof, projType;
-    if (isPvp) {
+    if (variant === 'slow') {
+      prof = DEFEND_PROFILES.gorgon_slow;
+      projType = null;
+    } else if (isPvp) {
       const oppWepId = cs?.enemy?.pvpWeapons?.[0] ?? "sword";
       const oppWep = ALL_WEAPONS[oppWepId] ?? ALL_WEAPONS.sword;
       projType = oppWep.qteType || "swing_beat";
@@ -3717,14 +4751,14 @@ function App() {
     setQteAnim({ type:"defend", t:0, projFrac:0, arrive, projPath: prof.projPath||"straight", projType, bossAttackPattern: bossAtkPattern });
     triggerEnemyWindUp();
 
+    ref._defArrivedShown = false; // guard: show indicator once at impact
+
     const onKey = (e) => {
       if (ref.gen !== myGen) { window.removeEventListener("keydown",onKey); return; }
       if (e.code!=="Space"||ref.pressT!==null) return;
       e.preventDefault();
       ref.pressT = (performance.now()-ref.startMs)/dur;
-      const d = Math.abs(ref.pressT - arrive);
-      if (d<.055)     { showHit("PARRIED!",  "#44aaff"); setParryFlash(true); setTimeout(()=>setParryFlash(false),900); }
-      else if (d<.14) showHit("BLOCKED!",  "#4488ff");
+      // no immediate text — result shown at arrive
     };
     window.addEventListener("keydown",onKey);
 
@@ -3740,21 +4774,37 @@ function App() {
         ref._defLastRender = now2;
         setQteAnim(prev=>prev?{...prev,t,projFrac,arrive}:null);
       }
+      // Fire damage indicator exactly when projectile arrives
+      if (!ref._defArrivedShown && t >= arrive) {
+        ref._defArrivedShown = true;
+        const _atk = (cs?.enemy?.atk||0) * (cs?.enemyAtkMult||1);
+        const _d   = ref.pressT!=null ? Math.abs(ref.pressT-arrive) : 99;
+        const _q   = _d<.055 ? "perfect" : _d<.14 ? "good" : "miss";
+        const _dmg = Math.floor(_atk * (_q==="perfect"?0:_q==="good"?.4:1.0));
+        triggerProjectileTrail(ENX, GNDY-40, HR_L+HSW/2, HR_T+HSH/2, _q==="miss"?"#ff4444":"#4488ff");
+        if (_q==="miss") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ff4444", 36);
+        else if (_q==="good") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#4488ff", 28);
+        else { triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#88ddff", 52); setTimeout(()=>triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ffffff", 24), 80); }
+        if (_q==="perfect") sfx.parry(); else if (_q==="good") sfx.blockHit(); else sfx.takeDmg();
+        showHit(_q==="perfect"?"PARRIED!":_q==="good"?`BLOCKED −${_dmg}hp`:`HIT −${_dmg}hp`,
+                _q==="perfect"?"#44aaff":_q==="good"?"#4488ff":"#ff4444");
+      }
       if (t<1) { requestAnimationFrame(tick); return; }
       window.removeEventListener("keydown",onKey);
       const d = ref.pressT!=null ? Math.abs(ref.pressT-arrive) : 99;
       setQteAnim(null);
-      handleDefend(d<.055?"perfect":d<.14?"good":"miss");
+      handleDefend(d<.055?"perfect":d<.14?"good":"miss", true); // suppressIndicator
     };
     requestAnimationFrame(tick);
   };
 
   /* ── Rush Melee QTE ─────────────────────────────────────── */
   // Enemy runs/walks to hero, plays strike animation, player times SPACE to block
-  const startRushMeleeQTE = () => {
+  const startRushMeleeQTE = (atkIdx = null) => {
     if (cs?.enemy?.id==="dragon" || cs?.pvpMode) { startDefendQTE(); return; }
     const sprite = cs?.enemySprite;
     if (!sprite?.rushApproach) { startDefendQTE(); return; } // fallback if no rush data
+    const _rushAtkIdx = atkIdx ?? cs?.enemyAtkIdx ?? 0;
 
     const ref = qteRef.current;
     ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
@@ -3767,8 +4817,9 @@ function App() {
     const WALK_END = 0.40;
     const ATK_END  = 0.82;
     // ARRIVE = moment the hit frame actually plays — computed from sprite data
-    const strikeFps    = sprite.rushStrike?.fps    ?? 12;
-    const hitFrameIdx  = sprite.rushStrike?.hitFrame ?? 3;
+    const _strikeAnim  = getRushStrike(sprite, _rushAtkIdx);
+    const strikeFps    = _strikeAnim?.fps    ?? 12;
+    const hitFrameIdx  = _strikeAnim?.hitFrame ?? 3;
     const strikePhaseMs = (ATK_END - WALK_END) * DUR;         // ms allocated for strike
     const hitFrameMs   = Math.min((hitFrameIdx / strikeFps) * 1000, strikePhaseMs * 0.85);
     const ARRIVE   = WALK_END + hitFrameMs / DUR;
@@ -3776,16 +4827,18 @@ function App() {
 
     ref.startMs = performance.now(); ref.pressT = null; ref.done = false; ref._rushLastRender = 0;
     setCs(prev => prev ? {...prev, phase:"defending"} : prev);
-    setQteAnim({ type:"rush_melee", t:0, walkEnd:WALK_END, attackEnd:ATK_END, arrive:ARRIVE, hitWindow:WINDOW, rushPhase:"approach" });
+    setQteAnim({ type:"rush_melee", t:0, walkEnd:WALK_END, attackEnd:ATK_END, arrive:ARRIVE, hitWindow:WINDOW, rushPhase:"approach", atkIdx:_rushAtkIdx });
+
+    ref._arrivedShown = false; // guard: show indicator exactly once at hit frame
 
     const onKey = (e) => {
       if (ref.gen !== myGen) { window.removeEventListener("keydown", onKey); return; }
       if (e.code !== "Space" || ref.pressT !== null) return;
       e.preventDefault();
       ref.pressT = (performance.now() - ref.startMs) / DUR;
+      // Immediate press feedback (quality not yet final — shown at ARRIVE)
       const d = Math.abs(ref.pressT - ARRIVE);
-      if (d < WINDOW * 0.5) { showHit("PERFECT BLOCK!", "#44aaff"); setParryFlash(true); setTimeout(()=>setParryFlash(false), 900); }
-      else if (d < WINDOW)   showHit("BLOCKED!", "#4488ff");
+      // no immediate feedback on keypress — result shown at ARRIVE+WINDOW
     };
     window.addEventListener("keydown", onKey);
 
@@ -3798,13 +4851,48 @@ function App() {
         ref._rushLastRender = now2;
         setQteAnim(prev => prev ? {...prev, t, rushPhase} : null);
       }
+      // Fire damage/parry indicator exactly at the hit frame (ARRIVE)
+      if (!ref._arrivedShown && t >= ARRIVE) {
+        ref._arrivedShown = true;
+        const _atk = (cs?.enemy?.atk||0) * (cs?.enemyAtkMult||1);
+        const _d   = ref.pressT != null ? Math.abs(ref.pressT - ARRIVE) : 99;
+        const _q   = _d < WINDOW*0.5 ? "perfect" : _d < WINDOW ? "good" : "miss";
+        const _dmg = Math.floor(_atk * (_q==="perfect"?0:_q==="good"?.4:1.0));
+        triggerProjectileTrail(ENX, GNDY-40, HR_L+HSW/2, HR_T+HSH/2, _q==="miss"?"#ff4444":"#4488ff");
+        if (_q==="miss") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ff4444", 36);
+        else if (_q==="good") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#4488ff", 28);
+        else { triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#88ddff", 52); setTimeout(()=>triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ffffff", 24), 80); }
+        if (_q==="perfect") sfx.parry();
+        else if (_q==="good") sfx.blockHit(); else sfx.takeDmg();
+        showHit(_q==="perfect"?"PARRIED!":_q==="good"?`BLOCKED −${_dmg}hp`:`HIT −${_dmg}hp`,
+                _q==="perfect"?"#44aaff":_q==="good"?"#4488ff":"#ff4444");
+      }
       if (t < 1) { requestAnimationFrame(tick); return; }
       window.removeEventListener("keydown", onKey);
       const d = ref.pressT != null ? Math.abs(ref.pressT - ARRIVE) : 99;
       setQteAnim(null);
-      handleDefend(d < WINDOW * 0.5 ? "perfect" : d < WINDOW ? "good" : "miss");
+      handleDefend(d < WINDOW * 0.5 ? "perfect" : d < WINDOW ? "good" : "miss", true); // suppressIndicator
     };
     requestAnimationFrame(tick);
+  };
+
+  // Debug globals — updated every render so closures stay fresh
+  window.__startEnemyAtk = (n) => {
+    const sprite = cs?.enemySprite;
+    const nAtk   = sprite?.attacks?.length || 1;
+    const idx    = ((n ?? 0) % nAtk + nAtk) % nAtk;
+    const atkType = sprite?.attacks?.[idx]?.type;
+    setCs(prev => prev ? {...prev, enemyAtkIdx: idx} : prev);
+    if (atkType === 'rush' && sprite?.rushApproach) startRushMeleeQTE();
+    else if (atkType === 'slow_proj')              startDefendQTE(null, 'slow');
+    else                                           startDefendQTE(null);
+  };
+  window.__cancelQTE = () => {
+    qteRef.current.gen  = (qteRef.current.gen || 0) + 1;
+    qteRef.current.done = true;
+    if (qteRef.current.defendTimer) { clearTimeout(qteRef.current.defendTimer); qteRef.current.defendTimer = null; }
+    setQteAnim(null);
+    setCs(prev => prev ? {...prev, phase:'action'} : prev);
   };
 
   /* ── Compute hero & enemy positions from qteAnim ─────────── */
@@ -4768,6 +5856,9 @@ function App() {
         </div>
       )}
 
+      {/* ── SPRITE DEBUG PANEL — global, always accessible for crop editing ── */}
+      <SpriteDebugPanel cs={cs} qteAnim={qteAnim}/>
+
       {/* ══ COMBAT ══ */}
       {screen==="combat"&&cs&&player&&(()=>{
         const enemyData = ENEMIES[cs.enemy.id]||ENEMIES.goblin;
@@ -4825,7 +5916,7 @@ function App() {
             })()}
 
             {/* ─── BATTLEFIELD — fills most of screen ──────── */}
-            <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
+            <div style={{flex:1,display:"flex",alignItems:"flex-start",justifyContent:"center",paddingTop:12,position:"relative"}}>
             <div style={{position:"relative",width:BFW,height:BFH,flexShrink:0,overflow:"visible",zoom:bfZoom}}>
 
               {/* Sky */}
@@ -5632,7 +6723,7 @@ function App() {
                       heroLooks={cs.enemy.pvpHeroLooks}
                       animRow={qteAnim?.type==="defend" ? (cs.enemy.pvpHeroLooks?.atkRow??5) : (cs.enemy.pvpHeroLooks?.idleRow??0)}
                       animFrame={frameTick%4}/>
-                  : <EnemySpriteSmall id={cs.enemy.id} scale={eScale} sprite={cs?.enemySprite} enemyFlash={enemyFlash} phase={cs.phase} bossAttackPattern={cs?.bossAttackPattern} rushAnim={qteAnim?.type==="rush_melee"?qteAnim.rushPhase:null}/>
+                  : <EnemySpriteSmall id={cs.enemy.id} scale={eScale} sprite={cs?.enemySprite} enemyFlash={enemyFlash} phase={cs.phase} bossAttackPattern={cs?.bossAttackPattern} rushAnim={qteAnim?.type==="rush_melee"?qteAnim.rushPhase:null} atkIdx={cs.enemyAtkIdx??0}/>
                 }
               </div>
 
@@ -5835,31 +6926,6 @@ function App() {
                 );
               })()}
 
-              {/* ── DEFEND: block hint pill ── */}
-              {qteAnim?.type==="defend"&&(()=>{
-                const pf     = qteAnim.projFrac||0;
-                const t      = qteAnim.t||0;
-                const arrive = qteAnim.arrive||0.82;
-                if (pf<=0 || t>arrive+0.06) return null;
-                const near    = pf>0.82;
-                const isCharge = qteAnim.bossAttackPattern==="charge";
-                const nearCol  = isCharge ? "#44ff88" : "#44ccff";
-                const nearGlow = isCharge ? "0 0 12px #22ff66" : "0 0 12px #44aaff";
-                const nearBdr  = isCharge ? "#22ff6655" : "#44aaff55";
-                return (
-                  <div style={{position:"absolute",left:"50%",bottom:36,transform:"translateX(-50%)",
-                    zIndex:30,pointerEvents:"none",
-                    fontFamily:"Cinzel",fontSize:10,fontWeight:700,letterSpacing:3,
-                    color:near?nearCol:"#e8d5a3aa",
-                    background:"rgba(0,0,0,.55)",borderRadius:20,padding:"4px 14px",
-                    border:`1px solid ${near?nearBdr:"#ffffff12"}`,
-                    textShadow:near?nearGlow:"none",
-                    animation:near?"pulse .2s ease-in-out infinite":"none",
-                    whiteSpace:"nowrap"}}>
-                    {isCharge ? "DODGE THE RUSH!" : "TIME THE BLOCK!"}
-                  </div>
-                );
-              })()}
 
               {/* Stomp instruction prompt */}
               {qteAnim?.type==="stomp"&&(()=>{
@@ -6073,7 +7139,7 @@ function App() {
               {qteAnim?.type==="rush_melee"&&cs?.enemySprite&&(()=>{
                 const sp    = cs.enemySprite;
                 const phase = qteAnim.rushPhase;
-                const anim  = phase==="strike" ? sp.rushStrike : sp.rushApproach;
+                const anim  = phase==="strike" ? getRushStrike(sp, qteAnim?.atkIdx) : sp.rushApproach;
                 if (!anim) return null;
                 const base  = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}`;
                 const src   = `${base}/${anim.file}`;
@@ -6096,23 +7162,22 @@ function App() {
                     <div style={{fontSize:8,fontFamily:"Cinzel",color:isHit?"#ff6644":"#5566aa",letterSpacing:2,marginBottom:3}}>
                       {phase.toUpperCase()} · f{frameIdx+1}/{anim.frames}{isHit?" 🔥 HIT":""}
                     </div>
-                    {/* Full strip — scroll to show active frame */}
-                    <div style={{position:"relative",width:DISP*Math.min(anim.frames,8),height:DISP,overflow:"hidden",borderRadius:3}}>
-                      <img src={src} alt="" style={{
-                        position:"absolute",
-                        left: -frameIdx*DISP,
-                        top:0,
-                        width: anim.frames*DISP,
-                        height:DISP,
-                        imageRendering:"pixelated"
-                      }}/>
-                      {/* Active frame highlight */}
-                      <div style={{
-                        position:"absolute",top:0,left:0,width:DISP,height:DISP,
-                        border:`2px solid ${isHit?"#ff4400":"#ffcc00"}`,borderRadius:2,
-                        boxShadow:isHit?"inset 0 0 8px #ff440066":"inset 0 0 6px #ffcc0033",
-                        pointerEvents:"none"
-                      }}/>
+                    {/* Per-frame cropped strip */}
+                    <div style={{display:"flex",gap:1,borderRadius:3}}>
+                      {[...Array(anim.frames)].map((_,i)=>{
+                        const isActive = i===frameIdx;
+                        const isHitF   = i===hitFrame;
+                        const pfData   = sp.animCrops?.[anim.file]?.perFrame?.[i] ?? null;
+                        return (
+                          <div key={i} style={{flexShrink:0,position:"relative",
+                            outline:isActive?`2px solid ${isHit?"#ff4400":"#ffcc00"}`:isHitF?"1px solid #ff4400":"1px solid #1a1a2a",
+                            borderRadius:2,
+                            boxShadow:isActive?(isHit?"0 0 6px #ff440066":"0 0 6px #ffcc0066"):"none"}}>
+                            <FrameThumbCanvas src={src} frameIdx={i} pf={pfData}
+                              fw={FW} fh={FH} nf={anim.frames} size={DISP}/>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -6122,60 +7187,8 @@ function App() {
             </div>{/* ─── END BATTLEFIELD (zoom wrapper) ── */}
             </div>{/* ─── END BATTLEFIELD (flex centerer) ── */}
 
-            {/* ── RUSH MELEE — approach warning + timing bar ── */}
-            {qteAnim?.type==="rush_melee"&&(()=>{
-              const { t, walkEnd=0.40, attackEnd=0.82, arrive=0.55, hitWindow:win=0.065 } = qteAnim;
-              const isApproach = t < walkEnd;
-              const isStrike   = t >= walkEnd && t < attackEnd;
-              const inWindow   = Math.abs(t - arrive) < win;
-              const strikeT    = isStrike ? (t - walkEnd) / (attackEnd - walkEnd) : 0;
-              const markerPct  = isStrike ? strikeT * 100 : t < walkEnd ? 0 : 100;
-              const winStartPct = ((arrive - win - walkEnd) / (attackEnd - walkEnd)) * 100;
-              const winEndPct   = ((arrive + win - walkEnd) / (attackEnd - walkEnd)) * 100;
 
-              return (
-                <div style={{position:"fixed",top:48,left:"50%",transform:"translateX(-50%)",
-                  width:"min(340px,68vw)",zIndex:3000,pointerEvents:"none",textAlign:"center"}}>
-                  {/* Approach phase: warn player */}
-                  {isApproach&&(
-                    <div style={{fontFamily:"Cinzel",fontSize:13,letterSpacing:3,
-                      color:"#ffaa44",textShadow:"0 0 18px #ff880099",
-                      animation:"pulse 0.4s ease-in-out infinite alternate"}}>
-                      ⚔ INCOMING — READY TO BLOCK
-                    </div>
-                  )}
-                  {/* Strike phase: timing bar */}
-                  {isStrike&&(
-                    <>
-                      <div style={{fontFamily:"Cinzel",fontSize:inWindow?15:11,letterSpacing:3,
-                        color:inWindow?"#ffcc00":"#8899cc",marginBottom:6,
-                        textShadow:inWindow?"0 0 22px #ffcc00,0 0 40px #ffaa00":"none",
-                        transition:"font-size .1s,color .1s"}}>
-                        {inWindow?"▶ BLOCK! [SPACE] ◀":"WATCH THE ENEMY"}
-                      </div>
-                      {/* Timing bar */}
-                      <div style={{height:10,background:"#04040c",borderRadius:5,
-                        border:"1px solid #2a2a4a",overflow:"visible",position:"relative"}}>
-                        {/* Hit window */}
-                        <div style={{position:"absolute",top:0,bottom:0,
-                          left:`${winStartPct}%`,width:`${winEndPct-winStartPct}%`,
-                          background:inWindow?"#44aaff55":"#44aaff22",
-                          border:"1px solid #44aaff88",borderRadius:3}}/>
-                        {/* Moving marker */}
-                        <div style={{position:"absolute",top:-3,bottom:-3,width:4,borderRadius:2,
-                          left:`calc(${markerPct}% - 2px)`,
-                          background:inWindow?"#ffcc00":"#ffffff",
-                          boxShadow:inWindow?"0 0 10px #ffcc00,0 0 20px #ffaa00":"none",
-                          transition:"background .05s"}}/>
-                      </div>
-                    </>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* ── SPRITE DEBUG PANEL — always visible in combat ── */}
-            {cs?.enemySprite&&<SpriteDebugPanel cs={cs} qteAnim={qteAnim}/>}
+            {/* SpriteDebugPanel rendered globally above combat block */}
 
             {/* ── RUSH FRAME INSPECTOR ── */}
             {qteAnim?.type==="rush_melee"&&<RushInspector cs={cs} qteAnim={qteAnim}/>}
@@ -6263,20 +7276,6 @@ function App() {
               );
             })()}
 
-            {/* ── Perfect Parry screen flash overlay ── */}
-            {parryFlash&&(
-              <>
-                <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:9999,
-                  background:"radial-gradient(ellipse at 50% 50%, #88ccff 0%, #2255aa 40%, transparent 75%)",
-                  animation:"parryFlash .9s ease-out forwards"}}/>
-                <div style={{position:"fixed",left:"50%",top:"40%",pointerEvents:"none",zIndex:10000,
-                  fontFamily:"Cinzel",fontWeight:900,fontSize:48,letterSpacing:8,
-                  color:"#ffffff",textShadow:"0 0 30px #44aaff, 0 0 80px #0088ff, 0 0 120px #0044ff",
-                  animation:"parryText .9s ease-out forwards",whiteSpace:"nowrap"}}>
-                  ⚡ PERFECT PARRY ⚡
-                </div>
-              </>
-            )}
 
             {/* bottom bar removed — actions now in fixed side panel */}
 
@@ -6486,10 +7485,6 @@ function App() {
                 <div style={{position:"absolute",inset:0,background:impactFlash===2?"rgba(255,100,0,.35)":"rgba(255,80,0,.2)",zIndex:50,pointerEvents:"none",borderRadius:8}}/>
               )}
 
-              {/* Parry flash */}
-              {parryFlash&&(
-                <div style={{position:"absolute",inset:0,background:"rgba(68,150,255,.18)",zIndex:49,pointerEvents:"none",animation:"parryFlash .9s ease-out forwards"}}/>
-              )}
 
               {/* Hit result */}
               {hitResult&&(
@@ -6660,15 +7655,30 @@ function App() {
         ];
         const activeType = qteAnim?.type;
         const activeWpn  = qteAnim?.weapon?.id;
+        const [_qteOpen, _setQteOpen] = React.useState(false);
         return (
           <div ref={el=>{ if(el) _dbgSetup(); }}
-            style={{position:'fixed',top:8,left:8,zIndex:9999,background:'rgba(0,0,0,.93)',
-              border:'1px solid #556',borderRadius:7,padding:'8px 10px',fontFamily:'monospace',
-              fontSize:10,boxShadow:'0 4px 20px #000',width:210,maxHeight:'94vh',overflowY:'auto'}}>
+            style={{position:'fixed',top:8,left:8,zIndex:9999,fontFamily:'monospace',fontSize:10}}>
+            {/* Collapsed pill */}
+            {!_qteOpen && (
+              <button onClick={()=>_setQteOpen(true)}
+                style={{background:'rgba(0,0,0,.85)',border:'1px solid #556',borderRadius:6,
+                  padding:'4px 10px',color:'#ffcc44',cursor:'pointer',fontFamily:'monospace',
+                  fontSize:10,letterSpacing:1,boxShadow:'0 2px 8px #000'}}>
+                ⚔ QTE
+              </button>
+            )}
+            {_qteOpen && (
+            <div style={{background:'rgba(0,0,0,.93)',border:'1px solid #556',borderRadius:7,
+              padding:'8px 10px',boxShadow:'0 4px 20px #000',width:210,maxHeight:'94vh',overflowY:'auto'}}>
             {/* Header */}
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:7}}>
               <span style={{color:'#ffcc44',fontWeight:'bold',letterSpacing:2,fontSize:10}}>QTE INSPECTOR</span>
-              <span style={{color:player?'#44ff88':'#ff6666',fontSize:9}}>{player?'● LIVE':'○ INIT'}</span>
+              <div style={{display:'flex',gap:5,alignItems:'center'}}>
+                <span style={{color:player?'#44ff88':'#ff6666',fontSize:9}}>{player?'● LIVE':'○ INIT'}</span>
+                <button onClick={()=>_setQteOpen(false)}
+                  style={{background:'none',border:'none',color:'#667',cursor:'pointer',fontSize:12,lineHeight:1,padding:'0 2px'}}>✕</button>
+              </div>
             </div>
 
             {/* QTE groups */}
@@ -6786,6 +7796,8 @@ function App() {
                 },200);
               }}/>
             }
+          </div>
+            )}
           </div>
         );
       })()}
