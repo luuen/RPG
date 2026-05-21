@@ -7039,6 +7039,11 @@ function App() {
                   border:'1px solid #224488',borderRadius:3,cursor:'pointer',fontFamily:'monospace',fontSize:9}}>
                 🖼 sheets
               </button>
+              <button onClick={()=>{ window.location.href='?debug&enemies'; }}
+                style={{flex:1,padding:'3px 0',background:'#0a1a0a',color:'#88ff88',
+                  border:'1px solid #226622',borderRadius:3,cursor:'pointer',fontFamily:'monospace',fontSize:9}}>
+                👾 enemies
+              </button>
             </div>
 
             {/* Randomize hero looks */}
