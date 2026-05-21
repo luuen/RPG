@@ -2263,6 +2263,18 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
     { label:'WEREWOLF', indices:[6,7,8] },
   ];
 
+  const isBoss = cs?.enemy?.id === 'dragon';
+
+  // ── Boss GIF frame editor ──────────────────────────────────────
+  const [bossW, setBossW] = React.useState(ENEMY_DIMS.dragon?.w || 238);
+  const [bossH, setBossH] = React.useState(ENEMY_DIMS.dragon?.h || 132);
+  const activeBossGif = (() => {
+    if (cs?.phase === 'won') return '05_d_death.webp';
+    if (enemyFlash)          return '04_d_take_hit.webp';
+    if (cs?.phase === 'enemy_turn' || cs?.phase === 'defending') return '03_d_cleave.webp';
+    return '01_d_idle.webp';
+  })();
+
   if (!open) return (
     <button onClick={()=>setOpen(true)} style={{
       position:'fixed',bottom:8,right:8,zIndex:88888,
@@ -2270,6 +2282,41 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
       background:'rgba(7,7,15,0.9)',border:'1px solid #2a2a4a',borderRadius:5,color:'#555',
       boxShadow:'0 2px 8px #000'
     }}>🖼 SPRITE</button>
+  );
+
+  if (isBoss) return (
+    <div style={{position:'fixed',bottom:0,left:0,right:0,
+      background:'rgba(7,7,15,0.94)',borderTop:'2px solid #442200',
+      zIndex:88888,padding:'8px 14px 12px',fontFamily:'monospace',backdropFilter:'blur(4px)'}}>
+      <button onClick={()=>setOpen(false)} style={{position:'absolute',top:6,right:10,
+        background:'none',border:'none',color:'#445',cursor:'pointer',fontSize:14,lineHeight:1,padding:'2px 4px'}}>✕</button>
+      <div style={{fontSize:9,color:'#ff8844',letterSpacing:2,marginBottom:8}}>BOSS — DEMON SLIME</div>
+      <div style={{display:'flex',gap:20,alignItems:'flex-end',flexWrap:'wrap'}}>
+        {_BOSS_GIFS.map(({label,file})=>{
+          const active = file === activeBossGif;
+          return (
+            <div key={file} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+              <div style={{fontSize:8,fontFamily:'Cinzel',
+                color: active ? '#ffcc44' : '#444', letterSpacing:1}}>{label}</div>
+              <img src={`${BOSS_GIF_BASE}/${file}`} width={bossW} height={bossH}
+                style={{imageRendering:'pixelated',
+                  border:`2px solid ${active ? '#ffcc44' : '#1a1a2a'}`,
+                  background:'#060610',display:'block',
+                  boxShadow: active ? '0 0 10px #ffcc4455' : 'none'}}/>
+              <div style={{fontSize:7,color:'#333'}}>{file}</div>
+            </div>
+          );
+        })}
+        <div style={{display:'flex',flexDirection:'column',gap:6,
+          background:'#0a0a16',border:'1px solid #1e1e3a',borderRadius:5,padding:'8px 10px',alignSelf:'flex-start'}}>
+          <div style={{fontSize:9,color:'#ff8844',marginBottom:2}}>RENDER SIZE</div>
+          <CropSliderRow label="W" value={bossW} min={60} max={480} onChange={v=>{setBossW(v);ENEMY_DIMS.dragon.w=v;}}/>
+          <CropSliderRow label="H" value={bossH} min={40} max={280} onChange={v=>{setBossH(v);ENEMY_DIMS.dragon.h=v;}}/>
+          <div style={{fontSize:8,color:'#555',marginTop:2}}>w:{bossW} h:{bossH}</div>
+          <div style={{fontSize:8,color:'#334',marginTop:2}}>natural: 288×160px</div>
+        </div>
+      </div>
+    </div>
   );
 
   return (
@@ -7235,7 +7282,7 @@ function App() {
       })()}
 
       {/* ── In-Combat Sprite Frame Overlay — visible at ?debug ── */}
-      {window.location.search.includes('debug') && screen==='combat' && cs?.enemySprite && (
+      {window.location.search.includes('debug') && screen==='combat' && (cs?.enemySprite || cs?.enemy?.id==='dragon') && (
         <CombatSpriteOverlay cs={cs} enemyFlash={enemyFlash}/>
       )}
 
