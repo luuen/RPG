@@ -6475,54 +6475,6 @@ function App() {
                 </div>
               )}
 
-              {/* ── RUSH MELEE sprite-sheet overlay — bottom of battlefield ── */}
-              {qteAnim?.type==="rush_melee"&&cs?.enemySprite&&(()=>{
-                const sp    = cs.enemySprite;
-                const phase = qteAnim.rushPhase;
-                const anim  = phase==="strike" ? getRushStrike(sp, qteAnim?.atkIdx) : sp.rushApproach;
-                if (!anim) return null;
-                const base  = `${ASSET_BASE}/icons/sprites/${sp.dir}/${sp.variant}`;
-                const src   = `${base}/${anim.file}`;
-                const FW    = sp.frameW||128, FH = sp.frameH||128;
-                const fps   = anim.fps||10;
-                // Which frame is playing right now?
-                const msElapsed = qteAnim.t * 2200; // DUR=2200
-                const frameIdx  = Math.floor((msElapsed / 1000) * fps) % anim.frames;
-                const hitFrame  = anim.hitFrame ?? -1;
-                const isHit     = frameIdx === hitFrame;
-                const stripW    = anim.frames * FW;
-                const DISP      = 48; // display size per frame
-                return (
-                  <div style={{
-                    position:"absolute",bottom:6,left:8,zIndex:50,
-                    background:"rgba(4,4,16,0.82)",border:`1px solid ${isHit?"#ff4400":"#2a2a4a"}`,
-                    borderRadius:6,padding:"4px 6px",pointerEvents:"none",
-                    boxShadow:isHit?"0 0 10px #ff440099":"none"
-                  }}>
-                    <div style={{fontSize:8,fontFamily:"Cinzel",color:isHit?"#ff6644":"#5566aa",letterSpacing:2,marginBottom:3}}>
-                      {phase.toUpperCase()} · f{frameIdx+1}/{anim.frames}{isHit?" 🔥 HIT":""}
-                    </div>
-                    {/* Per-frame cropped strip */}
-                    <div style={{display:"flex",gap:1,borderRadius:3}}>
-                      {[...Array(anim.frames)].map((_,i)=>{
-                        const isActive = i===frameIdx;
-                        const isHitF   = i===hitFrame;
-                        const pfData   = sp.animCrops?.[anim.file]?.perFrame?.[i] ?? null;
-                        return (
-                          <div key={i} style={{flexShrink:0,position:"relative",
-                            outline:isActive?`2px solid ${isHit?"#ff4400":"#ffcc00"}`:isHitF?"1px solid #ff4400":"1px solid #1a1a2a",
-                            borderRadius:2,
-                            boxShadow:isActive?(isHit?"0 0 6px #ff440066":"0 0 6px #ffcc0066"):"none"}}>
-                            <FrameThumbCanvas src={src} frameIdx={i} pf={pfData}
-                              fw={FW} fh={FH} nf={anim.frames} size={DISP}/>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })()}
-
               {/* particles injected via particleContainerRef (DOM/Web Animations API) */}
             </div>{/* ─── END BATTLEFIELD (zoom wrapper) ── */}
             </div>{/* ─── END BATTLEFIELD (flex centerer) ── */}
