@@ -1044,16 +1044,25 @@ const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, spr
       fps    = 14;
     } else if (isAttacking && sprite.attacks?.length) {
       const atk = sprite.attacks[atkIdx % sprite.attacks.length];
-      src     = `${base}/${atk.file}`;
-      frames  = atk.frames;
-      fps     = 12;
       atkType = atk.type || null;
-      // slow_proj plays once — when done, revert to idle
-      if (atkType === 'slow_proj' && slowProjDone) {
+      // Rush attacks are handled entirely by the rush QTE (approach/strike/retreat).
+      // Don't play the strike animation while standing in place during enemy_turn.
+      if (atkType === 'rush') {
         src    = `${base}/Idle.png`;
         frames = sprite.idleFrames;
         fps    = 8;
         atkType = null;
+      } else {
+        src    = `${base}/${atk.file}`;
+        frames = atk.frames;
+        fps    = 12;
+        // slow_proj plays once — when done, revert to idle
+        if (atkType === 'slow_proj' && slowProjDone) {
+          src    = `${base}/Idle.png`;
+          frames = sprite.idleFrames;
+          fps    = 8;
+          atkType = null;
+        }
       }
     } else {
       src    = `${base}/Idle.png`;
