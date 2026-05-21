@@ -3101,7 +3101,7 @@ function App() {
         const atkType  = atkEntry?.type;
         let defendFn;
         if (atkType === 'rush' && sprite?.rushApproach && cs?.enemy?.id!=="dragon" && !cs?.pvpMode) {
-          defendFn = () => startRushMeleeQTE();
+          defendFn = () => startRushMeleeQTE(nextIdx);
         } else if (atkType === 'slow_proj') {
           defendFn = () => startDefendQTE(bossAtk, 'slow');
         } else if (atkType === 'projectile' || atkType) {
@@ -3109,14 +3109,14 @@ function App() {
         } else {
           // No type annotation — keep legacy random-rush for backwards compat
           const useRush = sprite?.rushApproach && cs?.enemy?.id!=="dragon" && !cs?.pvpMode && Math.random() < 0.5;
-          defendFn = useRush ? () => startRushMeleeQTE() : () => startDefendQTE(bossAtk);
+          defendFn = useRush ? () => startRushMeleeQTE(nextIdx) : () => startDefendQTE(bossAtk);
         }
         qteRef.current.defendTimer = setTimeout(defendFn, _defDelay);
       }
       // In debug mode stay in "action" so the panel can re-launch immediately
       const nextPhase = qteRef.current.debugMode ? "action" : "enemy_turn";
       const pendingAttacks = (!qteRef.current.debugMode && prev.elite && newHp>0) ? 1 : 0;
-      const nextAtkIdx = qteRef.current.debugMode ? (prev.enemyAtkIdx??0) : (prev.enemyAtkIdx??-1) + 1;
+      const nextAtkIdx = qteRef.current.debugMode ? (prev.enemyAtkIdx??0) : nextIdx;
       return {...prev, enemy:{...prev.enemy,hp:newHp}, phase:nextPhase, enemyAtkIdx:nextAtkIdx, bossAttackPattern:qteRef.current.debugMode?null:bossAtk, pendingAttacks, log:[...prev.log,logMsg]};
     });
   };
@@ -3156,10 +3156,10 @@ function App() {
         const _nextIdx2 = ((prev.enemyAtkIdx??-1)+1+1) % (_sp2?.attacks?.length||1);
         const _nextType2 = _sp2?.attacks?.[_nextIdx2]?.type;
         const _secondFn = (_nextType2==='rush' && _sp2?.rushApproach && prev.enemy?.id!=='dragon' && !prev.pvpMode)
-          ? ()=>startRushMeleeQTE()
+          ? ()=>startRushMeleeQTE(_nextIdx2)
           : (_nextType2==='slow_proj' ? ()=>startDefendQTE(null,'slow') : ()=>startDefendQTE(nextBossAtk));
         qteRef.current.defendTimer = setTimeout(_secondFn, 550);
-        return {...prev, phase:"enemy_turn", enemyAtkIdx:(prev.enemyAtkIdx??-1)+1, pendingAttacks:nextPending, bossAttackPattern:nextBossAtk,
+        return {...prev, phase:"enemy_turn", enemyAtkIdx:_nextIdx2, pendingAttacks:nextPending, bossAttackPattern:nextBossAtk,
           log:[...prev.log, logMsg, "⚔ ELITE attacks again!"].slice(-8)};
       }
       return {...prev, phase:"action", pendingAttacks:0,
