@@ -1099,6 +1099,7 @@ const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, spr
     return <AnimatedSprite src={src} numFrames={frames} fps={fps}
       displayW={displayW} displayH={displayH}
       imgW={imgW} imgH={imgH} cropOffX={cropOffX} cropOffY={cropOffY}
+      flip={rushAnim === 'retreat'}
       perFrameOps={perFrameOps}
       loop={!isDead && !playOnce}
       onComplete={atkType === 'slow_proj' ? () => setSlowProjDone(true) : null}/>;
@@ -3150,7 +3151,14 @@ function App() {
       if((prev.pendingAttacks||0)>0){
         const nextPending = prev.pendingAttacks-1;
         const nextBossAtk = prev.enemy.id==="dragon"?(Math.random()<.5?"cleave":"charge"):null;
-        qteRef.current.defendTimer = setTimeout(()=>startDefendQTE(nextBossAtk), 550);
+        // Respect enemy attack type for elite second hit — rush enemies stay rush
+        const _sp2 = prev.enemySprite;
+        const _nextIdx2 = ((prev.enemyAtkIdx??-1)+1+1) % (_sp2?.attacks?.length||1);
+        const _nextType2 = _sp2?.attacks?.[_nextIdx2]?.type;
+        const _secondFn = (_nextType2==='rush' && _sp2?.rushApproach && prev.enemy?.id!=='dragon' && !prev.pvpMode)
+          ? ()=>startRushMeleeQTE()
+          : (_nextType2==='slow_proj' ? ()=>startDefendQTE(null,'slow') : ()=>startDefendQTE(nextBossAtk));
+        qteRef.current.defendTimer = setTimeout(_secondFn, 550);
         return {...prev, phase:"enemy_turn", enemyAtkIdx:(prev.enemyAtkIdx??-1)+1, pendingAttacks:nextPending, bossAttackPattern:nextBossAtk,
           log:[...prev.log, logMsg, "⚔ ELITE attacks again!"].slice(-8)};
       }
