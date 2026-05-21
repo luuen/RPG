@@ -125,7 +125,8 @@ const ENEMY_DIMS = {
   goblin_pup:{w:48,h:58}, goblin:{w:64,h:78}, skeleton:{w:56,h:88}, eye:{w:80,h:80},
   golem:{w:84,h:88},  wraith:{w:64,h:96},
   // Boss GIF natural frame size is 288×160 — scale to ~75% to fit battlefield
-  dragon:{w:216,h:120},
+  // hitFrame/hitFps: used by startRushMeleeQTE to time the parry window on the cleave GIF
+  dragon:{w:216,h:120, hitFrame:3, hitFps:12},
 };
 
 // Enemy sprite pool — 9 variants randomized per encounter (dragon excluded)
@@ -2266,8 +2267,10 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
   const isBoss = cs?.enemy?.id === 'dragon';
 
   // ── Boss GIF frame editor ──────────────────────────────────────
-  const [bossW, setBossW] = React.useState(ENEMY_DIMS.dragon?.w || 238);
-  const [bossH, setBossH] = React.useState(ENEMY_DIMS.dragon?.h || 132);
+  const [bossW,        setBossW]        = React.useState(ENEMY_DIMS.dragon?.w       || 216);
+  const [bossH,        setBossH]        = React.useState(ENEMY_DIMS.dragon?.h       || 120);
+  const [bossHitFrame, setBossHitFrame] = React.useState(ENEMY_DIMS.dragon?.hitFrame ?? 3);
+  const [bossHitFps,   setBossHitFps]   = React.useState(ENEMY_DIMS.dragon?.hitFps   ?? 12);
   const activeBossGif = (() => {
     if (cs?.phase === 'won') return '05_d_death.webp';
     if (enemyFlash)          return '04_d_take_hit.webp';
@@ -2308,12 +2311,38 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
           );
         })}
         <div style={{display:'flex',flexDirection:'column',gap:6,
-          background:'#0a0a16',border:'1px solid #1e1e3a',borderRadius:5,padding:'8px 10px',alignSelf:'flex-start'}}>
+          background:'#0a0a16',border:'1px solid #1e1e3a',borderRadius:5,padding:'8px 10px',alignSelf:'flex-start',minWidth:180}}>
           <div style={{fontSize:9,color:'#ff8844',marginBottom:2}}>RENDER SIZE</div>
           <CropSliderRow label="W" value={bossW} min={60} max={480} onChange={v=>{setBossW(v);ENEMY_DIMS.dragon.w=v;}}/>
           <CropSliderRow label="H" value={bossH} min={40} max={280} onChange={v=>{setBossH(v);ENEMY_DIMS.dragon.h=v;}}/>
-          <div style={{fontSize:8,color:'#555',marginTop:2}}>w:{bossW} h:{bossH}</div>
-          <div style={{fontSize:8,color:'#334',marginTop:2}}>natural: 288×160px</div>
+          <div style={{fontSize:8,color:'#555',marginTop:2}}>w:{bossW} h:{bossH} · natural: 288×160</div>
+
+          <div style={{fontSize:9,color:'#ffcc44',marginTop:6,marginBottom:2,borderTop:'1px solid #1a1a3a',paddingTop:6}}>
+            STRIKE TIMING — CLEAVE
+          </div>
+          <CropSliderRow label="hit f" value={bossHitFrame} min={0} max={30} onChange={v=>{
+            setBossHitFrame(v); ENEMY_DIMS.dragon.hitFrame=v;
+          }}/>
+          <CropSliderRow label="fps"   value={bossHitFps}   min={1} max={30} onChange={v=>{
+            setBossHitFps(v); ENEMY_DIMS.dragon.hitFps=v;
+          }}/>
+          {(() => {
+            // Replicate startRushMeleeQTE timing math so user sees the live result
+            const DUR=3000, WALK_END=0.40, ATK_END=0.82;
+            const strikePhaseMs=(ATK_END-WALK_END)*DUR;
+            const hitFrameMs=Math.min((bossHitFrame/bossHitFps)*1000, strikePhaseMs*0.85);
+            const arrive=WALK_END+hitFrameMs/DUR;
+            const arriveMs=Math.round(arrive*DUR);
+            return (
+              <div style={{fontSize:8,color:'#88aaff',lineHeight:1.7,marginTop:2}}>
+                <div>parry @ t={arrive.toFixed(3)} ({arriveMs}ms)</div>
+                <div style={{color:'#555'}}>window ±210ms</div>
+                <div style={{color:'#444',marginTop:2}}>
+                  hit f: {bossHitFrame} @ {bossHitFps}fps = {Math.round((bossHitFrame/bossHitFps)*1000)}ms into strike
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>
@@ -4277,9 +4306,10 @@ function App() {
     const WALK_END = 0.40;
     const ATK_END  = 0.82;
     // ARRIVE = moment the hit frame actually plays — computed from sprite data
-    const _strikeAnim  = getRushStrike(sprite, _rushAtkIdx);
-    const strikeFps    = _strikeAnim?.fps    ?? 12;
-    const hitFrameIdx  = _strikeAnim?.hitFrame ?? 3;
+    // Boss: use ENEMY_DIMS.dragon.hitFrame/hitFps (editable from frame editor)
+    const _strikeAnim  = isBoss ? null : getRushStrike(sprite, _rushAtkIdx);
+    const strikeFps    = isBoss ? (ENEMY_DIMS.dragon?.hitFps ?? 12)   : (_strikeAnim?.fps    ?? 12);
+    const hitFrameIdx  = isBoss ? (ENEMY_DIMS.dragon?.hitFrame ?? 3)  : (_strikeAnim?.hitFrame ?? 3);
     const strikePhaseMs = (ATK_END - WALK_END) * DUR;         // ms allocated for strike
     const hitFrameMs   = Math.min((hitFrameIdx / strikeFps) * 1000, strikePhaseMs * 0.85);
     const ARRIVE   = WALK_END + hitFrameMs / DUR;
