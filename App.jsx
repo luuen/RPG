@@ -2289,60 +2289,71 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
 
   if (isBoss) return (
     <div style={{position:'fixed',bottom:0,left:0,right:0,
-      background:'rgba(7,7,15,0.94)',borderTop:'2px solid #442200',
+      background:'rgba(7,7,15,0.94)',borderTop:'2px solid #2a2a4a',
       zIndex:88888,padding:'8px 14px 12px',fontFamily:'monospace',backdropFilter:'blur(4px)'}}>
+
       <button onClick={()=>setOpen(false)} style={{position:'absolute',top:6,right:10,
         background:'none',border:'none',color:'#445',cursor:'pointer',fontSize:14,lineHeight:1,padding:'2px 4px'}}>✕</button>
-      <div style={{fontSize:9,color:'#ff8844',letterSpacing:2,marginBottom:8}}>BOSS — DEMON SLIME</div>
-      <div style={{display:'flex',gap:20,alignItems:'flex-end',flexWrap:'wrap'}}>
-        {_BOSS_GIFS.map(({label,file})=>{
-          const active = file === activeBossGif;
-          return (
-            <div key={file} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
-              <div style={{fontSize:8,fontFamily:'Cinzel',
-                color: active ? '#ffcc44' : '#444', letterSpacing:1}}>{label}</div>
-              <img src={`${BOSS_GIF_BASE}/${file}`} width={bossW} height={bossH}
-                style={{imageRendering:'pixelated',
-                  border:`2px solid ${active ? '#ffcc44' : '#1a1a2a'}`,
-                  background:'#060610',display:'block',
-                  boxShadow: active ? '0 0 10px #ffcc4455' : 'none'}}/>
-              <div style={{fontSize:7,color:'#333'}}>{file}</div>
-            </div>
-          );
-        })}
-        <div style={{display:'flex',flexDirection:'column',gap:6,
-          background:'#0a0a16',border:'1px solid #1e1e3a',borderRadius:5,padding:'8px 10px',alignSelf:'flex-start',minWidth:180}}>
-          <div style={{fontSize:9,color:'#ff8844',marginBottom:2}}>RENDER SIZE</div>
+
+      {/* Sprite picker row — matches normal overlay style */}
+      <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:7,
+        borderBottom:'1px solid #1e1e3a',paddingBottom:6,flexWrap:'wrap'}}>
+        <span style={{fontSize:9,color:'#555',letterSpacing:'.1em'}}>SPRITE</span>
+        <span style={{fontSize:9,color:'#ff8844',letterSpacing:1}}>DEMON SLIME — BOSS</span>
+        <span style={{fontSize:8,color:'#334'}}>webp GIF · 288×160px natural</span>
+      </div>
+
+      <div style={{display:'flex',gap:12,alignItems:'flex-start'}}>
+
+        {/* Big preview — active GIF */}
+        <div style={{flexShrink:0}}>
+          <div style={{fontSize:9,color:'#555',letterSpacing:'.08em',marginBottom:3}}>ACTIVE ANIM</div>
+          <img src={`${BOSS_GIF_BASE}/${activeBossGif}`} width={bossW} height={bossH}
+            style={{imageRendering:'pixelated',border:'1px solid #ffcc4466',
+              background:'#060610',display:'block'}}/>
+          <div style={{fontSize:9,color:'#c8a84b',textAlign:'center',marginTop:3}}>
+            {activeBossGif.replace('.webp','').replace('0\d_d_','')}  · {bossW}×{bossH}px
+          </div>
+        </div>
+
+        {/* All GIF strip — same feel as frame strip */}
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:9,color:'#555',marginBottom:5}}>demon_slime_boss · all animations</div>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'flex-end'}}>
+            {_BOSS_GIFS.map(({label,file})=>{
+              const active = file === activeBossGif;
+              return (
+                <div key={file} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                  <div style={{fontSize:8,color:active?'#ffcc00':'#333',letterSpacing:1}}>{label}</div>
+                  <img src={`${BOSS_GIF_BASE}/${file}`} width={Math.round(bossW*0.55)} height={Math.round(bossH*0.55)}
+                    style={{imageRendering:'pixelated',display:'block',
+                      border:`2px solid ${active?'#ffcc00':'#1e1e3a'}`,background:'#060610'}}/>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Controls — same panel style as crop sliders */}
+        <div style={{flexShrink:0,display:'flex',flexDirection:'column',gap:6,
+          background:'#0a0a16',border:'1px solid #1e1e3a',borderRadius:5,padding:'8px 10px'}}>
+          <div style={{fontSize:9,color:'#555',letterSpacing:'.08em',marginBottom:2}}>SIZE — demon_slime</div>
           <CropSliderRow label="W" value={bossW} min={60} max={480} onChange={v=>{setBossW(v);ENEMY_DIMS.dragon.w=v;}}/>
           <CropSliderRow label="H" value={bossH} min={40} max={280} onChange={v=>{setBossH(v);ENEMY_DIMS.dragon.h=v;}}/>
-          <div style={{fontSize:8,color:'#555',marginTop:2}}>w:{bossW} h:{bossH} · natural: 288×160</div>
-
-          <div style={{fontSize:9,color:'#ffcc44',marginTop:6,marginBottom:2,borderTop:'1px solid #1a1a3a',paddingTop:6}}>
-            STRIKE TIMING — CLEAVE
+          <div style={{fontSize:8,color:'#333',marginTop:2}}>w:{bossW} h:{bossH}</div>
+          <div style={{borderTop:'1px solid #1a1a3a',marginTop:4,paddingTop:6}}>
+            <div style={{fontSize:9,color:'#555',letterSpacing:'.08em',marginBottom:4}}>HIT FRAME — cleave</div>
+            <CropSliderRow label="frame" value={bossHitFrame} min={0} max={30} onChange={v=>{setBossHitFrame(v);ENEMY_DIMS.dragon.hitFrame=v;}}/>
+            <CropSliderRow label="fps"   value={bossHitFps}   min={1} max={30} onChange={v=>{setBossHitFps(v);ENEMY_DIMS.dragon.hitFps=v;}}/>
+            {(()=>{
+              const DUR=3000,WALK_END=0.40,ATK_END=0.82;
+              const hitMs=Math.min((bossHitFrame/bossHitFps)*1000,(ATK_END-WALK_END)*DUR*0.85);
+              const arrive=WALK_END+hitMs/DUR;
+              return <div style={{fontSize:8,color:'#555',marginTop:4,lineHeight:1.7}}>
+                parry @ {Math.round(arrive*DUR)}ms · frame {bossHitFrame} @ {bossHitFps}fps
+              </div>;
+            })()}
           </div>
-          <CropSliderRow label="hit f" value={bossHitFrame} min={0} max={30} onChange={v=>{
-            setBossHitFrame(v); ENEMY_DIMS.dragon.hitFrame=v;
-          }}/>
-          <CropSliderRow label="fps"   value={bossHitFps}   min={1} max={30} onChange={v=>{
-            setBossHitFps(v); ENEMY_DIMS.dragon.hitFps=v;
-          }}/>
-          {(() => {
-            // Replicate startRushMeleeQTE timing math so user sees the live result
-            const DUR=3000, WALK_END=0.40, ATK_END=0.82;
-            const strikePhaseMs=(ATK_END-WALK_END)*DUR;
-            const hitFrameMs=Math.min((bossHitFrame/bossHitFps)*1000, strikePhaseMs*0.85);
-            const arrive=WALK_END+hitFrameMs/DUR;
-            const arriveMs=Math.round(arrive*DUR);
-            return (
-              <div style={{fontSize:8,color:'#88aaff',lineHeight:1.7,marginTop:2}}>
-                <div>parry @ t={arrive.toFixed(3)} ({arriveMs}ms)</div>
-                <div style={{color:'#555'}}>window ±210ms</div>
-                <div style={{color:'#444',marginTop:2}}>
-                  hit f: {bossHitFrame} @ {bossHitFps}fps = {Math.round((bossHitFrame/bossHitFps)*1000)}ms into strike
-                </div>
-              </div>
-            );
-          })()}
         </div>
       </div>
     </div>
