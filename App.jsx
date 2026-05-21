@@ -1000,6 +1000,10 @@ const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, spr
 
     let src, frames, fps, atkType=null;
     const isAttacking = phase==="enemy_turn" || phase==="defending";
+    // During enemy_turn (880ms wind-up before QTE fires) the enemy should look idle —
+    // showing the attack animation here + the QTE firing looks like TWO attacks.
+    // Only show the real attack animation once the QTE is active (phase="defending").
+    const isWindup = phase==="enemy_turn";
 
     // Rush approach/retreat: use PerFrameCanvas directly if perFrame data exists.
     // Bypasses AnimatedSprite + perFrameOps useMemo entirely — reads animCrops straight.
@@ -1045,14 +1049,17 @@ const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, spr
     } else if (isAttacking && sprite.attacks?.length) {
       const atk = sprite.attacks[atkIdx % sprite.attacks.length];
       atkType = atk.type || null;
-      // Rush attacks are handled entirely by the rush QTE (approach/strike/retreat).
-      // Don't play the strike animation while standing in place during enemy_turn.
-      if (atkType === 'rush') {
+      if (isWindup || atkType === 'rush') {
+        // During enemy_turn wind-up OR rush attacks: always show idle.
+        // - Rush: the actual attack plays inside the rush QTE (approach/strike/retreat).
+        // - Wind-up: showing the attack animation 880ms BEFORE the QTE fires looks like
+        //   two separate attacks. Keep idle; the QTE is the visible attack.
         src    = `${base}/Idle.png`;
         frames = sprite.idleFrames;
         fps    = 8;
         atkType = null;
       } else {
+        // defending phase — QTE is active, show real attack animation
         src    = `${base}/${atk.file}`;
         frames = atk.frames;
         fps    = 12;
