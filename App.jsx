@@ -3092,11 +3092,11 @@ function App() {
         }, 1100);
         return {...prev, enemy:{...prev.enemy,hp:0}, phase:"won", log:[...prev.log,logMsg]};
       }
+      const sprite = cs?.enemySprite;
+      const nextIdx  = ((prev.enemyAtkIdx??-1)+1) % (sprite?.attacks?.length||1);
       if (!qteRef.current.debugMode) {
         const _defDelay = cs?.enemy?.id==="dragon" ? 300 : 880;
-        const sprite = cs?.enemySprite;
         // Derive attack type from sprite data; fall back to random rush for untyped sprites
-        const nextIdx  = ((prev.enemyAtkIdx??-1)+1) % (sprite?.attacks?.length||1);
         const atkEntry = sprite?.attacks?.[nextIdx];
         const atkType  = atkEntry?.type;
         let defendFn;
