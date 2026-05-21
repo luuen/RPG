@@ -1,4 +1,4 @@
-﻿const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useRef } = React;
 
 // GitHub Pages serves from /RPG/ subpath; local dev serves from root
 const ASSET_BASE = window.location.hostname.includes("github.io") ? "/RPG" : "";
