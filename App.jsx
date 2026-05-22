@@ -5134,9 +5134,9 @@ function App() {
 
             {/* Tagline steps */}
             <div style={{margin:"20px 0 8px",display:"flex",alignItems:"center",justifyContent:"center",gap:12,flexWrap:"wrap"}}>
-              {["SLAY THE SLIME","USE RPG","SHOOT DUMBASS ON THE OTHER END"].map((t,i,arr)=>(
+              {["RACE TO KILL THE SLIME DEMON","ACQUIRE RPG"].map((t,i,arr)=>(
                 <React.Fragment key={i}>
-                  <span style={{fontFamily:"Cinzel",fontSize:12,letterSpacing:3,color:i===2?"#ff4422":i===1?"#ffcc44":"#aabbcc",textShadow:i===2?"0 0 12px #ff4422":i===1?"0 0 10px #ffcc44":"none",fontWeight:700}}>
+                  <span style={{fontFamily:"Cinzel",fontSize:12,letterSpacing:3,color:i===1?"#ffcc44":"#aabbcc",textShadow:i===1?"0 0 10px #ffcc44":"none",fontWeight:700}}>
                     {t}
                   </span>
                   {i<arr.length-1&&<span style={{color:"#444466",fontSize:16}}>›</span>}
@@ -6915,7 +6915,7 @@ function App() {
           </h1>
           <p style={{fontFamily:"IM Fell English",fontStyle:"italic",opacity:.5,fontSize:16,marginBottom:30,letterSpacing:3}}>
             {iWonRace
-              ? "You won the race — 🚀 RPG is yours! Waiting for your rival..."
+              ? "You have won the RPG for beating the boss first, now use it carefully against your opponent, it's tricky!"
               : "Rival claimed the RPG. Survive if you can."}
           </p>
           {/* Opponent progress while waiting */}
