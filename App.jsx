@@ -2272,14 +2272,44 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
   const [bossHitFrame,   setBossHitFrame]   = React.useState(ENEMY_DIMS.dragon?.hitFrame     ?? 3);
   const [bossHitFps,     setBossHitFps]     = React.useState(ENEMY_DIMS.dragon?.hitFps       ?? 12);
   const [bossAnimIdx,    setBossAnimIdx]    = React.useState(2); // 2 = CLEAVE
-  const [bossLiveFrame,  setBossLiveFrame]  = React.useState(0);
+  const [bossLiveFrame,    setBossLiveFrame]    = React.useState(0);
+  const [bossSelFrame,     setBossSelFrame]     = React.useState(null); // null = live GIF
+  const [bossFrameDataUrl, setBossFrameDataUrl] = React.useState(null);
   const bossTotalFrames = _BOSS_GIFS[bossAnimIdx]?.frames ?? 1;
+
+  // Reset selected frame when switching animations
+  React.useEffect(() => {
+    setBossSelFrame(null);
+    setBossFrameDataUrl(null);
+  }, [bossAnimIdx]);
+
+  // Frame ticker
   React.useEffect(() => {
     if (!isBoss) return;
     setBossLiveFrame(0);
     const iv = setInterval(() => setBossLiveFrame(f => (f+1) % bossTotalFrames), 1000/bossHitFps);
     return () => clearInterval(iv);
   }, [isBoss, bossAnimIdx, bossTotalFrames, bossHitFps]);
+
+  // Extract a single webp frame via ImageDecoder API (Chrome 94+)
+  const extractBossFrame = React.useCallback(async (file, frameIdx) => {
+    try {
+      const url = `${BOSS_GIF_BASE}/${file}`;
+      const resp = await fetch(url);
+      const decoder = new ImageDecoder({ data: resp.body, type: 'image/webp' });
+      await decoder.tracks.ready;
+      const result = await decoder.decode({ frameIndex: frameIdx });
+      const bmp = result.image;
+      const cv = document.createElement('canvas');
+      cv.width = bmp.displayWidth; cv.height = bmp.displayHeight;
+      cv.getContext('2d').drawImage(bmp, 0, 0);
+      setBossFrameDataUrl(cv.toDataURL());
+      bmp.close();
+    } catch(e) {
+      console.warn('[extractBossFrame]', e);
+      setBossFrameDataUrl(null); // fallback: show live GIF
+    }
+  }, []);
   const activeBossGif = (() => {
     if (cs?.phase === 'won') return '05_d_death.webp';
     if (enemyFlash)          return '04_d_take_hit.webp';
@@ -2326,14 +2356,20 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
 
         <div style={{display:'flex',gap:12,alignItems:'flex-start'}}>
 
-          {/* Big preview — GIF playing live (mirrors IN-GAME CROP position) */}
+          {/* Big preview — isolated frame or live GIF */}
           <div style={{flexShrink:0}}>
-            <div style={{fontSize:9,color:'#555',letterSpacing:'.08em',marginBottom:3}}>IN-GAME ANIM</div>
-            <img src={`${BOSS_GIF_BASE}/${bossAnim.file}`} width={BIG} height={Math.round(BIG*(bossH/bossW))}
-              style={{imageRendering:'pixelated',border:'1px solid #2a2a4a',
+            <div style={{fontSize:9,color:'#555',letterSpacing:'.08em',marginBottom:3}}>
+              {bossSelFrame!==null ? `FRAME ${bossSelFrame} — ${bossAnim.label}` : 'IN-GAME ANIM'}
+              {bossSelFrame!==null && <button onClick={()=>{setBossSelFrame(null);setBossFrameDataUrl(null);}}
+                style={{marginLeft:8,fontSize:8,padding:'1px 5px',cursor:'pointer',background:'#1a0808',
+                  border:'1px solid #553333',color:'#cc5555',borderRadius:2,fontFamily:'monospace'}}>✕ live</button>}
+            </div>
+            <img src={bossSelFrame!==null && bossFrameDataUrl ? bossFrameDataUrl : `${BOSS_GIF_BASE}/${bossAnim.file}`}
+              width={BIG} height={Math.round(BIG*(bossH/bossW))}
+              style={{imageRendering:'pixelated',border:`1px solid ${bossSelFrame!==null?'#ffcc4488':'#2a2a4a'}`,
                 background:'#111122',display:'block',borderRadius:5}}/>
             <div style={{fontSize:9,color:'#c8a84b',textAlign:'center',marginTop:3}}>
-              frame {bossLiveFrame+1}/{bossTotalFrames} · {bossAnim.label}
+              {bossSelFrame!==null ? `isolated · frame ${bossSelFrame}/${bossTotalFrames-1}` : `frame ${bossLiveFrame+1}/${bossTotalFrames} · ${bossAnim.label}`}
             </div>
           </div>
 
@@ -2346,23 +2382,30 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
             <div style={{display:'flex',gap:2,flexWrap:'wrap',marginBottom:6}}>
               {Array.from({length:bossTotalFrames},(_,i) => {
                 const isLive = i === bossLiveFrame;
-                const isHit  = i === bossHitFrame && bossAnimIdx === 2; // only show on cleave
+                const isHit  = i === bossHitFrame && bossAnimIdx === 2;
+                const isSel  = i === bossSelFrame;
                 return (
                   <button key={i} onClick={()=>{
-                    if (bossAnimIdx===2) { setBossHitFrame(i); ENEMY_DIMS.dragon.hitFrame=i; }
+                    setBossSelFrame(i);
+                    extractBossFrame(bossAnim.file, i);
                   }}
-                    title={bossAnimIdx===2 ? `Set frame ${i} as hit frame` : 'Switch to CLEAVE to set hit frame'}
+                    onContextMenu={e=>{ e.preventDefault();
+                      if (bossAnimIdx===2) { setBossHitFrame(i); ENEMY_DIMS.dragon.hitFrame=i; }
+                    }}
+                    title={`Click: isolate frame ${i}${bossAnimIdx===2?' · Right-click: set hit frame':''}`}
                     style={{
                       width:36,height:36,fontSize:9,cursor:'pointer',borderRadius:3,
-                      background: isHit ? '#1a2a00' : isLive ? '#1a1430' : '#0d0d1a',
-                      border: `2px solid ${isHit?'#ffcc00':isLive?'#9977cc':'#2a2a3a'}`,
-                      color: isHit?'#ffcc00':isLive?'#cc99ff':'#555',
+                      background: isSel ? '#0a2a0a' : isHit ? '#1a2a00' : isLive ? '#1a1430' : '#0d0d1a',
+                      border: `2px solid ${isSel?'#44ff88':isHit?'#ffcc00':isLive?'#9977cc':'#2a2a3a'}`,
+                      color: isSel?'#44ff88':isHit?'#ffcc00':isLive?'#cc99ff':'#555',
                       fontFamily:'monospace', position:'relative',
                     }}>
                     {i}
-                    {isHit && <div style={{position:'absolute',bottom:1,left:0,right:0,
+                    {isSel && <div style={{position:'absolute',bottom:1,left:0,right:0,
+                      textAlign:'center',fontSize:6,color:'#44ff88'}}>📌</div>}
+                    {isHit && !isSel && <div style={{position:'absolute',bottom:1,left:0,right:0,
                       textAlign:'center',fontSize:6,color:'#ffcc00'}}>HIT</div>}
-                    {isLive && !isHit && <div style={{position:'absolute',bottom:1,left:0,right:0,
+                    {isLive && !isHit && !isSel && <div style={{position:'absolute',bottom:1,left:0,right:0,
                       textAlign:'center',fontSize:6,color:'#9977cc'}}>▶</div>}
                   </button>
                 );
@@ -2370,9 +2413,7 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
             </div>
             {/* Frame numbers row */}
             <div style={{fontSize:8,color:'#334',marginTop:2}}>
-              {bossAnimIdx===2
-                ? `hit frame: ${bossHitFrame} — click any frame above to set it`
-                : 'select CLEAVE anim to set hit frame'}
+              click: isolate frame · {bossAnimIdx===2 ? `right-click: set hit frame (currently ${bossHitFrame})` : 'switch to CLEAVE to set hit frame'}
             </div>
           </div>
 
