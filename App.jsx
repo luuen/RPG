@@ -2615,6 +2615,7 @@ function App() {
   const [pvpTurn,    setPvpTurn]   = useState("mine");    // "mine" | "theirs"
   const [pvpWinner,  setPvpWinner] = useState(null);      // null | "me" | "them"
   const [mpDisconnected, setMpDisconnected] = useState(false);
+  const [oppDiedInDungeon, setOppDiedInDungeon] = useState(false);
   const [iWonRace,   setIWonRace]  = useState(false);
   const [myWeaponLocked, setMyWeaponLocked] = useState(false); // race: true after LOCK IN pressed
   const [bookOpen,   setBookOpen]  = useState(false);
@@ -2717,6 +2718,14 @@ function App() {
       setTimeout(()=>enterPvp(iWonRace), 400);
     }
   },[oppSnap?.dragonKilled, screen]);
+
+  // ── Watch opponent dungeonDied → show "noob died" win screen ──
+  useEffect(()=>{
+    if(gameMode!=="race") return;
+    if(!oppSnap?.dungeonDied) return;
+    if(cs?.pvpMode || pvpWinner) return; // already in pvp combat — irrelevant
+    setOppDiedInDungeon(true);
+  },[oppSnap?.dungeonDied, gameMode, cs?.pvpMode, pvpWinner]);
 
   // ── Weapon lock-in: both players locked → start simultaneously ──
   useEffect(()=>{
@@ -2861,6 +2870,7 @@ function App() {
       if (data.pvpMyHp      !== undefined) next.pvpHp        = data.pvpMyHp;
       if (data.pvpAtk       !== undefined) next.pvpAtk       = data.pvpAtk;
       if (data.pvpTurnDone  !== undefined) next.pvpTurnDone  = data.pvpTurnDone;
+      if (data.dungeonDied  !== undefined) next.dungeonDied  = data.dungeonDied;
       return next;
     });
   };
@@ -2880,10 +2890,11 @@ function App() {
           setGameMode("solo"); setMpStatus("idle");
           setMpMode(null); setPvpWinner(null);
           setCs(null); setScreen("title");
+          setOppDiedInDungeon(false);
           setTimeout(() => setMpDisconnected(false), 2800);
         }, 400);
       } else {
-        setGameMode("solo"); setMpStatus("idle"); setMpMode(null);
+        setGameMode("solo"); setMpStatus("idle"); setMpMode(null); setOppDiedInDungeon(false);
       }
     });
     conn.on("open", () => {
@@ -3359,7 +3370,11 @@ function App() {
     setPlayer(p=>{
       if(!p) return p;
       const nhp = Math.max(0, p.hp-dmg);
-      if (nhp <= 0) setTimeout(()=>setScreen("gameover"), 650);
+      if (nhp <= 0) {
+        setTimeout(()=>setScreen("gameover"), 650);
+        // Notify opponent in race mode so they get the win screen
+        if (gameMode==="race" && !pvpModeRef.current) mpSend({ type:"state", dungeonDied: true });
+      }
       return {...p, hp:nhp};
     });
     setCs(prev=>{
@@ -4737,6 +4752,38 @@ function App() {
     <div style={{minHeight:"100vh",minWidth:"100vw",background:"#020205",color:"#e8d5a3",overflowX:"hidden"}}>
       <style>{GS}</style>
 
+      {/* ── OPPONENT DIED IN DUNGEON OVERLAY ── */}
+      {oppDiedInDungeon&&(
+        <div style={{position:"fixed",inset:0,zIndex:9100,display:"flex",
+          alignItems:"center",justifyContent:"center",
+          background:"rgba(2,2,8,.92)",backdropFilter:"blur(8px)"}}>
+          <div style={{textAlign:"center",padding:"44px 56px",
+            background:"linear-gradient(160deg,#0d0d1a,#0a1a0a)",
+            border:"1px solid #44ff6644",borderRadius:16,
+            boxShadow:"0 0 60px #22ff4433",maxWidth:480}}>
+            <div style={{fontSize:52,marginBottom:16}}>💀</div>
+            <div style={{fontFamily:"Cinzel",fontSize:22,fontWeight:900,letterSpacing:4,
+              color:"#44ff88",textShadow:"0 0 24px #22ff66",marginBottom:12}}>
+              YOU WIN
+            </div>
+            <div style={{fontFamily:"IM Fell English",fontStyle:"italic",fontSize:16,
+              color:"#aaddaa",lineHeight:1.6,marginBottom:28}}>
+              Your opponent died to the dungeon.<br/>
+              <span style={{color:"#ffcc44"}}>What a noob.</span><br/>
+              Guess you win by default.
+            </div>
+            <button className="btn" style={{fontSize:13,padding:"12px 36px",letterSpacing:4}}
+              onClick={()=>{
+                setOppDiedInDungeon(false);
+                setGameMode("solo"); setMpStatus("idle"); setMpMode(null);
+                setPvpWinner(null); setCs(null); setScreen("title");
+              }}>
+              ← HOME
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── OPPONENT DISCONNECTED OVERLAY ── */}
       {mpDisconnected&&(
         <div style={{position:"fixed",inset:0,zIndex:9000,display:"flex",
@@ -5579,7 +5626,10 @@ function App() {
                 const mL = (heroPos?.left??HR_L) + HSW/2 - mW/2;
                 const mT = (heroPos?.top ??HR_T) - mH - 14;
                 const pct = Math.min(charge*100, 100);
-                const goodLo=50, perfLo=CHARGE_PERFECT_LO*100, perfHi=CHARGE_PERFECT_HI*100;
+                // Use weapon-specific zone bounds so the visual always matches the resolve logic
+                const _wcplo = qteAnim?.weapon?.chargePerfectLo ?? CHARGE_PERFECT_LO;
+                const _wcphi = qteAnim?.weapon?.chargePerfectHi ?? CHARGE_PERFECT_HI;
+                const goodLo=50, perfLo=_wcplo*100, perfHi=_wcphi*100;
                 const fillCol = pct>=100?"#ff3311":pct>=perfHi?"#ff2200":pct>=perfLo?"#00ff66":pct>=goodLo?"#ffaa22":"#3388ff";
                 const isPerfectZone = pct>=perfLo && pct<perfHi;
                 const isDanger      = pct>=perfHi;
@@ -5631,7 +5681,10 @@ function App() {
               {/* ── CHARGE: projectile flying to enemy after release ── */}
               {qteAnim?.type==="hold_release"&&qteAnim.released&&(()=>{
                 const rt  = qteAnim.releaseT||0;
-                const q   = (qteAnim.charge||0)>=CHARGE_PERFECT_LO?"perfect":(qteAnim.charge||0)>=0.60?"good":"miss";
+                const _rc = qteAnim.charge||0;
+                const _rlo = qteAnim.weapon?.chargePerfectLo ?? CHARGE_PERFECT_LO;
+                const _rhi = qteAnim.weapon?.chargePerfectHi ?? CHARGE_PERFECT_HI;
+                const q   = _rc>=_rlo&&_rc<_rhi?"perfect":_rc>=0.60?"good":"miss";
                 const col = q==="perfect"?"#44ff88":q==="good"?"#ffcc44":"#ff5522";
                 const sx  = (heroPos?.left||HR_L)+HSW/2;
                 const sy  = (heroPos?.top||HR_T)+HSH/2;
@@ -6935,7 +6988,23 @@ function App() {
               CONNECTING TO OPPONENT…
             </p>
           )}
-          <p style={{fontFamily:"Cinzel",fontSize:9,opacity:.25,letterSpacing:2}}>PVP ARENA LOADING ONCE RIVAL IS READY</p>
+          {oppSnap?.dungeonDied
+            ? <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14,marginTop:8}}>
+                <p style={{fontFamily:"IM Fell English",fontStyle:"italic",fontSize:15,color:"#44ff88",textAlign:"center",lineHeight:1.6,margin:0}}>
+                  Your opponent died to the dungeon. What a noob.<br/>
+                  <span style={{color:"#ffcc44"}}>You win by default.</span>
+                </p>
+                <button className="btn" style={{fontSize:12,padding:"10px 32px",letterSpacing:4}}
+                  onClick={()=>{
+                    setOppDiedInDungeon(false);
+                    setGameMode("solo"); setMpStatus("idle"); setMpMode(null);
+                    setPvpWinner(null); setCs(null); setScreen("title");
+                  }}>
+                  ← HOME
+                </button>
+              </div>
+            : <p style={{fontFamily:"Cinzel",fontSize:9,opacity:.25,letterSpacing:2}}>PVP ARENA LOADING ONCE RIVAL IS READY</p>
+          }
         </div>
       )}
 
