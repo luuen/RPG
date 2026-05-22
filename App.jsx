@@ -126,7 +126,7 @@ const ENEMY_DIMS = {
   golem:{w:84,h:88},  wraith:{w:64,h:96},
   // Boss GIF natural frame size is 288×160 — scale to ~75% to fit battlefield
   // hitFrame/hitFps: used by startRushMeleeQTE to time the parry window on the cleave GIF
-  dragon:{w:216,h:120, hitFrame:11, hitFps:12},
+  dragon:{w:216,h:120, hitFrame:13, hitFps:12},
 };
 
 // Enemy sprite pool — 9 variants randomized per encounter (dragon excluded)
@@ -942,9 +942,10 @@ const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, spr
     if (!sprite) return null;
     const animFile = (() => {
       if (rushAnim === "approach" || rushAnim === "retreat") return sprite.rushApproach?.file;
-      if (rushAnim === "strike") return getRushStrike(sprite, 0)?.file;
+      if (rushAnim === "strike") return getRushStrike(sprite, atkIdx)?.file;
       if (phase === "won") return sprite.deadFile;
-      if (phase === "enemy_turn" || phase === "defending") return sprite.attacks?.[0]?.file;
+      if (enemyFlash && sprite.hurtFile) return sprite.hurtFile;
+      if (phase === "enemy_turn" || phase === "defending") return sprite.attacks?.[atkIdx % (sprite.attacks?.length || 1)]?.file;
       return "Idle.png";
     })();
     const ac = sprite.animCrops?.[animFile];
@@ -979,7 +980,7 @@ const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, spr
       const dstH  = Math.round(srcH * sy);
       return { srcX, srcY, srcW, srcH, dstX, dstY, dstW, dstH };
     });
-  }, [sprite, rushAnim, phase, scale]);
+  }, [sprite, rushAnim, phase, scale, atkIdx, enemyFlash]);
 
   const [slowProjDone, setSlowProjDone] = React.useState(false);
   React.useEffect(() => { setSlowProjDone(false); }, [sprite?.variant, atkIdx, phase]);
@@ -2574,6 +2575,7 @@ function App() {
   const [selectedWeapon, setSelectedWeapon] = useState(null);
   const [player,         setPlayer]         = useState(null);
   const [cs,             setCs]             = useState(null);
+  const csRef = useRef(null); csRef.current = cs; // always-fresh cs for closures (avoids stale atk values)
   const [qteAnim,        setQteAnim]        = useState(null); // all in-scene QTE state
   React.useEffect(()=>{ window.__setQteAnim = setQteAnim; window.__setScreen = setScreen; window.__setPlayer = setPlayer; window.__setCs = setCs; window.__randomHeroLooks = randomHeroLooks; window.ENEMY_SPRITE_POOL = ENEMY_SPRITE_POOL; },[]); // dev debug hook
   // Frame ticker for sprite animation cycling (120ms per frame ≈ ~8fps sprite anim)
@@ -3253,18 +3255,12 @@ function App() {
       pvpAtkCbRef.current(q, weapon, dmg);
       return;
     }
-    if (q!=="miss" && dmgOverride===null) triggerImpact(q==="perfect"?2:1);
-    // Weapon-colored burst at enemy on hit, plus impact trail
-    const wCol = WEAPON_PART_COL[weapon?.id] || WEAPON_PART_COL.default;
-    if (q!=="miss") {
-      triggerProjectileTrail(HR_L+HSW/2, HR_T+HSH/2, ENX, GNDY-40, wCol);
-      triggerParticles(ENX, GNDY-40, wCol, q==="perfect"?48:28);
-      if (q==="perfect") setTimeout(()=>triggerParticles(ENX, GNDY-40, "#ffffff", 18), 60);
-    }
     showHit(q==="perfect"?`PERFECT! −${dmg}`:q==="good"?`HIT −${dmg}`:`MISS −${dmg}`,
             q==="perfect"?"#44ff88":q==="good"?"#ffcc44":"#666");
-    setEnemyFlash(true);
-    setTimeout(()=>setEnemyFlash(false), 450);
+    if (q!=="miss") {
+      setEnemyFlash(true);
+      setTimeout(()=>setEnemyFlash(false), 450);
+    }
 
     // Pick boss attack pattern now so we can close over it in setTimeout
     const bossAtk = cs?.enemy?.id === "dragon" ? "cleave" : null; // boss is melee-only
@@ -3291,6 +3287,7 @@ function App() {
         const useRush = sprite?.rushApproach && !cs?.pvpMode && Math.random() < 0.5;
         defendFn = useRush ? () => startRushMeleeQTE(nextIdx) : () => startDefendQTE(null);
       }
+      clearTimeout(qteRef.current.defendTimer);
       qteRef.current.defendTimer = setTimeout(defendFn, _defDelay);
     }
     setCs(prev=>{
@@ -3342,7 +3339,9 @@ function App() {
   const handleDefend = (q, suppressIndicator=false) => {
     // PvP routing
     if (pvpModeRef.current && pvpDefCbRef.current) { pvpDefCbRef.current(q); return; }
-    const atk = (cs?.enemy?.atk||0) * (cs?.enemyAtkMult||1);
+    // Use csRef.current (always fresh) — cs from closure may be stale if called from rAF/setTimeout
+    const _liveCs = csRef.current;
+    const atk = (_liveCs?.enemy?.atk||0) * (_liveCs?.enemyAtkMult||1);
     const mult = q==="perfect"?0:q==="good"?.4:1.0;
     const dmg  = Math.floor(atk*mult);
     if (!suppressIndicator) {
@@ -3357,17 +3356,18 @@ function App() {
     }
     // Compute elite second-attack params OUTSIDE setCs — same concurrent-mode safety rule:
     // setTimeout inside a state updater gets doubled when React re-invokes the updater.
-    const _elitePending = (cs?.pendingAttacks||0) > 0;
-    const _sp2 = cs?.enemySprite;
-    const _nextIdx2 = _elitePending ? ((cs?.enemyAtkIdx??-1)+1) % (_sp2?.attacks?.length||1) : 0;
+    const _elitePending = (_liveCs?.pendingAttacks||0) > 0;
+    const _sp2 = _liveCs?.enemySprite;
+    const _nextIdx2 = _elitePending ? ((_liveCs?.enemyAtkIdx??-1)+1) % (_sp2?.attacks?.length||1) : 0;
     const _nextType2 = _elitePending ? _sp2?.attacks?.[_nextIdx2]?.type : null;
-    const _nextBossAtk2 = _elitePending && cs?.enemy?.id==="dragon" ? "cleave" : null;
+    const _nextBossAtk2 = _elitePending && _liveCs?.enemy?.id==="dragon" ? "cleave" : null;
     if (_elitePending) {
-      const _secondFn = (cs?.enemy?.id==='dragon' && !cs?.pvpMode)
+      const _secondFn = (_liveCs?.enemy?.id==='dragon' && !_liveCs?.pvpMode)
         ? ()=>startRushMeleeQTE(_nextIdx2)
-        : (_nextType2==='rush' && _sp2?.rushApproach && !cs?.pvpMode)
+        : (_nextType2==='rush' && _sp2?.rushApproach && !_liveCs?.pvpMode)
           ? ()=>startRushMeleeQTE(_nextIdx2)
           : (_nextType2==='slow_proj' ? ()=>startDefendQTE(null,'slow') : ()=>startDefendQTE(null));
+      clearTimeout(qteRef.current.defendTimer);
       qteRef.current.defendTimer = setTimeout(_secondFn, 550);
     }
     setPlayer(p=>{
@@ -3519,7 +3519,6 @@ function App() {
         }
         dmg = Math.max(1, Math.floor((weaponDmg(weapon)+(player?.str||0)) * mult));
         if (q==="perfect") sfx.swordPerfect();
-        triggerImpact(q==="perfect"?2:1);
         const hitsLabel = `${hits}/3`;
         showHit(
           q==="perfect" ? `PERFECT! ${hitsLabel} −${dmg}`
@@ -3615,7 +3614,6 @@ function App() {
         return;
       }
       if(q==="perfect") sfx.hammerPerfect(); else if(q==="good") sfx.hammerGood();
-      if (q!=="miss") triggerImpact(q==="perfect"?2:1);
       showHit(q==="perfect"?"PERFECT!":q==="good"?"GOOD!":"MISS!",
               q==="perfect"?"#44ff88":q==="good"?"#ffcc44":"#666");
       const t0 = performance.now();
@@ -3820,11 +3818,6 @@ function App() {
               setQteAnim(prev=>prev?{...prev,arrows:(prev.arrows||[]).map((a,i)=>i===arrowIdx?{...a,frac:af}:a)}:null);
               if(af<1){requestAnimationFrame(arrowTick);return;}
               sfx.arrowHit(ld.q);
-              if(ld.q!=="miss"){
-                triggerImpact(ld.q==="perfect"?2:1);
-                const eDims2=ENEMY_DIMS[cs?.enemy?.id]||{h:70};
-                triggerParticles(ENX, GNDY-eDims2.h*1.1*0.5, ld.q==="perfect"?"#ffee44":"#ffbb33", ld.q==="perfect"?36:22);
-              }
               // After last arrow
               if(arrowIdx===locked.length-1){
                 const hitCount = scores.filter(s=>s!=="miss").length;
@@ -3887,12 +3880,6 @@ function App() {
       const t = Math.min(1,(performance.now()-start)/BOLT_DUR);
       setQteAnim(prev=>prev?{...prev,t}:null);
       if (t<1) { requestAnimationFrame(tick); return; }
-      triggerImpact(q==="perfect"?2:1);
-      // Particle burst at enemy on bolt impact
-      const bCol = q==="perfect"?"#cc44ff":q==="good"?"#8833ff":"#444466";
-      const _bDims = ENEMY_DIMS[cs?.enemy?.id]||{h:70};
-      const _bTop  = GNDY - _bDims.h*1.1;
-      triggerParticles(ENX, _bTop+_bDims.h*0.4, bCol, q==="perfect"?44:28);
       showHit(q==="perfect"?"PERFECT!":q==="good"?"GOOD!":"MISS!", q==="perfect"?"#44ff88":q==="good"?"#ffcc44":"#666");
       setQteAnim(null);
       setTimeout(()=>resolveAttack(q,weapon,dmg), 80);
@@ -4029,8 +4016,6 @@ function App() {
         const flashAt = 0.92;
         if (t>=flashAt&&!ref.flashDone) {
           ref.flashDone=true;
-          triggerImpact(1);
-          // Fire contact burst particles at enemy head
           const sid = Date.now();
           setStompImpact({ x: ENX, y: (ref.landTop||0) + HSH, quality:"hit", id: sid });
           setTimeout(()=>setStompImpact(s=>s?.id===sid?null:s), 550);
@@ -4060,8 +4045,6 @@ function App() {
         sfx.stompLand(q2);
         totalDmg += dmgFor(q2);
         const best = [q1,q2].includes("perfect")?"perfect":"good";
-        triggerImpact(best==="perfect"?2:1);
-        // Final quality burst — overrides the hit burst with larger perfect explosion
         const sid2 = Date.now();
         setStompImpact({ x: ENX, y: (ref.landTop||0) + HSH, quality: best, id: sid2 });
         setTimeout(()=>setStompImpact(s=>s?.id===sid2?null:s), best==="perfect"?900:650);
@@ -4082,12 +4065,7 @@ function App() {
       const t = Math.min(1,(performance.now()-start)/ROCKET_DUR);
       setQteAnim(prev=>prev?{...prev,t}:null);
       if (t<1) { requestAnimationFrame(tick); return; }
-      // Massive multi-wave explosion
       sfx.rpgImpact();
-      triggerImpact(2);
-      triggerParticles(ENX, GNDY-50, "#ff4400", 52);
-      setTimeout(()=>triggerParticles(ENX, GNDY-35, "#ffcc00", 36),90);
-      setTimeout(()=>triggerParticles(ENX, GNDY-60, "#ff8800", 28),190);
       const isP = q==="perfect";
       showHit(isP?`DIRECT HIT! −${dmg}`:q==="good"?`HIT −${dmg}`:`MISS −${dmg}`,
               isP?"#ff6622":q==="good"?"#ffaa22":"#666", isP);
@@ -4347,9 +4325,22 @@ function App() {
 
     ref.projSoundPlayed = false; ref._defLastRender = 0;
     const tick = () => {
-      if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown",onKey); return; } // cancelled externally
       const now2 = performance.now();
       const t = Math.min(1,(now2-ref.startMs)/dur);
+      // Resolution always runs at t=1 regardless of gen — prevents missed damage when timers
+      // fire between the indicator frame (t>=arrive) and the resolution frame (t=1).
+      if (t >= 1) {
+        window.removeEventListener("keydown",onKey);
+        if (!ref.done) {
+          ref.done = true;
+          const d = ref.pressT!=null ? Math.abs(ref.pressT-arrive) : 99;
+          setQteAnim(null);
+          handleDefend(d<.055?"perfect":d<.14?"good":"miss", true); // suppressIndicator
+        }
+        return;
+      }
+      // Gen guard only applies to animation frames — not to resolution
+      if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown",onKey); return; }
       const projFrac = t < launch ? 0
         : Math.min(1,(t-launch)/(arrive-launch));
       if(t>=launch&&!ref.projSoundPlayed){ref.projSoundPlayed=true;sfx.projLaunch();}
@@ -4360,7 +4351,7 @@ function App() {
       // Fire damage indicator exactly when projectile arrives
       if (!ref._defArrivedShown && t >= arrive) {
         ref._defArrivedShown = true;
-        const _atk = (cs?.enemy?.atk||0) * (cs?.enemyAtkMult||1);
+        const _atk = (csRef.current?.enemy?.atk||0) * (csRef.current?.enemyAtkMult||1);
         const _d   = ref.pressT!=null ? Math.abs(ref.pressT-arrive) : 99;
         const _q   = _d<.055 ? "perfect" : _d<.14 ? "good" : "miss";
         const _dmg = Math.floor(_atk * (_q==="perfect"?0:_q==="good"?.4:1.0));
@@ -4372,11 +4363,7 @@ function App() {
         showHit(_q==="perfect"?"PARRIED!":_q==="good"?`BLOCKED −${_dmg}hp`:`HIT −${_dmg}hp`,
                 _q==="perfect"?"#44aaff":_q==="good"?"#4488ff":"#ff4444");
       }
-      if (t<1) { requestAnimationFrame(tick); return; }
-      window.removeEventListener("keydown",onKey);
-      const d = ref.pressT!=null ? Math.abs(ref.pressT-arrive) : 99;
-      setQteAnim(null);
-      handleDefend(d<.055?"perfect":d<.14?"good":"miss", true); // suppressIndicator
+      requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
   };
@@ -4406,7 +4393,7 @@ function App() {
     const strikeFps    = isBoss ? (ENEMY_DIMS.dragon?.hitFps ?? 12)   : (_strikeAnim?.fps    ?? 12);
     const hitFrameIdx  = isBoss ? (ENEMY_DIMS.dragon?.hitFrame ?? 3)  : (_strikeAnim?.hitFrame ?? 3);
     const strikePhaseMs = (ATK_END - WALK_END) * DUR;         // ms allocated for strike
-    const hitFrameMs   = Math.min((hitFrameIdx / strikeFps) * 1000, strikePhaseMs * 0.85);
+    const hitFrameMs   = Math.min((hitFrameIdx / strikeFps) * 1000, strikePhaseMs * 0.92);
     const ARRIVE   = WALK_END + hitFrameMs / DUR;
     const WINDOW   = 0.07; // half-window for "good" block (~210ms total window)
 
@@ -4428,9 +4415,22 @@ function App() {
     window.addEventListener("keydown", onKey);
 
     const tick = () => {
-      if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown", onKey); return; }
       const now2 = performance.now();
       const t = Math.min(1, (now2 - ref.startMs) / DUR);
+      // Resolution always runs at t=1 regardless of gen — prevents missed damage when a timer
+      // fires between the indicator frame (t>=ARRIVE) and the resolution frame (t=1).
+      if (t >= 1) {
+        window.removeEventListener("keydown", onKey);
+        if (!ref.done) {
+          ref.done = true;
+          const d = ref.pressT != null ? Math.abs(ref.pressT - ARRIVE) : 99;
+          setQteAnim(null);
+          handleDefend(d < WINDOW * 0.5 ? "perfect" : d < WINDOW ? "good" : "miss", true); // suppressIndicator
+        }
+        return;
+      }
+      // Gen guard only applies to animation frames — not to the resolution block above
+      if (ref.done || ref.gen !== myGen) { window.removeEventListener("keydown", onKey); return; }
       const rushPhase = t < WALK_END ? "approach" : t < ATK_END ? "strike" : "retreat";
       if (now2 - ref._rushLastRender >= 20) {
         ref._rushLastRender = now2;
@@ -4439,7 +4439,7 @@ function App() {
       // Fire damage/parry indicator exactly at the hit frame (ARRIVE)
       if (!ref._arrivedShown && t >= ARRIVE) {
         ref._arrivedShown = true;
-        const _atk = (cs?.enemy?.atk||0) * (cs?.enemyAtkMult||1);
+        const _atk = (csRef.current?.enemy?.atk||0) * (csRef.current?.enemyAtkMult||1);
         const _d   = ref.pressT != null ? Math.abs(ref.pressT - ARRIVE) : 99;
         const _q   = _d < WINDOW*0.5 ? "perfect" : _d < WINDOW ? "good" : "miss";
         const _dmg = Math.floor(_atk * (_q==="perfect"?0:_q==="good"?.4:1.0));
@@ -4452,11 +4452,7 @@ function App() {
         showHit(_q==="perfect"?"PARRIED!":_q==="good"?`BLOCKED −${_dmg}hp`:`HIT −${_dmg}hp`,
                 _q==="perfect"?"#44aaff":_q==="good"?"#4488ff":"#ff4444");
       }
-      if (t < 1) { requestAnimationFrame(tick); return; }
-      window.removeEventListener("keydown", onKey);
-      const d = ref.pressT != null ? Math.abs(ref.pressT - ARRIVE) : 99;
-      setQteAnim(null);
-      handleDefend(d < WINDOW * 0.5 ? "perfect" : d < WINDOW ? "good" : "miss", true); // suppressIndicator
+      requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
   };
@@ -4583,11 +4579,20 @@ function App() {
     if (t >= prof.launch) return 0;
     return Math.sin(t * Math.PI * 14) * 5;
   })();
-  // Rush melee: enemy slides right toward hero, then retreats
+  // Rush melee: enemy slides right toward hero, then retreats.
+  // RUSH_DIST is per-enemy so every sprite's right edge lands at the same X (HR_L - 8),
+  // giving a consistent parry position regardless of sprite width.
   const enemyRushOffset = (() => {
     if (!qteAnim || qteAnim.type !== "rush_melee") return 0;
     const { t, walkEnd=0.40, attackEnd=0.82 } = qteAnim;
-    const RUSH_DIST = HRX - ENX - 95; // stop just left of hero
+    const _erW = (() => {
+      if (cs?.enemy?.id === "dragon") return ENEMY_DIMS.dragon.w * 1.1;
+      const _sp = cs?.enemySprite;
+      if (_sp) return (_sp.cropW || _sp.frameW || 64) * 1.1;
+      return (ENEMY_DIMS[cs?.enemy?.id]?.w || 64) * 1.1;
+    })();
+    // enemy right edge = ENX + _erW/2 + RUSH_DIST → target HR_L - 8
+    const RUSH_DIST = Math.max(50, Math.round(HR_L - 8 - _erW / 2 - ENX));
     if (t < walkEnd) return RUSH_DIST * easeIO(t / walkEnd);
     if (t < attackEnd) return RUSH_DIST;
     return RUSH_DIST * (1 - easeIO((t - attackEnd) / (1 - attackEnd)));
