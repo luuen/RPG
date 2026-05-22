@@ -3370,15 +3370,17 @@ function App() {
     // dmgOverride: use pre-computed dmg from ARRIVE frame so shown number === HP deducted
     const dmg  = dmgOverride != null ? dmgOverride : Math.floor(atk*mult);
     if (!suppressIndicator) {
-      // Projectile trail enemy → hero, then burst
+      // Projectile trail enemy → hero, then burst (only when QTE didn't already play these at ARRIVE)
       triggerProjectileTrail(ENX, GNDY-40, HR_L+HSW/2, HR_T+HSH/2, q==="miss"?"#ff4444":"#4488ff");
       if (q==="miss") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ff4444", 36);
       else if (q==="good") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#4488ff", 28);
       else { triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#88ddff", 52); setTimeout(()=>triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ffffff", 24), 80); }
       if(q==="perfect") sfx.parry(); else if(q==="good") sfx.blockHit(); else sfx.takeDmg();
-      showHit(q==="perfect"?"PARRIED!":q==="good"?`BLOCKED −${dmg}hp`:`HIT −${dmg}hp`,
-              q==="perfect"?"#44aaff":q==="good"?"#4488ff":"#ff4444");
     }
+    // Always show result text — moved outside suppressIndicator so the FINAL correct result
+    // is always displayed, even when ARRIVE already played sfx/particles.
+    showHit(q==="perfect"?"PARRIED!":q==="good"?`BLOCKED −${dmg}hp`:`HIT −${dmg}hp`,
+            q==="perfect"?"#44aaff":q==="good"?"#4488ff":"#ff4444");
     setPlayer(p=>{
       if(!p) return p;
       const nhp = Math.max(0, p.hp-dmg);
@@ -4379,8 +4381,7 @@ function App() {
         else if (_q==="good") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#4488ff", 28);
         else { triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#88ddff", 52); setTimeout(()=>triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ffffff", 24), 80); }
         if (_q==="perfect") sfx.parry(); else if (_q==="good") sfx.blockHit(); else sfx.takeDmg();
-        showHit(_q==="perfect"?"PARRIED!":_q==="good"?`BLOCKED −${_dmg}hp`:`HIT −${_dmg}hp`,
-                _q==="perfect"?"#44aaff":_q==="good"?"#4488ff":"#ff4444");
+        // showHit intentionally omitted — handleDefend at t=1 shows the definitive result
       }
       requestAnimationFrame(tick);
     };
@@ -4471,8 +4472,7 @@ function App() {
         else { triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#88ddff", 52); setTimeout(()=>triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ffffff", 24), 80); }
         if (_q==="perfect") sfx.parry();
         else if (_q==="good") sfx.blockHit(); else sfx.takeDmg();
-        showHit(_q==="perfect"?"PARRIED!":_q==="good"?`BLOCKED −${_dmg}hp`:`HIT −${_dmg}hp`,
-                _q==="perfect"?"#44aaff":_q==="good"?"#4488ff":"#ff4444");
+        // showHit intentionally omitted — handleDefend at t=1 shows the definitive result
       }
       requestAnimationFrame(tick);
     };
