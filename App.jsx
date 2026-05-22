@@ -103,7 +103,7 @@ const ALL_WEAPONS = {
   club_musket:    { id:"club_musket",   name:"Club & Musket",   emoji:"🏏💥", baseDmg:24, speed:1.0, qteType:"dual_action",tier:"epic", dotSpeed:3.60, centerWidth:0.12,                           classEmoji:"💥",  className:"Rifleman",   desc:"Blazing dot speed — react fast. Hold A+W+D, click the center." },
   sniper_spear:   { id:"sniper_spear",  name:"Sniper & Spear",  emoji:"🎯🔱", baseDmg:26, speed:1.0, qteType:"dual_action",tier:"epic", dotSpeed:4.20, centerWidth:0.10,                           classEmoji:"🎯",  className:"Deadeye",    desc:"Fastest dot — pure reflex. Nail it for massive damage. Hold A+W+D, click." },
   // ── LEGENDARY ──
-  rpg:            { id:"rpg",           name:"RPG",             emoji:"🚀",  baseDmg:35, speed:1.2, qteType:"sequence_reveal", tier:"legendary", seqLength:5, seqDur:5500, classEmoji:"💥", className:"Demolisher" },
+  rpg:            { id:"rpg",           name:"RPG",             emoji:"🚀",  baseDmg:35, speed:1.2, qteType:"sequence_reveal", tier:"legendary", seqLength:10, classEmoji:"💥", className:"Demolisher" },
 };
 
 /* ─── ENEMY DATA ─────────────────────────────────────────────── */
@@ -4073,7 +4073,7 @@ function App() {
     sfx.rpgLaunch();
     const start = performance.now();
     const ROCKET_DUR = RPG_SPEEDS[Math.floor(Math.random() * RPG_SPEEDS.length)];
-    const rocketLevel = correctCount<=1?0:correctCount<=3?1:correctCount<=4?2:3;
+    const rocketLevel = correctCount<=4?0:correctCount<=7?1:correctCount<=9?2:3;
     setQteAnim({ type:"rpg_rocket", weapon, t:0, q, rocketLevel });
     const tick = () => {
       const t = Math.min(1,(performance.now()-start)/ROCKET_DUR);
@@ -4089,12 +4089,12 @@ function App() {
     requestAnimationFrame(tick);
   };
 
-  // ── SEQUENCE REVEAL (RPG): grid — target jumps & remaining keys reshuffle on correct press ──
-  // Simpler: 5 keys, 5.5s window. Max 200 dmg. -8% per miss. Min 40%.
+  // ── SEQUENCE REVEAL (RPG): 2×5 grid — target jumps & ALL remaining keys reshuffle on each correct press ──
+  // The reshuffle prevents the player reading ahead. Max 200 dmg. -5% per miss/incomplete. Min 30%.
   const startRPGQTE = (weapon) => {
     const ref = qteRef.current;
     ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
-    const len = weapon.seqLength || 5;
+    const len = weapon.seqLength || 10;
     const SEQ_DUR_RPG = weapon.seqDur ?? SEQ_DUR;
     const genKey = () => ALL_KEYS[Math.floor(Math.random()*ALL_KEYS.length)];
     const seq = Array.from({length:len}, genKey);
@@ -4122,7 +4122,7 @@ function App() {
           ref.done = true;
           window.removeEventListener("keydown", onKey);
           clearTimeout(ref.rpgTimer);
-          const dmg = Math.round(200 * Math.max(0.40, 1 - ref.missCount * 0.08));
+          const dmg = Math.round(200 * Math.max(0.30, 1 - ref.missCount * 0.05));
           fireRPGRocket("perfect", dmg, weapon, ref.doneSet.size);
         } else {
           // Pick new random target from remaining slots
@@ -4150,9 +4150,9 @@ function App() {
         ref.done = true;
         window.removeEventListener("keydown", onKey);
         const incomplete = len - ref.doneSet.size;
-        const dmg = Math.round(200 * Math.max(0.40, 1 - (ref.missCount * 0.08 + incomplete * 0.10)));
+        const dmg = Math.round(200 * Math.max(0.30, 1 - (ref.missCount + incomplete) * 0.05));
         // RPG never misses — only does less damage. Minimum "good" so PvP always sends the attack.
-        const q = ref.doneSet.size >= len ? "perfect" : "good";
+        const q = ref.doneSet.size >= len*0.75 ? "perfect" : "good";
         fireRPGRocket(q, dmg, weapon, ref.doneSet.size);
       }
     }, SEQ_DUR_RPG);
