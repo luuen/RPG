@@ -6630,7 +6630,7 @@ function App() {
                 return (
                   <div key={wid} style={{
                     position:"absolute", left:hcx, top:hcy,
-                    width:0, height:0, zIndex:22, pointerEvents:"none",
+                    width:0, height:0, zIndex:1, pointerEvents:"none",
                     animation:`weaponOrbit ${ORBIT_DUR}s linear ${delay}s infinite`,
                     transformOrigin:"0 0",
                   }}>
