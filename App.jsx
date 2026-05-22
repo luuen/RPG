@@ -152,9 +152,10 @@ const ENEMY_SPRITE_POOL = [
    hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:3,
    rushApproach:{file:"Run.png",frames:7,fps:10}, rushStrike:{file:"Attack_3.png",frames:10,fps:14,hitFrame:5}},
   {variant:"Gorgon_3",  name:"Gorgon",        dir:"free-gorgon-pixel-art-character-sprite-sheets",   frameW:128,frameH:128,idleFrames:7,  headPad:22, cropY:35,cropH:93,
-   attacks:[{file:"Attack_1.png",frames:16,type:"slow_proj"},{file:"Attack_2.png",frames:7,type:"projectile"},{file:"Attack_3.png",frames:10,type:"rush"}],
+   // Attack_2/Attack_3 are swapped in Gorgon_3's sprite pack — correct frame counts here
+   attacks:[{file:"Attack_1.png",frames:16,type:"slow_proj"},{file:"Attack_3.png",frames:7,type:"projectile"},{file:"Attack_2.png",frames:10,type:"rush"}],
    hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:3,
-   rushApproach:{file:"Run.png",frames:7,fps:10}, rushStrike:{file:"Attack_3.png",frames:10,fps:14,hitFrame:5}},
+   rushApproach:{file:"Run.png",frames:7,fps:10}, rushStrike:{file:"Attack_2.png",frames:10,fps:14,hitFrame:5}},
   {variant:"Minotaur_1",name:"Minotaur",      dir:"free-minotaur-sprite-sheet-pixel-art-pack",       frameW:128,frameH:128,idleFrames:10, headPad:18, cropY:30,cropH:98,
    attacks:[{file:"Attack.png",frames:5,type:"rush"}],
    hurtFile:"Hurt.png",hurtFrames:3, deadFile:"Dead.png",deadFrames:5,
