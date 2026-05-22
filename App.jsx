@@ -4288,6 +4288,9 @@ function App() {
   };
   const startDefendQTE = (bossAtkPattern = null, variant = null) => {
     const ref = qteRef.current;
+    // Cancel any pending second timer the moment a QTE starts — prevents stale timers
+    // from firing mid-QTE and scheduling a duplicate attack.
+    clearTimeout(ref.defendTimer); ref.defendTimer = null;
     ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
     const isPvp = cs?.pvpMode && cs?.enemy?.id === "pvp_opp";
     let prof, projType;
@@ -4378,6 +4381,8 @@ function App() {
     const _rushAtkIdx = atkIdx ?? cs?.enemyAtkIdx ?? 0;
 
     const ref = qteRef.current;
+    // Cancel any pending timer the moment this QTE starts — prevents duplicate attacks.
+    clearTimeout(ref.defendTimer); ref.defendTimer = null;
     ref.gen = (ref.gen||0)+1; const myGen = ref.gen;
 
     // Timeline fractions (all over DUR ms):
@@ -6312,7 +6317,7 @@ function App() {
                   :cs.enemy.id==="dragon"
                     ?(enemyFlash?"drop-shadow(0 0 28px #ff4400) drop-shadow(0 0 12px #ff6600)":"drop-shadow(0 0 22px #ff6600bb)")
                   :`drop-shadow(0 0 22px ${enemyData.color}bb) drop-shadow(0 8px 4px #00000088)`,
-                animation:enemyFlash?`hitFlash .35s ease-out, squish .3s ease-out`:"none",
+                animation:enemyFlash?`hitFlash .35s ease-out`:"none",
                 transformOrigin:"bottom center",
                 transform:(qteAnim?.type==="rush_melee"&&qteAnim.rushPhase==="retreat")?"scaleX(-1)":cs.enemy.id==="dragon"||cs.enemy.id==="pvp_opp"?"scaleX(-1)":"none"}}>
                 {cs.enemy.id==="pvp_opp"
