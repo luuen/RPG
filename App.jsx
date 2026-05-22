@@ -4603,37 +4603,47 @@ function App() {
   // Returns {x,y} in battlefield coords for projType at fraction t (0→1)
   const pvpProjPos = (projType, t, srcX, srcY, dstX, dstY) => {
     const lerp = (a,b,f) => a+(b-a)*f;
-    const x = lerp(srcX, dstX, t);
-    let y;
+    let x, y;
     switch(projType) {
-      case "swing_beat":
-        y = lerp(srcY, dstY, t);
+      case "swing_beat": // sword — diagonal slash arc, curves downward on approach
+        x = lerp(srcX, dstX, t);
+        y = lerp(srcY, dstY, t) + Math.sin(t * Math.PI) * 28;
         break;
-      case "hold_release":
-        y = GNDY - 10 + Math.sin(t*Math.PI)*(-5);
+      case "hold_release": // hammer — massive overhead parabola, slams from above
+        x = lerp(srcX, dstX, t);
+        y = lerp(srcY, dstY, t) - Math.sin(t * Math.PI) * 110;
         break;
-      case "rapid_tap":
-        y = lerp(srcY, dstY, t) + Math.sin(t * Math.PI * 8) * 22;
+      case "rapid_tap": // daggers — violent rapid zigzag, barely controllable
+        x = lerp(srcX, dstX, t);
+        y = lerp(srcY, dstY, t) + Math.sin(t * Math.PI * 11) * 32;
         break;
-      case "sequence":
-        y = lerp(srcY, dstY, t) + Math.sin(t * Math.PI * 2) * 35;
+      case "sequence": // staff — slow corkscrew spiral, both axes rotate
+        x = lerp(srcX, dstX, t) + Math.sin(t * Math.PI * 5) * 18;
+        y = lerp(srcY, dstY, t) + Math.cos(t * Math.PI * 5) * 18;
         break;
-      case "stomp":
-        y = GNDY - 8 + Math.abs(Math.sin(t*Math.PI)) * (-20);
+      case "stomp": // boots — ground-skims with 3 bounces like a skipping stone
+        x = lerp(srcX, dstX, t);
+        y = GNDY - 6 - Math.abs(Math.sin(t * Math.PI * 3)) * 55;
         break;
-      case "poke":
-        y = lerp(srcY, dstY, t);
+      case "poke": // spear — rockets in a straight line but accelerates (ease-in)
+        x = srcX + (dstX - srcX) * (t * t);
+        y = srcY + (dstY - srcY) * (t * t);
         break;
-      case "archery":
-        y = lerp(srcY, dstY, t) - Math.sin(t * Math.PI) * 30;
+      case "archery": // bow — high rainbow arc, peaks at midpoint
+        x = lerp(srcX, dstX, t);
+        y = lerp(srcY, dstY, t) - Math.sin(t * Math.PI) * 85;
         break;
-      case "sequence_reveal":
-        y = lerp(srcY, dstY, t) + Math.sin(t * Math.PI * 1.5) * 15;
+      case "sequence_reveal": // rpg — slow wind-up then rockets (cubic ease-in)
+        { const e = t * t * t;
+          x = srcX + (dstX - srcX) * e;
+          y = lerp(srcY, dstY, e) - Math.sin(t * Math.PI) * 20; }
         break;
-      case "dual_action":
-        y = lerp(srcY, dstY, t);
+      case "dual_action": // sword+gun — bullet path with damping wobble, settles straight
+        x = lerp(srcX, dstX, t);
+        y = lerp(srcY, dstY, t) + Math.sin(t * Math.PI * 4) * (1 - t) * 45;
         break;
       default:
+        x = lerp(srcX, dstX, t);
         y = lerp(srcY, dstY, t);
     }
     return { x, y };
