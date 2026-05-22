@@ -1655,11 +1655,11 @@ function CropSliderRow({ label, value, min, max, onChange }) {
 
 const _BOSS_CROP_ENTRY = { variant:'demon_slime_boss', name:'Demon Slime', isBoss:true };
 const _BOSS_GIFS = [
-  {label:'IDLE',   file:'01_d_idle.webp'},
-  {label:'WALK',   file:'02_d_walk.webp'},
-  {label:'CLEAVE', file:'03_d_cleave.webp'},
-  {label:'HIT',    file:'04_d_take_hit.webp'},
-  {label:'DEAD',   file:'05_d_death.webp'},
+  {label:'IDLE',   file:'01_d_idle.webp',    frames:6},
+  {label:'WALK',   file:'02_d_walk.webp',    frames:12},
+  {label:'CLEAVE', file:'03_d_cleave.webp',  frames:15},
+  {label:'HIT',    file:'04_d_take_hit.webp',frames:5},
+  {label:'DEAD',   file:'05_d_death.webp',   frames:21},
 ];
 
 /* ── Crop Editor — modal, uses actual image dimensions for accuracy ─── */
@@ -2272,8 +2272,8 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
   const [bossHitFrame,   setBossHitFrame]   = React.useState(ENEMY_DIMS.dragon?.hitFrame     ?? 3);
   const [bossHitFps,     setBossHitFps]     = React.useState(ENEMY_DIMS.dragon?.hitFps       ?? 12);
   const [bossAnimIdx,    setBossAnimIdx]    = React.useState(2); // 2 = CLEAVE
-  const [bossTotalFrames,setBossTotalFrames]= React.useState(ENEMY_DIMS.dragon?.totalFrames  ?? 8);
   const [bossLiveFrame,  setBossLiveFrame]  = React.useState(0);
+  const bossTotalFrames = _BOSS_GIFS[bossAnimIdx]?.frames ?? 1;
   React.useEffect(() => {
     if (!isBoss) return;
     setBossLiveFrame(0);
@@ -2340,7 +2340,7 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
           {/* Frame strip — clickable frame buttons, live frame + hit frame highlighted */}
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:9,color:'#555',marginBottom:5}}>
-              demon_slime_boss · {bossAnim.file} · {bossTotalFrames}f · click frame to set hit frame
+              demon_slime_boss · {bossAnim.file} · {bossTotalFrames} frames · click frame to set hit frame
             </div>
             {/* Frame button strip */}
             <div style={{display:'flex',gap:2,flexWrap:'wrap',marginBottom:6}}>
@@ -2380,11 +2380,10 @@ function CombatSpriteOverlay({ cs, enemyFlash }) {
           <div style={{flexShrink:0,display:'flex',flexDirection:'column',gap:6,
             background:'#0a0a16',border:'1px solid #1e1e3a',borderRadius:5,padding:'8px 10px'}}>
             <div style={{fontSize:9,color:'#555',letterSpacing:'.08em',marginBottom:2}}>BOSS — demon_slime</div>
-            <CropSliderRow label="W"      value={bossW}           min={60}  max={480} onChange={v=>{setBossW(v);ENEMY_DIMS.dragon.w=v;}}/>
-            <CropSliderRow label="H"      value={bossH}           min={40}  max={280} onChange={v=>{setBossH(v);ENEMY_DIMS.dragon.h=v;}}/>
-            <CropSliderRow label="frames" value={bossTotalFrames} min={1}   max={32}  onChange={v=>{setBossTotalFrames(v);ENEMY_DIMS.dragon.totalFrames=v;}}/>
-            <CropSliderRow label="fps"    value={bossHitFps}      min={1}   max={30}  onChange={v=>{setBossHitFps(v);ENEMY_DIMS.dragon.hitFps=v;}}/>
-            <CropSliderRow label="hit f"  value={bossHitFrame}    min={0}   max={Math.max(0,bossTotalFrames-1)} onChange={v=>{setBossHitFrame(v);ENEMY_DIMS.dragon.hitFrame=v;}}/>
+            <CropSliderRow label="W"     value={bossW}        min={60} max={480} onChange={v=>{setBossW(v);ENEMY_DIMS.dragon.w=v;}}/>
+            <CropSliderRow label="H"     value={bossH}        min={40} max={280} onChange={v=>{setBossH(v);ENEMY_DIMS.dragon.h=v;}}/>
+            <CropSliderRow label="fps"   value={bossHitFps}   min={1}  max={30}  onChange={v=>{setBossHitFps(v);ENEMY_DIMS.dragon.hitFps=v;}}/>
+            <CropSliderRow label="hit f" value={bossHitFrame} min={0}  max={Math.max(0,bossTotalFrames-1)} onChange={v=>{setBossHitFrame(v);ENEMY_DIMS.dragon.hitFrame=v;}}/>
             <div style={{fontSize:8,color:'#333',marginTop:2}}>
               w:{bossW} h:{bossH}<br/>
               hit f:{bossHitFrame} fps:{bossHitFps}
