@@ -97,7 +97,7 @@ const ALL_WEAPONS = {
   titan_hammer:   { id:"titan_hammer",  name:"Titan's Hammer",  emoji:"🔨",  baseDmg:24, speed:0.9, qteType:"hold_release",tier:"epic", chargePerfectLo:0.84, chargePerfectHi:0.91,               classEmoji:"⚡",  className:"Titan",      desc:"Razor-thin perfect zone — hold steady, release at the peak." },
   shadow_fangs:   { id:"shadow_fangs",  name:"Shadow Fangs",    emoji:"🗡️",  baseDmg:19, speed:4.0, qteType:"rapid_tap",  tier:"epic", tapTarget:14, rapidDur:1300,                               classEmoji:"🕷️", className:"Assassin",   desc:"Mash A+D 14 times in 1.3 seconds — pure chaos speed." },
   void_scepter:   { id:"void_scepter",  name:"Void Scepter",    emoji:"✨",  baseDmg:21, speed:1.8, qteType:"sequence",   tier:"epic", seqLength:6, seqDur:2600,                                   classEmoji:"🌌",  className:"Arcanist",   desc:"6 runes in 2.6 seconds — one mistake and you restart." },
-  darkwood_bow:   { id:"darkwood_bow",  name:"Darkwood Bow",    emoji:"🏹",  baseDmg:20, speed:1.5, qteType:"archery",    tier:"epic", archDur:2500,                                               classEmoji:"🌙",  className:"Shadowshot", desc:"Fast-orbiting dots — lightning reflexes needed." },
+  darkwood_bow:   { id:"darkwood_bow",  name:"Darkwood Bow",    emoji:"🏹",  baseDmg:14, speed:1.5, qteType:"archery",    tier:"epic", archDur:2500,                                               classEmoji:"🌙",  className:"Shadowshot", desc:"Fast-orbiting dots — lightning reflexes needed." },
   thunder_boots:  { id:"thunder_boots", name:"Thunder Boots",   emoji:"👟",  baseDmg:20, speed:1.4, qteType:"stomp",      tier:"epic", stompDur:530,                                               classEmoji:"⚡",  className:"Thunderfoot",desc:"Blink-fast stomp — the window is tiny." },
   dragon_lance:   { id:"dragon_lance",  name:"Dragon Lance",    emoji:"🔱",  baseDmg:22, speed:2.0, qteType:"poke",       tier:"epic", pokeDur:1400, pokeTarg:36,                                  classEmoji:"🐉",  className:"Dragoon",    desc:"36 keypresses — blazing speed, use every finger." },
   club_musket:    { id:"club_musket",   name:"Club & Musket",   emoji:"🏏💥", baseDmg:24, speed:1.0, qteType:"dual_action",tier:"epic", dotSpeed:3.60, centerWidth:0.12,                           classEmoji:"💥",  className:"Rifleman",   desc:"Blazing dot speed — react fast. Hold A+W+D, click the center." },
@@ -3330,20 +3330,21 @@ function App() {
       }
       // In debug mode stay in "action" so the panel can re-launch immediately
       const nextPhase = qteRef.current.debugMode ? "action" : "enemy_turn";
-      const pendingAttacks = (!qteRef.current.debugMode && prev.elite && newHp>0) ? 1 : 0;
+      const pendingAttacks = 0;
       const nextAtkIdx = qteRef.current.debugMode ? (prev.enemyAtkIdx??0) : nextIdx;
       return {...prev, enemy:{...prev.enemy,hp:newHp}, phase:nextPhase, enemyAtkIdx:nextAtkIdx, bossAttackPattern:qteRef.current.debugMode?null:bossAtk, pendingAttacks, log:[...prev.log,logMsg]};
     });
   };
 
-  const handleDefend = (q, suppressIndicator=false) => {
+  const handleDefend = (q, suppressIndicator=false, dmgOverride=null) => {
     // PvP routing
     if (pvpModeRef.current && pvpDefCbRef.current) { pvpDefCbRef.current(q); return; }
     // Use csRef.current (always fresh) — cs from closure may be stale if called from rAF/setTimeout
     const _liveCs = csRef.current;
     const atk = (_liveCs?.enemy?.atk||0) * (_liveCs?.enemyAtkMult||1);
     const mult = q==="perfect"?0:q==="good"?.4:1.0;
-    const dmg  = Math.floor(atk*mult);
+    // dmgOverride: use pre-computed dmg from ARRIVE frame so shown number === HP deducted
+    const dmg  = dmgOverride != null ? dmgOverride : Math.floor(atk*mult);
     if (!suppressIndicator) {
       // Projectile trail enemy → hero, then burst
       triggerProjectileTrail(ENX, GNDY-40, HR_L+HSW/2, HR_T+HSH/2, q==="miss"?"#ff4444":"#4488ff");
@@ -3353,22 +3354,6 @@ function App() {
       if(q==="perfect") sfx.parry(); else if(q==="good") sfx.blockHit(); else sfx.takeDmg();
       showHit(q==="perfect"?"PARRIED!":q==="good"?`BLOCKED −${dmg}hp`:`HIT −${dmg}hp`,
               q==="perfect"?"#44aaff":q==="good"?"#4488ff":"#ff4444");
-    }
-    // Compute elite second-attack params OUTSIDE setCs — same concurrent-mode safety rule:
-    // setTimeout inside a state updater gets doubled when React re-invokes the updater.
-    const _elitePending = (_liveCs?.pendingAttacks||0) > 0;
-    const _sp2 = _liveCs?.enemySprite;
-    const _nextIdx2 = _elitePending ? ((_liveCs?.enemyAtkIdx??-1)+1) % (_sp2?.attacks?.length||1) : 0;
-    const _nextType2 = _elitePending ? _sp2?.attacks?.[_nextIdx2]?.type : null;
-    const _nextBossAtk2 = _elitePending && _liveCs?.enemy?.id==="dragon" ? "cleave" : null;
-    if (_elitePending) {
-      const _secondFn = (_liveCs?.enemy?.id==='dragon' && !_liveCs?.pvpMode)
-        ? ()=>startRushMeleeQTE(_nextIdx2)
-        : (_nextType2==='rush' && _sp2?.rushApproach && !_liveCs?.pvpMode)
-          ? ()=>startRushMeleeQTE(_nextIdx2)
-          : (_nextType2==='slow_proj' ? ()=>startDefendQTE(null,'slow') : ()=>startDefendQTE(null));
-      clearTimeout(qteRef.current.defendTimer);
-      qteRef.current.defendTimer = setTimeout(_secondFn, 550);
     }
     setPlayer(p=>{
       if(!p) return p;
@@ -3381,10 +3366,6 @@ function App() {
       const logMsg = q==="perfect"?"⚡ Perfect parry! 0 damage.":
                      q==="good"   ?`Blocked — ${dmg} through.`:
                                    `${prev.enemy.name} slams for ${dmg}!`;
-      if(_elitePending){
-        return {...prev, phase:"enemy_turn", enemyAtkIdx:_nextIdx2, pendingAttacks:(prev.pendingAttacks||1)-1, bossAttackPattern:_nextBossAtk2,
-          log:[...prev.log, logMsg, "⚔ ELITE attacks again!"].slice(-8)};
-      }
       return {...prev, phase:"action", pendingAttacks:0,
         log:[...prev.log, logMsg].slice(-8)};
     });
@@ -4136,7 +4117,8 @@ function App() {
         window.removeEventListener("keydown", onKey);
         const incomplete = len - ref.doneSet.size;
         const dmg = Math.round(200 * Math.max(0.30, 1 - (ref.missCount + incomplete) * 0.05));
-        const q = ref.doneSet.size >= len*0.75 ? "perfect" : ref.doneSet.size >= len*0.45 ? "good" : "miss";
+        // RPG never misses — only does less damage. Minimum "good" so PvP always sends the attack.
+        const q = ref.doneSet.size >= len*0.75 ? "perfect" : "good";
         fireRPGRocket(q, dmg, weapon, ref.doneSet.size);
       }
     }, SEQ_DUR);
@@ -4430,7 +4412,7 @@ function App() {
           ref.done = true;
           const d = ref.pressT != null ? Math.abs(ref.pressT - ARRIVE) : 99;
           setQteAnim(null);
-          handleDefend(d < WINDOW * 0.5 ? "perfect" : d < WINDOW ? "good" : "miss", true); // suppressIndicator
+          handleDefend(d < WINDOW * 0.5 ? "perfect" : d < WINDOW ? "good" : "miss", true, ref.arrivedDmg ?? null); // suppressIndicator; pass locked dmg
         }
         return;
       }
@@ -4448,6 +4430,7 @@ function App() {
         const _d   = ref.pressT != null ? Math.abs(ref.pressT - ARRIVE) : 99;
         const _q   = _d < WINDOW*0.5 ? "perfect" : _d < WINDOW ? "good" : "miss";
         const _dmg = Math.floor(_atk * (_q==="perfect"?0:_q==="good"?.4:1.0));
+        ref.arrivedDmg = _dmg; // lock in — t=1 resolution uses this so shown number === HP deducted
         triggerProjectileTrail(ENX, GNDY-40, HR_L+HSW/2, HR_T+HSH/2, _q==="miss"?"#ff4444":"#4488ff");
         if (_q==="miss") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ff4444", 36);
         else if (_q==="good") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#4488ff", 28);
@@ -5795,7 +5778,7 @@ function App() {
                           }
                           return (<g key={i}>{pts.map((pt,si)=>si%4===0?(
                             <circle key={si} cx={cx+pt.x} cy={cy+pt.y} r="1"
-                              fill="#6655aa" opacity=".2"/>
+                              fill="#6655aa" opacity=".06"/>
                           ):null)}</g>);
                         }
                       });
@@ -5837,7 +5820,7 @@ function App() {
                       }
                       // Future dot: always moving but very dim, no label
                       return (
-                        <g key={i} opacity=".28">
+                        <g key={i} opacity=".12">
                           <circle cx={cx+px} cy={cy+py} r="6" fill="#aaaacc"/>
                           <circle cx={cx+px} cy={cy+py} r="2.5" fill="#ccccee" opacity=".6"/>
                         </g>
