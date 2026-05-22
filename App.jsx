@@ -126,7 +126,7 @@ const ENEMY_DIMS = {
   golem:{w:84,h:88},  wraith:{w:64,h:96},
   // Boss GIF natural frame size is 288×160 — scale to ~75% to fit battlefield
   // hitFrame/hitFps: used by startRushMeleeQTE to time the parry window on the cleave GIF
-  dragon:{w:216,h:120, hitFrame:3, hitFps:12},
+  dragon:{w:216,h:120, hitFrame:11, hitFps:12},
 };
 
 // Enemy sprite pool — 9 variants randomized per encounter (dragon excluded)
