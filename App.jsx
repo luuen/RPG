@@ -469,6 +469,17 @@ const pickRewards = (held, eliteDrop=false) => {
   return result.sort(()=>Math.random()-.5);
 };
 
+/* ─── RPG DEFEND VARIANTS ────────────────────────────────────── */
+// Every RPG launch picks one at random — defender sees a different pattern each time
+const RPG_DEFEND_VARIANTS = [
+  { dur: 660, launch:0.10, arrive:0.74, projPath:"straight"    }, // sprint  — straight fast
+  { dur:1400, launch:0.28, arrive:0.88, projPath:"loop"        }, // arc     — looping high
+  { dur: 880, launch:0.14, arrive:0.78, projPath:"bounce"      }, // skip    — bouncing low
+  { dur: 540, launch:0.08, arrive:0.70, projPath:"ground_rush" }, // deck    — ground skim
+  { dur:1200, launch:0.20, arrive:0.84, projPath:"zigzag"      }, // spiral  — zigzag weave
+  { dur:1650, launch:0.38, arrive:0.92, projPath:"straight"    }, // siege   — slow heavy shot
+];
+
 /* ─── BATTLEFIELD CONSTANTS ──────────────────────────────────── */
 const STOMP_DUR = 800;
 const LAND_FRAC = 0.52;
@@ -554,14 +565,13 @@ if (!document.getElementById('__stompImpactKF')) {
 // Per-frame canvas sprite image cache
 const _spriteImgCache = {};
 
-// AnimatedSprite — two render modes:
-// 1. CSS sliding-div (default): for uniform crops, fast.
-// 2. Canvas per-frame (when perFrameOps provided): for sprites where each frame has its own
-//    crop region on the strip (including negative x = borrowing from previous frame's pixels).
+// AnimatedSprite — always-canvas renderer.
+// Handles both per-frame ops (animCrops perFrame data) and uniform crop strips (CSS-equivalent).
+// Always uses a <canvas> so phase transitions never swap element types → no flash on animation switch.
 const AnimatedSprite = React.memo(function AnimatedSprite({
   src, numFrames, fps=8, displayW, displayH, flip=false,
   imgW=null, imgH=null, cropOffX=0, cropOffY=0, loop=true,
-  perFrameOps=null, // [{srcX,srcY,srcW,srcH,dstX,dstY,dstW,dstH}] — canvas mode
+  perFrameOps=null, // [{srcX,srcY,srcW,srcH,dstX,dstY,dstW,dstH}] — per-frame canvas mode
   onComplete=null,  // fired once when loop=false animation reaches last frame
 }) {
   const [frame, setFrame] = React.useState(0);
@@ -583,49 +593,45 @@ const AnimatedSprite = React.memo(function AnimatedSprite({
     return ()=>clearInterval(iv);
   },[src, numFrames, fps, loop]);
 
-  // Canvas mode: load image once, draw per-frame crop on each frame change
+  // Always load image — needed for canvas draw in both modes
   React.useEffect(()=>{
-    if (!perFrameOps) return;
     if (_spriteImgCache[src]) { forceUpdate(); return; }
     const img = new Image();
     img.onload = ()=>{ _spriteImgCache[src] = img; forceUpdate(); };
     img.src = src;
-  },[src, !!perFrameOps]);
+  },[src]);
 
-  React.useEffect(()=>{
-    if (!perFrameOps) return;
+  // Canvas draw — useLayoutEffect fires before paint so changing canvas dimensions
+  // (width/height attrs clear the buffer) never produce a visible blank frame.
+  React.useLayoutEffect(()=>{
     const cv = canvasRef.current; if (!cv) return;
     const img = _spriteImgCache[src]; if (!img) return;
     const ctx = cv.getContext('2d');
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, displayW, displayH);
-    const op = perFrameOps[frame % perFrameOps.length];
-    if (op && op.srcW > 0 && op.srcH > 0)
-      ctx.drawImage(img, op.srcX, op.srcY, op.srcW, op.srcH, op.dstX, op.dstY, op.dstW, op.dstH);
-  },[frame, src, perFrameOps, displayW, displayH]);
+    if (perFrameOps) {
+      // Per-frame ops: each frame has its own srcX/srcY/srcW/srcH crop (may include negative-x borrows)
+      const op = perFrameOps[frame % perFrameOps.length];
+      if (op && op.srcW > 0 && op.srcH > 0)
+        ctx.drawImage(img, op.srcX, op.srcY, op.srcW, op.srcH, op.dstX, op.dstY, op.dstW, op.dstH);
+    } else {
+      // Uniform crop: CSS-equivalent sliding strip, computed from natural image dimensions
+      const nfw    = img.naturalWidth / numFrames;      // natural pixels per frame
+      const scaleX = imgW ? (img.naturalWidth  / imgW) : 1; // display→natural x ratio
+      const scaleY = imgH ? (img.naturalHeight / imgH) : 1; // display→natural y ratio
+      const srcX   = frame * nfw + cropOffX * scaleX;
+      const srcY   = cropOffY * scaleY;
+      const srcW   = displayW * scaleX;
+      const srcH   = displayH * scaleY;
+      if (srcW > 0 && srcH > 0)
+        ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, displayW, displayH);
+    }
+  },[frame, src, perFrameOps, displayW, displayH, imgW, imgH, cropOffX, cropOffY, numFrames]);
 
-  if (perFrameOps) {
-    return <canvas ref={canvasRef} width={displayW} height={displayH}
-      style={{display:'block', imageRendering:'pixelated',
-        transform:flip?'scaleX(-1)':'none'}}/>;
-  }
-
-  // CSS sliding-div mode (uniform crop)
-  const totalW      = imgW ?? numFrames * displayW;
-  const totalH      = imgH ?? displayH;
-  const frameStride = totalW / numFrames;
-  return (
-    <div style={{width:displayW,height:displayH,overflow:"hidden",position:"relative",
-      transform:flip?"scaleX(-1)":"none",imageRendering:"pixelated"}}>
-      <img src={src} style={{
-        position:"absolute",
-        left: -(frame * frameStride + cropOffX),
-        top:  -cropOffY,
-        width: totalW, height: totalH,
-        imageRendering:"pixelated",
-      }}/>
-    </div>
-  );
+  // Always canvas — no element-type switching between animation phases
+  return <canvas ref={canvasRef} width={displayW} height={displayH}
+    style={{display:'block', imageRendering:'pixelated',
+      transform:flip?'scaleX(-1)':'none'}}/>;
 });
 
 // PerFrameCanvas — dedicated per-frame sprite renderer that reads animCrops directly.
@@ -946,7 +952,13 @@ const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, spr
       if (rushAnim === "strike") return getRushStrike(sprite, atkIdx)?.file;
       if (phase === "won") return sprite.deadFile;
       if (enemyFlash && sprite.hurtFile) return sprite.hurtFile;
-      if (phase === "enemy_turn" || phase === "defending") return sprite.attacks?.[atkIdx % (sprite.attacks?.length || 1)]?.file;
+      if (phase === "enemy_turn" || phase === "defending") {
+        const atk = sprite.attacks?.[atkIdx % (sprite.attacks?.length || 1)];
+        const atkType = atk?.type || null;
+        // Match main code: wind-up (enemy_turn) and rush attacks always show Idle
+        if (phase === "enemy_turn" || atkType === "rush") return "Idle.png";
+        return atk?.file;
+      }
       return "Idle.png";
     })();
     const ac = sprite.animCrops?.[animFile];
@@ -1000,25 +1012,6 @@ const EnemySpriteSmall = React.memo(function EnemySpriteSmall({ id, scale=1, spr
     // showing the attack animation here + the QTE firing looks like TWO attacks.
     // Only show the real attack animation once the QTE is active (phase="defending").
     const isWindup = phase==="enemy_turn";
-
-    // Rush approach/retreat: use PerFrameCanvas directly if perFrame data exists.
-    // Bypasses AnimatedSprite + perFrameOps useMemo entirely — reads animCrops straight.
-    if ((rushAnim === "approach" || rushAnim === "retreat") && sprite.rushApproach) {
-      const _rapFile = sprite.rushApproach.file;
-      const _rapAC   = sprite.animCrops?.[_rapFile];
-      if (_rapAC?.perFrame?.length) {
-        const _rapSrc = `${base}/${_rapFile}`;
-        return <PerFrameCanvas
-          src={_rapSrc}
-          animCrops={_rapAC}
-          fw={sprite.frameW || 128}
-          fps={sprite.rushApproach.fps || 12}
-          scale={scale}
-          loop={true}
-          flip={rushAnim === "retreat"}
-        />;
-      }
-    }
 
     // Rush melee overrides normal animation selection
     if (rushAnim === "approach" && sprite.rushApproach) {
@@ -3000,7 +2993,12 @@ function App() {
       // Send attack — DO NOT update pvpOppHp here. Defender reports their HP after block/parry.
       // pvpOppHp is updated via oppSnap.pvpHp effect once defender resolves. This ensures
       // damage registers after their QTE and prevents both-win race conditions.
-      mpSend({ type:"state", pvpAtk: { dmg, quality: q, ts } });
+      // Include weapon so defender's QTE matches attacker's weapon type.
+      // RPG also picks a random variant so every launch has a different projectile pattern.
+      const rpgVariant = weapon.id === "rpg"
+        ? Math.floor(Math.random() * RPG_DEFEND_VARIANTS.length)
+        : undefined;
+      mpSend({ type:"state", pvpAtk: { dmg, quality: q, ts, weaponId: weapon.id, rpgVariant } });
       setCs(prev=>prev?{...prev,phase:"enemy_turn",
         log:[...prev.log,`⚔ You launched ${dmg} at ${prev.enemy.name}…`].slice(-8)}:prev);
       setPvpLog(lg => [...lg, `⚔ You attacked ${oppSnap?.name||"RIVAL"} for ${dmg} (${q}) — awaiting block…`].slice(-6));
@@ -3020,11 +3018,12 @@ function App() {
     pvpDefCbRef.current = (q) => {
       pvpDefCbRef.current = null;
       const inDmg = mpRef.current.pvpIncomingDmg;
-      const mult = q==="perfect"?0:q==="good"?0.4:1.0;
+      const mult = q==="perfect"?0:q==="good"?0.15:1.0;
       const finalDmg = Math.floor(inDmg * mult);
-      triggerProjectileTrail(ENX, GNDY-40, HR_L+HSW/2, HR_T+HSH/2, q==="miss"?"#ff4444":"#4488ff");
-      if (q==="perfect") showHit("PARRIED!", "#44aaff");
-      else showHit(q==="good"?`BLOCKED −${finalDmg}`:`HIT −${finalDmg}`, q==="good"?"#4488ff":"#ff4444");
+      // Trail already fired at ARRIVE — only play the result sfx+particles here
+      if (q==="perfect") { sfx.parry(); triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#88ddff", 52); showHit("PARRIED!", "#44aaff"); }
+      else if (q==="good") { sfx.blockHit(); triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#4488ff", 28); showHit(`BLOCKED −${finalDmg}`, "#4488ff"); }
+      else { sfx.takeDmg(); triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ff4444", 36); showHit(`HIT −${finalDmg}`, "#ff4444"); }
       setPvpMyHp(h => {
         const nh = Math.max(0, h - finalDmg);
         mpSend({ type:"state", pvpMyHp: nh, pvpTurnDone: Date.now() });
@@ -3040,7 +3039,8 @@ function App() {
     };
     // Put cs into defending phase so defend QTE prompt shows
     setCs(prev=>prev?{...prev,phase:"defending"}:prev);
-    startDefendQTE();
+    // Pass attacker's weapon so defender QTE matches the attack type (RPG also varies every use)
+    startDefendQTE(null, null, atkData.weaponId ?? null, atkData.rpgVariant ?? null);
   };
 
   // Burst particles — position:fixed on document.body, screen coords via getBoundingClientRect.
@@ -3366,7 +3366,7 @@ function App() {
     // Use csRef.current (always fresh) — cs from closure may be stale if called from rAF/setTimeout
     const _liveCs = csRef.current;
     const atk = (_liveCs?.enemy?.atk||0) * (_liveCs?.enemyAtkMult||1);
-    const mult = q==="perfect"?0:q==="good"?.4:1.0;
+    const mult = q==="perfect"?0:q==="good"?.15:1.0;
     // dmgOverride: use pre-computed dmg from ARRIVE frame so shown number === HP deducted
     const dmg  = dmgOverride != null ? dmgOverride : Math.floor(atk*mult);
     if (!suppressIndicator) {
@@ -3405,7 +3405,8 @@ function App() {
     setPlayer(p=>{
       if(!p) return p;
       const n={...p};
-      if(r.type==="heal") n.hp=Math.min(p.maxHp,p.hp+r.value);
+      n.hp = Math.min(p.maxHp, n.hp + 10); // flat +10 HP every floor clear
+      if(r.type==="heal") n.hp=Math.min(p.maxHp,n.hp+r.value);
       if(r.type==="stat"){n[r.stat]=p[r.stat]+r.value;if(r.stat==="maxHp")n.hp=p.hp+r.value;}
       if(r.type==="weapon"){
         const newW=ALL_WEAPONS[r.weaponId];
@@ -3681,9 +3682,13 @@ function App() {
         ref.done=true;
         window.removeEventListener("keydown",onKey);
         sfx.daggerFlurry();
+        // 6 taps = beat-perfect (1.5x); 8 taps = +0.25x bonus = 1.75x
+        const _t = ref.taps;
+        const _fMult = _t>=8 ? 1.75 : _t>=6 ? 1.5+(_t-6)/2*0.25 : 0.30+_t/6*1.20;
+        const _dmg = Math.max(1,Math.floor((weaponDmg(weapon)+(player?.str||0))*_fMult));
         showHit("PERFECT!", "#44ff88");
         setQteAnim(null);
-        setTimeout(()=>resolveAttack("perfect",weapon), 80);
+        setTimeout(()=>resolveAttack("perfect",weapon,_dmg), 80);
       }
     };
     window.addEventListener("keydown",onKey);
@@ -3695,12 +3700,18 @@ function App() {
       if (t<1) { requestAnimationFrame(tick); return; }
       window.removeEventListener("keydown",onKey);
       ref.done = true;
-      const ratio = Math.min(1,ref.taps/tapTarget);
-      const q = ratio>=.85?"perfect":ratio>=.5?"good":"miss";
-      showHit(q==="perfect"?"PERFECT!":q==="good"?`GOOD! x${ref.taps}`:`WEAK x${ref.taps}`,
+      const taps = ref.taps;
+      const q = taps>=6?"perfect":taps>=3?"good":"miss";
+      // 6 taps = beat-perfect (1.5x); 8 taps = 1.75x; linear between anchors
+      const fMult = taps>=8 ? 1.75
+                  : taps>=6 ? 1.5+(taps-6)/2*0.25
+                  : taps>=1 ? 0.30+taps/6*1.20
+                  : 0.30;
+      const dmg = Math.max(1,Math.floor((weaponDmg(weapon)+(player?.str||0))*fMult));
+      showHit(q==="perfect"?"PERFECT!":q==="good"?`GOOD! x${taps}`:`WEAK x${taps}`,
               q==="perfect"?"#44ff88":q==="good"?"#ffcc44":"#666");
       setQteAnim(null);
-      setTimeout(()=>resolveAttack(q,weapon), 80);
+      setTimeout(()=>resolveAttack(q,weapon,dmg), 80);
     };
     requestAnimationFrame(tick);
   };
@@ -3929,10 +3940,13 @@ function App() {
         ref.done = true;
         window.removeEventListener("keydown",onKey);
         clearTimeout(ref.seqTimer);
-        const ratio = ref.correctCount / seq.length;
-        const q = ratio>=.75?"perfect":ratio>=.45?"good":"miss";
-        // Tiered mult: all correct=2x, 60-99%=1.75x, 1-59%=1.15x, 0=0.30x
-        const seqMult = ratio>=1.0?2.0:ratio>=0.60?1.75:ratio>=0.10?1.15:0.30;
+        const c = ref.correctCount;
+        const q = c>=4?"perfect":c>=2?"good":"miss";
+        // 4 correct = beat-perfect (1.5x); 8 correct = +0.75x bonus = 2.25x; linear between anchors
+        const seqMult = c>=8 ? 2.25
+                      : c>=4 ? 1.5 + (c-4)/4*0.75
+                      : c>=1 ? 0.30 + c/4*1.20
+                      : 0.30;
         const dmg = Math.max(1,Math.floor((weaponDmg(weapon)+(player?.str||0))*seqMult));
         fireMagicBolt(q, dmg, weapon);
       } else {
@@ -3946,9 +3960,12 @@ function App() {
       if (!ref.done && ref.gen === myGen) {
         ref.done=true;
         window.removeEventListener("keydown",onKey);
-        const ratio = ref.correctCount / seq.length;
-        const q = ratio>=.75?"perfect":ratio>=.45?"good":"miss";
-        const seqMult = ratio>=1.0?2.0:ratio>=0.60?1.75:ratio>=0.10?1.15:0.30;
+        const c = ref.correctCount;
+        const q = c>=4?"perfect":c>=2?"good":"miss";
+        const seqMult = c>=8 ? 2.25
+                      : c>=4 ? 1.5 + (c-4)/4*0.75
+                      : c>=1 ? 0.30 + c/4*1.20
+                      : 0.30;
         const dmg = Math.max(1,Math.floor((weaponDmg(weapon)+(player?.str||0))*seqMult));
         fireMagicBolt(q, dmg, weapon);
       }
@@ -4304,7 +4321,7 @@ function App() {
     sequence_reveal: { dur:1500, launch:0.28, arrive:0.82 },
     dual_action:     { dur: 500, launch:0.16, arrive:0.80 },
   };
-  const startDefendQTE = (bossAtkPattern = null, variant = null) => {
+  const startDefendQTE = (bossAtkPattern = null, variant = null, pvpWeaponId = null, pvpRpgVariant = null) => {
     const ref = qteRef.current;
     // Cancel any pending second timer the moment a QTE starts — prevents stale timers
     // from firing mid-QTE and scheduling a duplicate attack.
@@ -4316,10 +4333,16 @@ function App() {
       prof = DEFEND_PROFILES.gorgon_slow;
       projType = null;
     } else if (isPvp) {
-      const oppWepId = cs?.enemy?.pvpWeapons?.[0] ?? "sword";
-      const oppWep = ALL_WEAPONS[oppWepId] ?? ALL_WEAPONS.sword;
-      projType = oppWep.qteType || "swing_beat";
-      prof = PVP_PROJ_PROFILES[projType] || { dur:1100, launch:0.20, arrive:0.82 };
+      const oppWepId = pvpWeaponId ?? cs?.enemy?.pvpWeapons?.[0] ?? "sword";
+      if (oppWepId === "rpg" && pvpRpgVariant != null) {
+        // RPG: every launch uses a different pattern — use attacker-sent variant index
+        prof = RPG_DEFEND_VARIANTS[pvpRpgVariant % RPG_DEFEND_VARIANTS.length];
+        projType = "sequence_reveal"; // rocket sprite
+      } else {
+        const oppWep = ALL_WEAPONS[oppWepId] ?? ALL_WEAPONS.sword;
+        projType = oppWep.qteType || "swing_beat";
+        prof = PVP_PROJ_PROFILES[projType] || { dur:1100, launch:0.20, arrive:0.82 };
+      }
     } else {
       const profKey = cs?.enemy?.id==="dragon" && bossAtkPattern==="charge"
         ? "dragon_charge" : cs?.enemy?.id;
@@ -4338,8 +4361,11 @@ function App() {
     const onKey = (e) => {
       if (ref.gen !== myGen) { window.removeEventListener("keydown",onKey); return; }
       if (e.code!=="Space"||ref.pressT!==null) return;
+      // Window closes at ARRIVE — pressing after the projectile hits always = miss
+      const tNow = (performance.now()-ref.startMs)/dur;
+      if (tNow >= arrive) return;
       e.preventDefault();
-      ref.pressT = (performance.now()-ref.startMs)/dur;
+      ref.pressT = tNow;
       // no immediate text — result shown at arrive
     };
     window.addEventListener("keydown",onKey);
@@ -4372,16 +4398,18 @@ function App() {
       // Fire damage indicator exactly when projectile arrives
       if (!ref._defArrivedShown && t >= arrive) {
         ref._defArrivedShown = true;
-        const _atk = (csRef.current?.enemy?.atk||0) * (csRef.current?.enemyAtkMult||1);
-        const _d   = ref.pressT!=null ? Math.abs(ref.pressT-arrive) : 99;
-        const _q   = _d<.055 ? "perfect" : _d<.14 ? "good" : "miss";
-        const _dmg = Math.floor(_atk * (_q==="perfect"?0:_q==="good"?.4:1.0));
+        const _d = ref.pressT!=null ? Math.abs(ref.pressT-arrive) : 99;
+        const _q = _d<.055 ? "perfect" : _d<.14 ? "good" : "miss";
+        // In PvP mode pvpDefCbRef owns all result sfx/particles — only fire the trail here
+        // so the projectile visually "lands". In solo mode fire the full indicator set.
         triggerProjectileTrail(ENX, GNDY-40, HR_L+HSW/2, HR_T+HSH/2, _q==="miss"?"#ff4444":"#4488ff");
-        if (_q==="miss") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ff4444", 36);
-        else if (_q==="good") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#4488ff", 28);
-        else { triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#88ddff", 52); setTimeout(()=>triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ffffff", 24), 80); }
-        if (_q==="perfect") sfx.parry(); else if (_q==="good") sfx.blockHit(); else sfx.takeDmg();
-        // showHit intentionally omitted — handleDefend at t=1 shows the definitive result
+        if (!pvpModeRef.current) {
+          if (_q==="miss") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ff4444", 36);
+          else if (_q==="good") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#4488ff", 28);
+          else { triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#88ddff", 52); setTimeout(()=>triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ffffff", 24), 80); }
+          if (_q==="perfect") sfx.parry(); else if (_q==="good") sfx.blockHit(); else sfx.takeDmg();
+        }
+        // showHit intentionally omitted — handleDefend/pvpDefCbRef at t=1 shows the definitive result
       }
       requestAnimationFrame(tick);
     };
@@ -4428,11 +4456,12 @@ function App() {
     const onKey = (e) => {
       if (ref.gen !== myGen) { window.removeEventListener("keydown", onKey); return; }
       if (e.code !== "Space" || ref.pressT !== null) return;
+      // Window closes at ARRIVE — pressing after the hit frame always = miss
+      const tNow = (performance.now() - ref.startMs) / DUR;
+      if (tNow >= ARRIVE) return;
       e.preventDefault();
-      ref.pressT = (performance.now() - ref.startMs) / DUR;
-      // Immediate press feedback (quality not yet final — shown at ARRIVE)
-      const d = Math.abs(ref.pressT - ARRIVE);
-      // no immediate feedback on keypress — result shown at ARRIVE+WINDOW
+      ref.pressT = tNow;
+      // no immediate feedback on keypress — result shown at ARRIVE
     };
     window.addEventListener("keydown", onKey);
 
@@ -4464,15 +4493,17 @@ function App() {
         const _atk = (csRef.current?.enemy?.atk||0) * (csRef.current?.enemyAtkMult||1);
         const _d   = ref.pressT != null ? Math.abs(ref.pressT - ARRIVE) : 99;
         const _q   = _d < WINDOW*0.5 ? "perfect" : _d < WINDOW ? "good" : "miss";
-        const _dmg = Math.floor(_atk * (_q==="perfect"?0:_q==="good"?.4:1.0));
+        const _dmg = Math.floor(_atk * (_q==="perfect"?0:_q==="good"?.15:1.0));
         ref.arrivedDmg = _dmg; // lock in — t=1 resolution uses this so shown number === HP deducted
         triggerProjectileTrail(ENX, GNDY-40, HR_L+HSW/2, HR_T+HSH/2, _q==="miss"?"#ff4444":"#4488ff");
-        if (_q==="miss") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ff4444", 36);
-        else if (_q==="good") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#4488ff", 28);
-        else { triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#88ddff", 52); setTimeout(()=>triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ffffff", 24), 80); }
-        if (_q==="perfect") sfx.parry();
-        else if (_q==="good") sfx.blockHit(); else sfx.takeDmg();
-        // showHit intentionally omitted — handleDefend at t=1 shows the definitive result
+        if (!pvpModeRef.current) {
+          if (_q==="miss") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ff4444", 36);
+          else if (_q==="good") triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#4488ff", 28);
+          else { triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#88ddff", 52); setTimeout(()=>triggerParticles(HR_L+HSW/2, HR_T+HSH/2, "#ffffff", 24), 80); }
+          if (_q==="perfect") sfx.parry();
+          else if (_q==="good") sfx.blockHit(); else sfx.takeDmg();
+        }
+        // showHit intentionally omitted — handleDefend/pvpDefCbRef at t=1 shows the definitive result
       }
       requestAnimationFrame(tick);
     };
@@ -5151,7 +5182,7 @@ function App() {
             <button className="btn" style={{padding:"16px 36px",fontSize:15}}
               onClick={()=>{setPlayer(p=>{if(!p)return p;const t=xpThresholdFor(p.level);return{...p,level:p.level+1,xp:Math.max(0,p.xp-t),maxHp:p.maxHp+15,hp:Math.min(p.hp+15,p.maxHp+15)};});setLevelUpPending(false);}}>❤️ +15 MAX HP</button>
             <button className="btn" style={{padding:"16px 36px",fontSize:15}}
-              onClick={()=>{setPlayer(p=>{if(!p)return p;const t=xpThresholdFor(p.level);return{...p,level:p.level+1,xp:Math.max(0,p.xp-t),str:p.str+3};});setLevelUpPending(false);}}>⚔️ +3 STRENGTH</button>
+              onClick={()=>{setPlayer(p=>{if(!p)return p;const t=xpThresholdFor(p.level);return{...p,level:p.level+1,xp:Math.max(0,p.xp-t),str:p.str+1};});setLevelUpPending(false);}}>⚔️ +1 STRENGTH</button>
           </div>
         </div>
       )}
